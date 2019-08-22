@@ -1,4 +1,4 @@
-package com.example.easysourcing.message.events.annotations;
+package com.easysourcing.api.message.snapshots.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HandleEvent {
+public @interface ApplyEvent {
 
 }

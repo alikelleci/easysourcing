@@ -1,6 +1,5 @@
-package com.example.easysourcing.message.snapshots;
+package com.easysourcing.api.message.snapshots;
 
-import com.example.easysourcing.message.snapshots.Snapshotable;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.springframework.beans.factory.annotation.Autowired;

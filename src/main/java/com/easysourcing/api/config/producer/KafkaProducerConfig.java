@@ -1,6 +1,6 @@
-package com.example.easysourcing.config.producer;
+package com.easysourcing.api.config.producer;
 
-import com.example.easysourcing.message.Message;
+import com.easysourcing.api.message.Message;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;

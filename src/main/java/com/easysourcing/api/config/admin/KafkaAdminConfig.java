@@ -1,4 +1,4 @@
-package com.example.easysourcing.config.admin;
+package com.easysourcing.api.config.admin;
 
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;

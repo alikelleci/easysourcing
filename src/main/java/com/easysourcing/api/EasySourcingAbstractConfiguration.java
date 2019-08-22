@@ -1,4 +1,4 @@
-package com.example.easysourcing;
+package com.easysourcing.api;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;

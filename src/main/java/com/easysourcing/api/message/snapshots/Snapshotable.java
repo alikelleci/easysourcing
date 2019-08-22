@@ -1,4 +1,4 @@
-package com.example.easysourcing.message.snapshots;
+package com.easysourcing.api.message.snapshots;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 

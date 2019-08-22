@@ -1,12 +1,11 @@
-package com.example.easysourcing.message.commands.annotations;
+package com.easysourcing.api.message.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.METHOD)
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HandleCommand {
-
+public @interface AggregateId {
 }

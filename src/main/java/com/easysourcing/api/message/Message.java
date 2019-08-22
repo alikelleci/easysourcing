@@ -1,6 +1,6 @@
-package com.example.easysourcing.message;
+package com.easysourcing.api.message;
 
-import com.example.easysourcing.message.annotations.AggregateId;
+import com.easysourcing.api.message.annotations.AggregateId;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

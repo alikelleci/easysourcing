@@ -1,23 +1,26 @@
-package com.example.easysourcing.message.events;
+package com.easysourcing.api.message.commands;
 
-import com.example.easysourcing.message.Message;
-import com.example.easysourcing.message.MessageType;
+import com.easysourcing.api.message.Message;
+import com.easysourcing.api.message.MessageType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class EventGateway {
+public class CommandGateway {
 
   @Autowired
   private KafkaTemplate<String, Message> kafkaTemplate;
 
+  @Value("${spring.kafka.streams.application-id}")
+  private String APPLICATION_ID;
 
   public <T> void send(T payload) {
-    String topic = payload.getClass().getPackage().getName().concat("-eventstore");
+    String topic = "events." + APPLICATION_ID;
 
     Message<T> message = Message.<T>builder()
-        .type(MessageType.Event)
+        .type(MessageType.Command)
         .payload(payload)
         .build();
 

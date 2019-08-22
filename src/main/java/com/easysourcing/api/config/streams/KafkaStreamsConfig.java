@@ -1,4 +1,4 @@
-package com.example.easysourcing.config.streams;
+package com.easysourcing.api.config.streams;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;

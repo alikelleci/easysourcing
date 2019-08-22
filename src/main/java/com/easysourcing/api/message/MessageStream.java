@@ -1,10 +1,10 @@
-package com.example.easysourcing.message;
+package com.easysourcing.api.message;
 
 
-import com.example.easysourcing.message.commands.annotations.HandleCommand;
-import com.example.easysourcing.message.events.annotations.HandleEvent;
-import com.example.easysourcing.message.snapshots.Snapshotable;
-import com.example.easysourcing.message.snapshots.annotations.ApplyEvent;
+import com.easysourcing.api.message.commands.annotations.HandleCommand;
+import com.easysourcing.api.message.events.annotations.HandleEvent;
+import com.easysourcing.api.message.snapshots.Snapshotable;
+import com.easysourcing.api.message.snapshots.annotations.ApplyEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -21,6 +21,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.reflections.Reflections;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.support.serializer.JsonSerde;
@@ -29,8 +30,13 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.reflections.ReflectionUtils.getConstructors;
@@ -48,22 +54,19 @@ public class MessageStream {
   @Autowired
   private Reflections reflections;
 
+  @Value("${spring.kafka.streams.application-id}")
+  private String APPLICATION_ID;
+
 
   @Bean
   public KStream<String, Message> eventStreamBuilder(StreamsBuilder builder) throws ExecutionException, InterruptedException {
-    // Collect all unique topics
-    Set<String> topics = getAllSubscribedTopicsForCommands();
-    topics.addAll(getAllSubscribedTopicsForEvents());
-    topics.addAll(getAllSubscribedTopicsForEventSourcing());
-    if (topics.isEmpty()) {
-      return null;
-    }
-    createTopics(topics);
+    // Create a topic for this application if not exists
+    createTopics(Collections.singleton("events." + APPLICATION_ID));
 
 
     // 1.  Read message stream
     KStream<String, Message> stream = builder
-        .stream(topics, Consumed.with(Serdes.String(), new JsonSerde<>(Message.class)))
+        .stream(Pattern.compile("events.(.*)"), Consumed.with(Serdes.String(), new JsonSerde<>(Message.class)))
         .filter((key, message) -> message != null)
         .filter((key, message) -> message.getPayload() != null);
 
@@ -85,8 +88,7 @@ public class MessageStream {
             .type(MessageType.Event)
             .payload(result)
             .build())
-        .to((key, message, recordContext) -> message.getPayload().getClass().getPackage().getName().concat("-eventstore"),
-            Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
+        .to("events." + APPLICATION_ID, Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
 
 
     // 4. Process Events, split stream
@@ -108,8 +110,7 @@ public class MessageStream {
             .type(MessageType.Command)
             .payload(result)
             .build())
-        .to((key, message, recordContext) -> message.getPayload().getClass().getPackage().getName().concat("-eventstore"),
-            Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
+        .to("events." + APPLICATION_ID, Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
 
 
     // Events that will be processed by @ApplyEvent method
@@ -152,19 +153,6 @@ public class MessageStream {
   // Commands
   //
 
-  private Set<String> getAllSubscribedTopicsForCommands() {
-    return applicationContext.getBeansWithAnnotation(Component.class).values()
-        .stream()
-        .flatMap(bean -> Arrays.stream(bean.getClass().getMethods()))
-        .filter(method -> method.isAnnotationPresent(HandleCommand.class))
-        .filter(method -> method.getReturnType() != Void.TYPE)
-        .filter(method -> method.getParameterCount() == 1)
-        .map(method -> method.getParameters()[0].getType())
-        .map(aClass -> aClass.getPackage().getName().concat("-eventstore"))
-        .collect(Collectors.toSet());
-  }
-
-
   private <T, V> V invokeCommandHandler(T payload) {
     Method methodToInvoke = getCommandHandler(payload);
     if (methodToInvoke != null) {
@@ -197,18 +185,6 @@ public class MessageStream {
   // Events
   //
 
-  private Set<String> getAllSubscribedTopicsForEvents() {
-    return applicationContext.getBeansWithAnnotation(Component.class).values()
-        .stream()
-        .flatMap(bean -> Arrays.stream(bean.getClass().getMethods()))
-        .filter(method -> method.isAnnotationPresent(HandleEvent.class))
-        .filter(method -> method.getReturnType() == List.class)
-        .filter(method -> method.getParameterCount() == 1)
-        .map(method -> method.getParameters()[0].getType())
-        .map(aClass -> aClass.getPackage().getName().concat("-eventstore"))
-        .collect(Collectors.toSet());
-  }
-
   private <T, V> List<V> invokeEventHandler(T payload) {
     Method methodToInvoke = getEventHandler(payload);
     if (methodToInvoke != null) {
@@ -239,17 +215,6 @@ public class MessageStream {
   //
   // Event Sourcing
   //
-
-  private Set<String> getAllSubscribedTopicsForEventSourcing() {
-    return reflections.getSubTypesOf(Snapshotable.class).stream()
-        .flatMap(aClass -> Arrays.stream(aClass.getMethods()))
-        .filter(method -> method.isAnnotationPresent(ApplyEvent.class))
-        .filter(method -> method.getReturnType() == method.getDeclaringClass())
-        .filter(method -> method.getParameterCount() == 1)
-        .map(method -> method.getParameters()[0].getType())
-        .map(aClass -> aClass.getPackage().getName().concat("-eventstore"))
-        .collect(Collectors.toSet());
-  }
 
   private <T> Snapshotable invokeEventSourcingHandler(T payload, Snapshotable bean) {
     Method methodToInvoke = getEventSourcingHandler(payload);

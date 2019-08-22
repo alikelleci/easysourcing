@@ -1,4 +1,4 @@
-package com.example.easysourcing.message;
+package com.easysourcing.api.message;
 
 public enum MessageType {
   Command,
