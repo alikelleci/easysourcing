@@ -7,7 +7,7 @@ import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Repository {
+public class SnapshotRepository {
 
   @Autowired
   private StreamsBuilderFactoryBean streamsBuilderFactoryBean;
