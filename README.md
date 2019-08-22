@@ -1,6 +1,6 @@
 ## Welcome to GitHub Pages
 
-Documentation: https://alikelleci.github.io/easy-sourcing
+[Documentation](https://alikelleci.github.io/easy-sourcing)
 
 You can use the [editor on GitHub](https://github.com/alikelleci/easy-sourcing/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
