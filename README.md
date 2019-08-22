@@ -1,3 +1,3 @@
 ## Easy Sourcing
 
-[Documentation](https://alikelleci.github.io/easy-sourcing)
+[Documentation](https://alikelleci.github.io/easysourcing)
