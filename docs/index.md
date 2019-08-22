@@ -1,2 +1,2 @@
-<h2>EasySourcing</h2>
-<h5>Event sourcing made easy!</h5>
+<h1>Easy Sourcing</h1>
+<h4>A Java library for Event Sourcing using Kafka</h4>
