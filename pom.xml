@@ -8,11 +8,11 @@
         <version>2.1.6.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.example</groupId>
-    <artifactId>easy-sourcing</artifactId>
+    <groupId>org.easysourcing</groupId>
+    <artifactId>easysourcing-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>easy-sourcing</name>
-    <description>A simple yet powerful event sourcing framework for Apache Kafka</description>
+    <name>Easy Sourcing</name>
+    <description>A Java library for Event Sourcing using Kafka</description>
 
     <properties>
         <java.version>1.8</java.version>
