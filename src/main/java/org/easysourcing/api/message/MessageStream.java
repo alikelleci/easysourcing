@@ -1,7 +1,7 @@
-package com.easysourcing.api.message;
+package org.easysourcing.api.message;
 
 
-import com.easysourcing.api.message.snapshots.Snapshot;
+import org.easysourcing.api.message.snapshots.Snapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;

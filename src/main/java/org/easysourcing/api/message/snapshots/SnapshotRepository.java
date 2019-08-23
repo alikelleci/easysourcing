@@ -1,4 +1,4 @@
-package com.easysourcing.api.message.snapshots;
+package org.easysourcing.api.message.snapshots;
 
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;

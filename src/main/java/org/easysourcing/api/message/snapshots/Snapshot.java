@@ -1,6 +1,6 @@
-package com.easysourcing.api.message;
+package org.easysourcing.api.message.snapshots;
 
-import com.easysourcing.api.message.annotations.AggregateId;
+import org.easysourcing.api.message.annotations.AggregateId;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -10,27 +10,25 @@ import java.lang.reflect.Field;
 
 @NoArgsConstructor
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
-public class Message<T> {
+public class Snapshot<T> {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
-  private T payload;
-  private MessageType type;
+  private T data;
 
 
   @Builder(toBuilder = true)
-  public Message(T payload, MessageType type) {
-    this.payload = payload;
-    this.type = type;
+  public Snapshot(T data) {
+    this.data = data;
   }
 
   @Transient
   public String getAggregateId() {
-    for (Field field : payload.getClass().getDeclaredFields()) {
+    for (Field field : data.getClass().getDeclaredFields()) {
       AggregateId annotation = field.getAnnotation(AggregateId.class);
       if (annotation != null) {
         field.setAccessible(true);
         try {
-          Object value = field.get(payload);
+          Object value = field.get(data);
           if (value instanceof String) {
             return (String) value;
           }
@@ -42,15 +40,12 @@ public class Message<T> {
     return null;
   }
 
-  public T getPayload() {
-    return payload;
+  public T getData() {
+    return data;
   }
 
-  public String getName() {
-    return payload.getClass().getSimpleName();
+  public String getType() {
+    return data.getClass().getSimpleName();
   }
 
-  public MessageType getType() {
-    return type;
-  }
 }

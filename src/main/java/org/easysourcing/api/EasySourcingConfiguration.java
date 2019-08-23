@@ -1,8 +1,8 @@
-package com.easysourcing.api;
+package org.easysourcing.api;
 
-import com.easysourcing.api.message.commands.annotations.HandleCommand;
-import com.easysourcing.api.message.events.annotations.HandleEvent;
-import com.easysourcing.api.message.snapshots.annotations.ApplyEvent;
+import org.easysourcing.api.message.commands.annotations.HandleCommand;
+import org.easysourcing.api.message.events.annotations.HandleEvent;
+import org.easysourcing.api.message.snapshots.annotations.ApplyEvent;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.scanners.MethodParameterScanner;

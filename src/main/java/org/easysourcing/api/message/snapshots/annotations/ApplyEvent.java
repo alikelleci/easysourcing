@@ -1,11 +1,12 @@
-package com.easysourcing.api.message.annotations;
+package org.easysourcing.api.message.snapshots.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.FIELD})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AggregateId {
+public @interface ApplyEvent {
+
 }

@@ -1,14 +1,14 @@
-package com.easysourcing.api.message.events;
+package org.easysourcing.api.message.commands;
 
-import com.easysourcing.api.message.Message;
-import com.easysourcing.api.message.MessageType;
+import org.easysourcing.api.message.Message;
+import org.easysourcing.api.message.MessageType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class EventGateway {
+public class CommandGateway {
 
   @Autowired
   private KafkaTemplate<String, Message> kafkaTemplate;
@@ -20,7 +20,7 @@ public class EventGateway {
     String topic = "events." + APPLICATION_ID;
 
     Message<T> message = Message.<T>builder()
-        .type(MessageType.Event)
+        .type(MessageType.Command)
         .payload(payload)
         .build();
 
