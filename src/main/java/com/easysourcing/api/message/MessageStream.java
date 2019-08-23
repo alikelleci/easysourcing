@@ -1,7 +1,7 @@
 package com.easysourcing.api.message;
 
 
-import com.easysourcing.api.message.snapshots.Snapshotable;
+import com.easysourcing.api.message.snapshots.Snapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -62,6 +62,7 @@ public class MessageStream {
   @Autowired
   private Map<Class<?>, Set<Method>> eventSourcingHandlers;
 
+
   @PostConstruct
   private void initTopics() throws ExecutionException, InterruptedException {
     List<String> existingTopics = adminClient.listTopics().listings().get()
@@ -78,7 +79,6 @@ public class MessageStream {
     newTopics.removeIf(newTopic -> existingTopics.contains(newTopic.name()));
     adminClient.createTopics(newTopics).all().get();
   }
-
 
   @Bean
   public KStream<String, Message> eventStreamBuilder(StreamsBuilder builder) throws ExecutionException, InterruptedException {
@@ -136,34 +136,20 @@ public class MessageStream {
         .groupByKey()
         .aggregate(
             () -> null,
-            (key, payload, currentAggregate) -> {
-              if (currentAggregate == null) {
-                currentAggregate = (Snapshotable) instantiateClazz(getEventSourcingHandler(payload).getDeclaringClass());
+            (key, payload, snapshot) -> {
+              if (snapshot == null) {
+                Object aggregate = instantiateClazz(getEventSourcingHandler(payload).getDeclaringClass());
+                snapshot = Snapshot.builder().data(aggregate).build();
               }
-              return invokeEventSourcingHandler(payload, currentAggregate);
+              Object aggregate = invokeEventSourcingHandler(payload, snapshot.getData());
+              return snapshot.toBuilder().data(aggregate).build();
             },
             Materialized
-                .<String, Snapshotable, KeyValueStore<Bytes, byte[]>>as("snapshots")
+                .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("snapshots")
                 .withKeySerde(Serdes.String())
-                .withValueSerde(new JsonSerde<>(Snapshotable.class)));
+                .withValueSerde(new JsonSerde<>(Snapshot.class)));
 
     return stream;
-  }
-
-
-  public void createTopics(Set<String> topics) throws ExecutionException, InterruptedException {
-    List<String> existingTopics = adminClient.listTopics().listings().get()
-        .stream()
-        .map(TopicListing::name)
-        .collect(Collectors.toList());
-
-    List<NewTopic> newTopics = new ArrayList<>();
-    topics.forEach(topic ->
-        newTopics.add(new NewTopic(topic, 6, (short) 1)));
-
-    // filter existing topics and create new topics
-    newTopics.removeIf(newTopic -> existingTopics.contains(newTopic.name()));
-    adminClient.createTopics(newTopics).all().get();
   }
 
 
@@ -171,19 +157,19 @@ public class MessageStream {
   // Commands
   //
 
-  public <T> Method getCommandHandler(T payload) {
+  public <C> Method getCommandHandler(C payload) {
     return CollectionUtils.emptyIfNull(commandHandlers.get(payload.getClass()))
         .stream()
         .findFirst()
         .orElse(null);
   }
 
-  private <T, V> V invokeCommandHandler(T payload) {
+  private <C, E> E invokeCommandHandler(C payload) {
     Method methodToInvoke = getCommandHandler(payload);
     if (methodToInvoke != null) {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
-        return (V) MethodUtils.invokeExactMethod(bean, methodToInvoke.getName(), payload);
+        return (E) MethodUtils.invokeExactMethod(bean, methodToInvoke.getName(), payload);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -197,19 +183,19 @@ public class MessageStream {
   // Events
   //
 
-  public <T> Method getEventHandler(T payload) {
+  public <E> Method getEventHandler(E payload) {
     return CollectionUtils.emptyIfNull(eventHandlers.get(payload.getClass()))
         .stream()
         .findFirst()
         .orElse(null);
   }
 
-  private <T, V> List<V> invokeEventHandler(T payload) {
+  private <E, C> List<C> invokeEventHandler(E payload) {
     Method methodToInvoke = getEventHandler(payload);
     if (methodToInvoke != null) {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
-        return (List<V>) MethodUtils.invokeExactMethod(bean, methodToInvoke.getName(), payload);
+        return (List<C>) MethodUtils.invokeExactMethod(bean, methodToInvoke.getName(), payload);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -223,18 +209,18 @@ public class MessageStream {
   // Event Sourcing
   //
 
-  public <T> Method getEventSourcingHandler(T payload) {
+  public <E> Method getEventSourcingHandler(E payload) {
     return CollectionUtils.emptyIfNull(eventSourcingHandlers.get(payload.getClass()))
         .stream()
         .findFirst()
         .orElse(null);
   }
 
-  private <T> Snapshotable invokeEventSourcingHandler(T payload, Snapshotable bean) {
+  private <E, A> A invokeEventSourcingHandler(E payload, A aggregate) {
     Method methodToInvoke = getEventSourcingHandler(payload);
     if (methodToInvoke != null) {
       try {
-        return (Snapshotable) MethodUtils.invokeExactMethod(bean, methodToInvoke.getName(), payload);
+        return (A) MethodUtils.invokeExactMethod(aggregate, methodToInvoke.getName(), payload);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -242,7 +228,6 @@ public class MessageStream {
     log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
     return null;
   }
-
 
   private <T> T instantiateClazz(Class<T> tClass) {
     Constructor constructor = getConstructors(tClass).stream()

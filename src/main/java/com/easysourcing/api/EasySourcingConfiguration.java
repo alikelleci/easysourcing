@@ -2,7 +2,6 @@ package com.easysourcing.api;
 
 import com.easysourcing.api.message.commands.annotations.HandleCommand;
 import com.easysourcing.api.message.events.annotations.HandleEvent;
-import com.easysourcing.api.message.snapshots.Snapshotable;
 import com.easysourcing.api.message.snapshots.annotations.ApplyEvent;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
@@ -17,13 +16,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
+
 
 @ComponentScan("com.easysourcing.api")
 @Configuration
@@ -49,6 +48,7 @@ public class EasySourcingConfiguration {
     );
   }
 
+
   @Bean
   public Map<Class<?>, Set<Method>> commandHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(HandleCommand.class)
@@ -69,10 +69,8 @@ public class EasySourcingConfiguration {
 
   @Bean
   public Map<Class<?>, Set<Method>> eventSourcingHandlers(Reflections reflections) {
-    return reflections.getSubTypesOf(Snapshotable.class)
+    return reflections.getMethodsAnnotatedWith(ApplyEvent.class)
         .stream()
-        .flatMap(aClass -> Arrays.stream(aClass.getMethods()))
-        .filter(method -> method.isAnnotationPresent(ApplyEvent.class))
         .filter(method -> method.getReturnType() == method.getDeclaringClass())
         .filter(method -> method.getParameterCount() == 1)
         .collect(Collectors.groupingBy(method -> method.getParameters()[0].getType(), toSet()));

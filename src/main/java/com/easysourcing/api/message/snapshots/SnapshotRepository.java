@@ -13,9 +13,13 @@ public class SnapshotRepository {
   private StreamsBuilderFactoryBean streamsBuilderFactoryBean;
 
 
-  public <T extends Snapshotable> T get(String id, Class<T> tClass) {
-    ReadOnlyKeyValueStore<String, T> keyValueStore = streamsBuilderFactoryBean.getKafkaStreams().store("snapshots", QueryableStoreTypes.keyValueStore());
-    return keyValueStore.get(id);
+  public <T> T get(String id) {
+    ReadOnlyKeyValueStore<String, Snapshot<T>> keyValueStore = streamsBuilderFactoryBean.getKafkaStreams().store("snapshots", QueryableStoreTypes.keyValueStore());
+    Snapshot<T> snapshot = keyValueStore.get(id);
+    if (snapshot != null) {
+      return snapshot.getData();
+    }
+    return null;
   }
 
 }
