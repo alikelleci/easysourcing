@@ -169,10 +169,8 @@ public class MessageStream {
 
 
   private <T> Method getCommandHandler(T payload) {
-    return applicationContext.getBeansWithAnnotation(Component.class).values()
+    return reflections.getMethodsAnnotatedWith(HandleCommand.class)
         .stream()
-        .flatMap(bean -> Arrays.stream(bean.getClass().getMethods()))
-        .filter(method -> method.isAnnotationPresent(HandleCommand.class))
         .filter(method -> method.getReturnType() != Void.TYPE)
         .filter(method -> method.getParameterCount() == 1)
         .filter(method -> method.getParameters()[0].getType() == payload.getClass())
@@ -200,10 +198,8 @@ public class MessageStream {
   }
 
   private <T> Method getEventHandler(T payload) {
-    return applicationContext.getBeansWithAnnotation(Component.class).values()
+    return reflections.getMethodsAnnotatedWith(HandleEvent.class)
         .stream()
-        .flatMap(bean -> Arrays.stream(bean.getClass().getMethods()))
-        .filter(method -> method.isAnnotationPresent(HandleEvent.class))
         .filter(method -> method.getReturnType() == List.class)
         .filter(method -> method.getParameterCount() == 1)
         .filter(method -> method.getParameters()[0].getType() == payload.getClass())
