@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toSet;
 
 
-@ComponentScan("com.easysourcing.api")
+@ComponentScan("org.easysourcing.api")
 @Configuration
 public class EasySourcingConfiguration {
 
