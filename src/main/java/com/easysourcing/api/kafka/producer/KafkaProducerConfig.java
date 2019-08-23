@@ -1,4 +1,4 @@
-package com.easysourcing.api.config.producer;
+package com.easysourcing.api.kafka.producer;
 
 import com.easysourcing.api.message.Message;
 import org.apache.kafka.clients.producer.ProducerConfig;
