@@ -19,7 +19,6 @@ public class CommandGateway {
   public <T> void send(T payload) {
     String topic = "events." + APPLICATION_ID;
 
-
     Message<T> message = Message.<T>builder()
         .type(MessageType.Command)
         .payload(payload)
