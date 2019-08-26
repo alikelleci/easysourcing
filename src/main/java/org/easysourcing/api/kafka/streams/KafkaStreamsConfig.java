@@ -36,6 +36,7 @@ public class KafkaStreamsConfig {
     properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, JsonSerde.class);
     properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
+    properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION , StreamsConfig.OPTIMIZE);
 
     return new KafkaStreamsConfiguration(properties);
   }
@@ -47,6 +48,7 @@ public class KafkaStreamsConfig {
     StreamsBuilderFactoryBean builder = new StreamsBuilderFactoryBean(kafkaStreamsConfiguration);
     builder.setUncaughtExceptionHandler((t, e) -> {
       log.error("Exception handler triggered ", e);
+
     });
 
     return builder;

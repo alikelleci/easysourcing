@@ -16,7 +16,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -53,7 +52,6 @@ public class EasySourcingConfiguration {
   public Map<Class<?>, Set<Method>> commandHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(HandleCommand.class)
         .stream()
-        .filter(method -> method.getReturnType() != Void.TYPE)
         .filter(method -> method.getParameterCount() == 1)
         .collect(Collectors.groupingBy(method -> method.getParameters()[0].getType(), toSet()));
   }
@@ -62,7 +60,6 @@ public class EasySourcingConfiguration {
   public Map<Class<?>, Set<Method>> eventHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(HandleEvent.class)
         .stream()
-        .filter(method -> method.getReturnType() == List.class)
         .filter(method -> method.getParameterCount() == 1)
         .collect(Collectors.groupingBy(method -> method.getParameters()[0].getType(), toSet()));
   }

@@ -19,12 +19,17 @@ public class CommandGateway {
   public <T> void send(T payload) {
     String topic = "events." + APPLICATION_ID;
 
+
     Message<T> message = Message.<T>builder()
         .type(MessageType.Command)
         .payload(payload)
         .build();
 
-    kafkaTemplate.send(topic, message.getAggregateId(), message);
+    String aggregateId =  message.getAggregateId();
+    if(aggregateId == null) {
+      throw new IllegalArgumentException("You are trying to dispatch a command without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
+    }
+    kafkaTemplate.send(topic, aggregateId, message);
   }
 
 

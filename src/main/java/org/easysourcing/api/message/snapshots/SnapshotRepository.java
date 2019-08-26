@@ -14,10 +14,10 @@ public class SnapshotRepository {
 
 
   public <T> T get(String id) {
-    ReadOnlyKeyValueStore<String, Snapshot<T>> keyValueStore = streamsBuilderFactoryBean.getKafkaStreams().store("snapshots", QueryableStoreTypes.keyValueStore());
+    ReadOnlyKeyValueStore<String, Snapshot<T>> keyValueStore = streamsBuilderFactoryBean.getKafkaStreams().store("store", QueryableStoreTypes.keyValueStore());
     Snapshot<T> snapshot = keyValueStore.get(id);
     if (snapshot != null) {
-      return snapshot.getData();
+      return snapshot.getPayload();
     }
     return null;
   }

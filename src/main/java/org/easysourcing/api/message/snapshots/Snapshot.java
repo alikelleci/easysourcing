@@ -13,22 +13,22 @@ import java.lang.reflect.Field;
 public class Snapshot<T> {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
-  private T data;
+  private T payload;
 
 
   @Builder(toBuilder = true)
-  public Snapshot(T data) {
-    this.data = data;
+  public Snapshot(T payload) {
+    this.payload = payload;
   }
 
   @Transient
   public String getAggregateId() {
-    for (Field field : data.getClass().getDeclaredFields()) {
+    for (Field field : payload.getClass().getDeclaredFields()) {
       AggregateId annotation = field.getAnnotation(AggregateId.class);
       if (annotation != null) {
         field.setAccessible(true);
         try {
-          Object value = field.get(data);
+          Object value = field.get(payload);
           if (value instanceof String) {
             return (String) value;
           }
@@ -40,12 +40,12 @@ public class Snapshot<T> {
     return null;
   }
 
-  public T getData() {
-    return data;
+  public T getPayload() {
+    return payload;
   }
 
   public String getType() {
-    return data.getClass().getSimpleName();
+    return payload.getClass().getSimpleName();
   }
 
 }
