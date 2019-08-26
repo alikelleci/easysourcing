@@ -68,7 +68,7 @@ In the code snippet above we use Lombok annotations to reduce some of the boiler
 
 3. This method is also annotated with `@ApplyEvent`. In here, we listen for CustomerAddressChanged events. When this event occurs, we only update the corresponding field. Notice that we don't need to set the customer id here.
 
-> **When designing your application, it is important that you only have one event sourcing method per event type. If your application has multiple event sourcing methods for the same event, then only one method will gets invoked.**
+> **When designing your application, it is important that you only have one event sourcing method per event type. If your application has multiple event sourcing methods for the same event type, then only one method will be invoked.**
 
 ## Commands
 
