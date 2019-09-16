@@ -3,7 +3,6 @@ package org.easysourcing.api.message.events;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
@@ -67,7 +66,7 @@ public class EventStream {
             .payload(result)
             .build())
         .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
-        .to("events." + APPLICATION_ID, Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
+        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
 
 
     // 2.2  Events resulted in multiple Commands
@@ -80,7 +79,7 @@ public class EventStream {
             .payload(result)
             .build())
         .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
-        .to("events." + APPLICATION_ID, Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
+        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
 
     return stream;
   }
@@ -98,7 +97,7 @@ public class EventStream {
     if (methodToInvoke != null) {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
-        return MethodUtils.invokeExactMethod(bean, methodToInvoke.getName(), payload);
+        return methodToInvoke.invoke(bean, payload);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

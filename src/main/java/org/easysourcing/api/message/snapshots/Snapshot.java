@@ -1,14 +1,15 @@
 package org.easysourcing.api.message.snapshots;
 
-import org.easysourcing.api.message.annotations.AggregateId;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.easysourcing.api.message.annotations.AggregateId;
 
 import java.beans.Transient;
 import java.lang.reflect.Field;
 
-@NoArgsConstructor
+@ToString
+@Builder(toBuilder = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public class Snapshot<T> {
 
@@ -16,7 +17,9 @@ public class Snapshot<T> {
   private T payload;
 
 
-  @Builder(toBuilder = true)
+  public Snapshot() {
+  }
+
   public Snapshot(T payload) {
     this.payload = payload;
   }

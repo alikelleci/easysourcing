@@ -17,7 +17,7 @@ public class CommandGateway {
   private String APPLICATION_ID;
 
   public <T> void send(T payload) {
-    String topic = "events." + APPLICATION_ID;
+    String topic = APPLICATION_ID.concat("-events");
 
     Message<T> message = Message.<T>builder()
         .type(MessageType.Command)

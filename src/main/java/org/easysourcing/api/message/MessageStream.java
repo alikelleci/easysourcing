@@ -42,7 +42,7 @@ public class MessageStream {
         .map(TopicListing::name)
         .collect(Collectors.toList());
 
-    List<String> topics = Arrays.asList("events." + APPLICATION_ID);
+    List<String> topics = Arrays.asList(APPLICATION_ID.concat("-events"));
     List<NewTopic> newTopics = new ArrayList<>();
     topics.forEach(topic ->
         newTopics.add(new NewTopic(topic, 6, (short) 1)));
@@ -56,7 +56,7 @@ public class MessageStream {
   public KStream<String, Message> messageKStream(StreamsBuilder builder) {
     // 1.  Read stream
     KStream<String, Message> stream = builder
-        .stream(Pattern.compile("events.(.*)"), Consumed.with(Serdes.String(), new JsonSerde<>(Message.class)))
+        .stream(Pattern.compile("(.*)-events"), Consumed.with(Serdes.String(), new JsonSerde<>(Message.class)))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
         .filter((key, message) -> message.getAggregateId() != null)

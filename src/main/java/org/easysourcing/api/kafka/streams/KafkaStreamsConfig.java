@@ -46,10 +46,8 @@ public class KafkaStreamsConfig {
   @Bean
   public StreamsBuilderFactoryBean streamsBuilderFactoryBean(KafkaStreamsConfiguration kafkaStreamsConfiguration) {
     StreamsBuilderFactoryBean builder = new StreamsBuilderFactoryBean(kafkaStreamsConfiguration);
-    builder.setUncaughtExceptionHandler((t, e) -> {
-      log.error("Exception handler triggered ", e);
-
-    });
+    builder.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
+    builder.setUncaughtExceptionHandler((t, e) -> log.error("Exception handler triggered ", e));
 
     return builder;
   }

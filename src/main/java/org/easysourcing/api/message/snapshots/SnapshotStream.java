@@ -3,7 +3,6 @@ package org.easysourcing.api.message.snapshots;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -64,15 +63,10 @@ public class SnapshotStream {
         .map(TopicListing::name)
         .collect(Collectors.toList());
 
-
     Map<String, String> properties = new HashMap<>();
     properties.put(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT);
-    properties.put(TopicConfig.DELETE_RETENTION_MS_CONFIG, "100");
-    properties.put(TopicConfig.SEGMENT_MS_CONFIG, "100");
-    properties.put(TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG, "0.01");
 
-
-    List<String> topics = Arrays.asList("snapshots." + APPLICATION_ID);
+    List<String> topics = Arrays.asList(APPLICATION_ID.concat("-snapshots"));
     List<NewTopic> newTopics = new ArrayList<>();
     topics.forEach(topic ->
         newTopics.add(new NewTopic(topic, 6, (short) 1).configs(properties)));
@@ -86,7 +80,7 @@ public class SnapshotStream {
   public GlobalKTable<String, Snapshot> snapshotGlobalKTable(StreamsBuilder builder) {
 
     // 1. Process Events
-    KTable<String, Snapshot> snapshots = eventKStream
+    KTable<String, Snapshot> snapshotKTable = eventKStream
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getEventSourcingHandler(payload) != null)
         .groupByKey()
@@ -100,12 +94,12 @@ public class SnapshotStream {
 
 
     // 2. Send results to output stream
-    snapshots.toStream()
-        .to("snapshots." + APPLICATION_ID, Produced.with(Serdes.String(), new JsonSerde<>(Snapshot.class)));
+    snapshotKTable.toStream()
+        .to(APPLICATION_ID.concat("-snapshots"), Produced.with(Serdes.String(), new JsonSerde<>(Snapshot.class)));
 
 
-    // 3. Read snapshot from output stream into a Global Table to make it available for query
-    return builder.globalTable("snapshots." + APPLICATION_ID, Materialized
+    // 3. Read snapshot from output stream into a Global Table to make it globally available for querying
+    return builder.globalTable(APPLICATION_ID.concat("-snapshots"), Materialized
         .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("store")
         .withKeySerde(Serdes.String())
         .withValueSerde(new JsonSerde<>(Snapshot.class)));
@@ -119,11 +113,11 @@ public class SnapshotStream {
         .orElse(null);
   }
 
-  private <E, A> A invokeEventSourcingHandler(E payload, A aggregate) {
+  private <E, A> Object invokeEventSourcingHandler(E payload, A aggregate) {
     Method methodToInvoke = getEventSourcingHandler(payload);
     if (methodToInvoke != null) {
       try {
-        return (A) MethodUtils.invokeExactMethod(aggregate, methodToInvoke.getName(), payload);
+        return methodToInvoke.invoke(aggregate, payload);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -133,8 +127,8 @@ public class SnapshotStream {
   }
 
   private <T> T instantiateClazz(Class<T> tClass) {
-    ObjectInstantiator thingyInstantiator = objenesis.getInstantiatorOf(tClass);
-    return (T) thingyInstantiator.newInstance();
+    ObjectInstantiator instantiator = objenesis.getInstantiatorOf(tClass);
+    return (T) instantiator.newInstance();
   }
 
   private Snapshot doAggregate(Object payload, Snapshot snapshot) {

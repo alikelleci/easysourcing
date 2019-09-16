@@ -1,14 +1,15 @@
 package org.easysourcing.api.message;
 
-import org.easysourcing.api.message.annotations.AggregateId;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.easysourcing.api.message.annotations.AggregateId;
 
 import java.beans.Transient;
 import java.lang.reflect.Field;
 
-@NoArgsConstructor
+@ToString
+@Builder(toBuilder = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public class Message<T> {
 
@@ -16,8 +17,9 @@ public class Message<T> {
   private T payload;
   private MessageType type;
 
+  public Message() {
+  }
 
-  @Builder(toBuilder = true)
   public Message(T payload, MessageType type) {
     this.payload = payload;
     this.type = type;
