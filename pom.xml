@@ -8,9 +8,9 @@
         <version>2.1.6.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>org.easysourcing</groupId>
+    <groupId>com.kelleci.easysourcing</groupId>
     <artifactId>easysourcing-api</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
     <name>Easy Sourcing</name>
     <description>A Java library for Event Sourcing using Kafka</description>
 

@@ -15,9 +15,9 @@ Add this to your pom.xml:
 
 ```javascript
 <dependency>
-  <groupId>com.github.alikelleci/easysourcing</groupId>
-  <artifactId>org.easysourcing.easysourcing-api</artifactId>
-  <version>0.0.1-snapshot</version>
+    <groupId>com.kelleci.easysourcing</groupId>
+    <artifactId>easysourcing-api</artifactId>
+    <version>0.0.2-snapshot</version>
 </dependency>
  ``` 
 - - - -
