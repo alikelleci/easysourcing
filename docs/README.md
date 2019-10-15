@@ -11,7 +11,13 @@ EasySourcing is an API for building high performance Event Driven and Event Sour
 - - - -
 
 ## Maven
-
+```javascript
+<dependency>
+  <groupId>com.github.alikelleci/easysourcing</groupId>
+  <artifactId>org.easysourcing.easysourcing-api</artifactId>
+  <version>0.0.1-snapshot</version>
+</dependency>
+ ``` 
 - - - -
 
 ## Spring Boot

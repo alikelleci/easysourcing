@@ -79,4 +79,12 @@
         </plugins>
     </build>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>Ali Kelleci Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/alikelleci/easysourcing</url>
+        </repository>
+    </distributionManagement>
+
 </project>
