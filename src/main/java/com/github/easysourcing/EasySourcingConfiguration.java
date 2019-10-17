@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toSet;
 
 
-@ComponentScan("org.easysourcing.api")
+@ComponentScan("com.github.easysourcing")
 @Configuration
 public class EasySourcingConfiguration {
 
