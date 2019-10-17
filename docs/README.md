@@ -17,7 +17,7 @@ Add this to your pom.xml:
 <dependency>
     <groupId>com.github.alikelleci</groupId>
     <artifactId>easysourcing</artifactId>
-    <version>0.0.11</version>
+    <version>0.0.12</version>
 </dependency>
  ``` 
 - - - -

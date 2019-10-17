@@ -40,7 +40,6 @@ public class KafkaStreamsConfig {
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
     properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
 
-
     return new KafkaStreamsConfiguration(properties);
   }
 
