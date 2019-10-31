@@ -24,11 +24,11 @@ public class EventGateway {
         .payload(payload)
         .build();
 
-    String aggregateId =  message.getAggregateId();
-    if(aggregateId == null) {
+    String aggregateId = message.getAggregateId();
+    if (aggregateId == null) {
       throw new IllegalArgumentException("You are trying to dispatch an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
     }
-    kafkaTemplate.send(topic,aggregateId, message);
+    kafkaTemplate.send(topic, aggregateId, message);
   }
 
 

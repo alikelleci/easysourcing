@@ -1,6 +1,8 @@
 package com.github.easysourcing.message.commands;
 
 
+import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.MessageType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;
@@ -8,8 +10,6 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.ValueMapper;
-import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;

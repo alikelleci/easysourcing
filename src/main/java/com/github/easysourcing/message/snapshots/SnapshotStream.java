@@ -1,6 +1,7 @@
 package com.github.easysourcing.message.snapshots;
 
 
+import com.github.easysourcing.message.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -16,10 +17,10 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
-import com.github.easysourcing.message.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.objenesis.Objenesis;
 import org.springframework.objenesis.ObjenesisStd;
@@ -30,7 +31,6 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,13 +63,13 @@ public class SnapshotStream {
         .map(TopicListing::name)
         .collect(Collectors.toList());
 
-    Map<String, String> properties = new HashMap<>();
-    properties.put(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT);
-
     List<String> topics = Arrays.asList(APPLICATION_ID.concat("-snapshots"));
     List<NewTopic> newTopics = new ArrayList<>();
-    topics.forEach(topic ->
-        newTopics.add(new NewTopic(topic, 6, (short) 1).configs(properties)));
+    topics.forEach(topic -> newTopics.add(TopicBuilder.name(topic)
+        .partitions(6)
+        .replicas(1)
+        .config(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT)
+        .build()));
 
     // filter existing topics and create new topics
     newTopics.removeIf(newTopic -> existingTopics.contains(newTopic.name()));
