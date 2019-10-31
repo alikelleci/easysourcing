@@ -5,5 +5,5 @@
 
 
 ## License
-GNU General Public License, Version 3
+GNU LESSER GENERAL PUBLIC LICENSE, VERSION 3 
 
