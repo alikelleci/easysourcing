@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +63,7 @@ public class SnapshotStream {
         .map(TopicListing::name)
         .collect(Collectors.toList());
 
-    List<String> topics = Arrays.asList(APPLICATION_ID.concat("-snapshots"));
+    List<String> topics = Collections.singletonList(APPLICATION_ID.concat("-snapshots"));
     List<NewTopic> newTopics = new ArrayList<>();
     topics.forEach(topic -> newTopics.add(TopicBuilder.name(topic)
         .partitions(6)
@@ -83,9 +83,10 @@ public class SnapshotStream {
     KTable<String, Snapshot> snapshotKTable = eventKStream
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getEventSourcingHandler(payload) != null)
+        .peek((key, payload) -> log.info("Event received: {}", payload))
         .groupByKey()
         .aggregate(
-            Snapshot::new,
+            () -> Snapshot.builder().build(),
             (key, payload, snapshot) -> doAggregate(payload, snapshot),
             Materialized
                 .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("snapshots")

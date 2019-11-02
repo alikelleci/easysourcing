@@ -51,6 +51,7 @@ public class EventStream {
     KStream<String, Object>[] branches = stream
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getEventHandler(payload) != null)
+        .peek((key, payload) -> log.info("Event received: {}", payload))
         .mapValues(this::invokeEventHandler)
         .filter((key, result) -> result != null)
         .branch(
@@ -63,6 +64,7 @@ public class EventStream {
     branches[0]
         .mapValues((key, result) -> Message.builder()
             .type(MessageType.Command)
+            .name(result.getClass().getSimpleName())
             .payload(result)
             .build())
         .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
@@ -76,6 +78,7 @@ public class EventStream {
         .filter((key, result) -> result != null)
         .mapValues((key, result) -> Message.builder()
             .type(MessageType.Command)
+            .name(result.getClass().getSimpleName())
             .payload(result)
             .build())
         .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))

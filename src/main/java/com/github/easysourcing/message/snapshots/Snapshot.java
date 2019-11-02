@@ -3,12 +3,12 @@ package com.github.easysourcing.message.snapshots;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.message.annotations.AggregateId;
 import lombok.Builder;
-import lombok.ToString;
+import lombok.Value;
 
 import java.beans.Transient;
 import java.lang.reflect.Field;
 
-@ToString
+@Value
 @Builder(toBuilder = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public class Snapshot<T> {
@@ -16,13 +16,6 @@ public class Snapshot<T> {
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private T payload;
 
-
-  public Snapshot() {
-  }
-
-  public Snapshot(T payload) {
-    this.payload = payload;
-  }
 
   @Transient
   public String getAggregateId() {
@@ -41,14 +34,6 @@ public class Snapshot<T> {
       }
     }
     return null;
-  }
-
-  public T getPayload() {
-    return payload;
-  }
-
-  public String getType() {
-    return payload.getClass().getSimpleName();
   }
 
 }

@@ -21,6 +21,7 @@ public class EventGateway {
 
     Message<T> message = Message.<T>builder()
         .type(MessageType.Event)
+        .name(payload.getClass().getSimpleName())
         .payload(payload)
         .build();
 

@@ -19,10 +19,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,7 +44,7 @@ public class MessageStream {
         .map(TopicListing::name)
         .collect(Collectors.toList());
 
-    List<String> topics = Arrays.asList(APPLICATION_ID.concat("-events"));
+    List<String> topics = Collections.singletonList(APPLICATION_ID.concat("-events"));
     List<NewTopic> newTopics = new ArrayList<>();
     topics.forEach(topic -> newTopics.add(TopicBuilder.name(topic)
         .partitions(6)
@@ -61,15 +59,14 @@ public class MessageStream {
 
   @Bean
   public KStream<String, Message> messageKStream(StreamsBuilder builder) {
-    // 1.  Read stream
-    KStream<String, Message> stream = builder
+    return builder
         .stream(Pattern.compile("(.*)-events"), Consumed.with(Serdes.String(), new JsonSerde<>(Message.class)))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getAggregateId() != null)
-        .filter((key, message) -> message.getPayload() != null);
-
-    return stream;
+        .filter((key, message) -> message.getType() != null)
+        .filter((key, message) -> message.getName() != null)
+        .filter((key, message) -> message.getPayload() != null)
+        .filter((key, message) -> message.getAggregateId() != null);
   }
 
 

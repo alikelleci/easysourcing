@@ -3,27 +3,21 @@ package com.github.easysourcing.message;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.message.annotations.AggregateId;
 import lombok.Builder;
-import lombok.ToString;
+import lombok.Value;
 
 import java.beans.Transient;
 import java.lang.reflect.Field;
 
-@ToString
+@Value
 @Builder(toBuilder = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public class Message<T> {
 
+  private MessageType type;
+  private String name;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private T payload;
-  private MessageType type;
 
-  public Message() {
-  }
-
-  public Message(T payload, MessageType type) {
-    this.payload = payload;
-    this.type = type;
-  }
 
   @Transient
   public String getAggregateId() {
@@ -44,15 +38,4 @@ public class Message<T> {
     return null;
   }
 
-  public T getPayload() {
-    return payload;
-  }
-
-  public String getName() {
-    return payload.getClass().getSimpleName();
-  }
-
-  public MessageType getType() {
-    return type;
-  }
 }

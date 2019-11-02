@@ -21,6 +21,7 @@ public class CommandGateway {
 
     Message<T> message = Message.<T>builder()
         .type(MessageType.Command)
+        .name(payload.getClass().getSimpleName())
         .payload(payload)
         .build();
 
