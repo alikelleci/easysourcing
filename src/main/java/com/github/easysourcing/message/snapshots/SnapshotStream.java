@@ -4,10 +4,7 @@ package com.github.easysourcing.message.snapshots;
 import com.github.easysourcing.message.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicListing;
-import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -27,15 +24,9 @@ import org.springframework.objenesis.ObjenesisStd;
 import org.springframework.objenesis.instantiator.ObjectInstantiator;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -50,30 +41,16 @@ public class SnapshotStream {
   @Autowired
   private Map<Class<?>, Set<Method>> eventSourcingHandlers;
 
-  @Autowired
-  private AdminClient adminClient;
-
   private Objenesis objenesis = new ObjenesisStd();
 
 
-  @PostConstruct
-  private void initTopics() throws ExecutionException, InterruptedException {
-    List<String> existingTopics = adminClient.listTopics().listings().get()
-        .stream()
-        .map(TopicListing::name)
-        .collect(Collectors.toList());
-
-    List<String> topics = Collections.singletonList(APPLICATION_ID.concat("-snapshots"));
-    List<NewTopic> newTopics = new ArrayList<>();
-    topics.forEach(topic -> newTopics.add(TopicBuilder.name(topic)
+  @Bean
+  public NewTopic initSnapshotsTopic() {
+    return TopicBuilder.name(APPLICATION_ID.concat("-snapshots"))
         .partitions(6)
         .replicas(1)
-        .config(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT)
-        .build()));
-
-    // filter existing topics and create new topics
-    newTopics.removeIf(newTopic -> existingTopics.contains(newTopic.name()));
-    adminClient.createTopics(newTopics).all().get();
+        .compact()
+        .build();
   }
 
   @Bean

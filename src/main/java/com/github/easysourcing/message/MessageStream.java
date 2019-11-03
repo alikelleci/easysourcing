@@ -2,28 +2,19 @@ package com.github.easysourcing.message;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -33,28 +24,13 @@ public class MessageStream {
   private String APPLICATION_ID;
 
 
-  @Autowired
-  private AdminClient adminClient;
-
-
-  @PostConstruct
-  private void initTopics() throws ExecutionException, InterruptedException {
-    List<String> existingTopics = adminClient.listTopics().listings().get()
-        .stream()
-        .map(TopicListing::name)
-        .collect(Collectors.toList());
-
-    List<String> topics = Collections.singletonList(APPLICATION_ID.concat("-events"));
-    List<NewTopic> newTopics = new ArrayList<>();
-    topics.forEach(topic -> newTopics.add(TopicBuilder.name(topic)
+  @Bean
+  public NewTopic initEventsTopic() {
+    return TopicBuilder.name(APPLICATION_ID.concat("-events"))
         .partitions(6)
         .replicas(1)
         .config(TopicConfig.RETENTION_MS_CONFIG, "-1")
-        .build()));
-
-    // filter existing topics and create new topics
-    newTopics.removeIf(newTopic -> existingTopics.contains(newTopic.name()));
-    adminClient.createTopics(newTopics).all().get();
+        .build();
   }
 
   @Bean

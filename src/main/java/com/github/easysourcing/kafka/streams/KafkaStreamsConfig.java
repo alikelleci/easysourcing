@@ -8,8 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
 import org.springframework.kafka.config.KafkaStreamsConfiguration;
-import org.springframework.kafka.config.StreamsBuilderFactoryBean;
+import org.springframework.kafka.config.StreamsBuilderFactoryBeanCustomizer;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.util.HashMap;
@@ -28,8 +29,7 @@ public class KafkaStreamsConfig {
   private String APPLICATION_ID;
 
 
-  //    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
-  @Bean
+  @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
   public KafkaStreamsConfiguration kafkaStreamsConfiguration() {
     Map<String, Object> properties = new HashMap<>();
     properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
@@ -44,14 +44,12 @@ public class KafkaStreamsConfig {
   }
 
 
-  //    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_BUILDER_BEAN_NAME)
   @Bean
-  public StreamsBuilderFactoryBean streamsBuilderFactoryBean(KafkaStreamsConfiguration kafkaStreamsConfiguration) {
-    StreamsBuilderFactoryBean builder = new StreamsBuilderFactoryBean(kafkaStreamsConfiguration);
-    builder.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
-    builder.setUncaughtExceptionHandler((t, e) -> log.error("Exception handler triggered ", e));
-
-    return builder;
+  public StreamsBuilderFactoryBeanCustomizer customizer() {
+    return fb -> {
+      fb.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
+      fb.setUncaughtExceptionHandler((t, e) -> log.error("Exception handler triggered ", e));
+    };
   }
 
 
