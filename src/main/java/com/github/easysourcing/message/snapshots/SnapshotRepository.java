@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 public class SnapshotRepository {
 
   @Autowired
-  private StreamsBuilderFactoryBean streamsBuilderFactoryBean;
+  private StreamsBuilderFactoryBean defaultKafkaStreamsBuilder;
 
 
   public <T> T get(String id) {
-    ReadOnlyKeyValueStore<String, Snapshot<T>> keyValueStore = streamsBuilderFactoryBean.getKafkaStreams().store("store", QueryableStoreTypes.keyValueStore());
+    ReadOnlyKeyValueStore<String, Snapshot<T>> keyValueStore = defaultKafkaStreamsBuilder.getKafkaStreams().store("store", QueryableStoreTypes.keyValueStore());
     Snapshot<T> snapshot = keyValueStore.get(id);
     if (snapshot != null) {
       return snapshot.getPayload();
