@@ -25,7 +25,7 @@ public class MessageStream {
 
 
   @Bean
-  public NewTopic initEventsTopic() {
+  public NewTopic eventsTopic() {
     return TopicBuilder.name(APPLICATION_ID.concat("-events"))
         .partitions(6)
         .replicas(1)

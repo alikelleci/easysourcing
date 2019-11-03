@@ -45,7 +45,7 @@ public class SnapshotStream {
 
 
   @Bean
-  public NewTopic initSnapshotsTopic() {
+  public NewTopic snapshotsTopic() {
     return TopicBuilder.name(APPLICATION_ID.concat("-snapshots"))
         .partitions(6)
         .replicas(1)
