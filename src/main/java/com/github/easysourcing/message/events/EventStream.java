@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
@@ -33,7 +33,7 @@ public class EventStream {
   private KStream<String, Message> messageKStream;
 
   @Autowired
-  private Map<Class<?>, Set<Method>> eventHandlers;
+  private ConcurrentMap<String, Set<Method>> eventHandlers;
 
   @Autowired
   private ApplicationContext applicationContext;
@@ -89,7 +89,7 @@ public class EventStream {
 
 
   private <E> Method getEventHandler(E payload) {
-    return CollectionUtils.emptyIfNull(eventHandlers.get(payload.getClass()))
+    return CollectionUtils.emptyIfNull(eventHandlers.get(payload.getClass().getName()))
         .stream()
         .findFirst()
         .orElse(null);

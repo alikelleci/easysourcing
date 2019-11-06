@@ -25,8 +25,8 @@ import org.springframework.objenesis.instantiator.ObjectInstantiator;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
@@ -39,7 +39,7 @@ public class SnapshotStream {
   private KStream<String, Message> eventKStream;
 
   @Autowired
-  private Map<Class<?>, Set<Method>> eventSourcingHandlers;
+  private ConcurrentMap<String, Set<Method>> eventSourcingHandlers;
 
   private Objenesis objenesis = new ObjenesisStd();
 
@@ -85,7 +85,7 @@ public class SnapshotStream {
 
 
   private <E> Method getEventSourcingHandler(E payload) {
-    return CollectionUtils.emptyIfNull(eventSourcingHandlers.get(payload.getClass()))
+    return CollectionUtils.emptyIfNull(eventSourcingHandlers.get(payload.getClass().getName()))
         .stream()
         .findFirst()
         .orElse(null);

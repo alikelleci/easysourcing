@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
@@ -33,7 +33,7 @@ public class CommandStream {
   private KStream<String, Message> messageKStream;
 
   @Autowired
-  private Map<Class<?>, Set<Method>> commandHandlers;
+  private ConcurrentMap<String, Set<Method>> commandHandlers;
 
   @Autowired
   private ApplicationContext applicationContext;
@@ -89,7 +89,7 @@ public class CommandStream {
 
 
   private <C> Method getCommandHandler(C payload) {
-    return CollectionUtils.emptyIfNull(commandHandlers.get(payload.getClass()))
+    return CollectionUtils.emptyIfNull(commandHandlers.get(payload.getClass().getName()))
         .stream()
         .findFirst()
         .orElse(null);

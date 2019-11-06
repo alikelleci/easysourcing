@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
@@ -49,27 +50,27 @@ public class EasySourcingConfiguration {
 
 
   @Bean
-  public Map<Class<?>, Set<Method>> commandHandlers(Reflections reflections) {
+  public ConcurrentMap<String, Set<Method>> commandHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(HandleCommand.class)
         .stream()
         .filter(method -> method.getParameterCount() == 1)
-        .collect(Collectors.groupingBy(method -> method.getParameters()[0].getType(), toSet()));
+        .collect(Collectors.groupingByConcurrent(method -> method.getParameters()[0].getType().getName(), toSet()));
   }
 
   @Bean
-  public Map<Class<?>, Set<Method>> eventHandlers(Reflections reflections) {
+  public ConcurrentMap<String, Set<Method>> eventHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(HandleEvent.class)
         .stream()
         .filter(method -> method.getParameterCount() == 1)
-        .collect(Collectors.groupingBy(method -> method.getParameters()[0].getType(), toSet()));
+        .collect(Collectors.groupingByConcurrent(method -> method.getParameters()[0].getType().getName(), toSet()));
   }
 
   @Bean
-  public Map<Class<?>, Set<Method>> eventSourcingHandlers(Reflections reflections) {
+  public ConcurrentMap<String, Set<Method>> eventSourcingHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(ApplyEvent.class)
         .stream()
         .filter(method -> method.getReturnType() == method.getDeclaringClass())
         .filter(method -> method.getParameterCount() == 1)
-        .collect(Collectors.groupingBy(method -> method.getParameters()[0].getType(), toSet()));
+        .collect(Collectors.groupingByConcurrent(method -> method.getParameters()[0].getType().getName(), toSet()));
   }
 }
