@@ -54,7 +54,7 @@ public class SnapshotStream {
   }
 
   @Bean
-  public GlobalKTable<String, Snapshot> snapshotGlobalKTable(StreamsBuilder builder) {
+  public KTable<String, Snapshot> snapshotKTable(StreamsBuilder builder) {
 
     // 1. Process Events
     KTable<String, Snapshot> snapshotKTable = eventKStream
@@ -77,10 +77,12 @@ public class SnapshotStream {
 
 
     // 3. Read snapshot from output stream into a Global Table to make it globally available for querying
-    return builder.globalTable(APPLICATION_ID.concat("-snapshots"), Materialized
-        .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("store")
+    builder.globalTable(APPLICATION_ID.concat("-snapshots"), Materialized
+        .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("snapshots-store")
         .withKeySerde(Serdes.String())
         .withValueSerde(new JsonSerde<>(Snapshot.class)));
+
+    return snapshotKTable;
   }
 
 
