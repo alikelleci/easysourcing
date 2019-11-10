@@ -23,12 +23,15 @@ public class MessageStream {
   @Value("${spring.kafka.streams.application-id}")
   private String APPLICATION_ID;
 
+  @Value("${spring.kafka.streams.replication-factor:1}")
+  private int REPLICATION_FACTOR;
+
 
   @Bean
   public NewTopic eventsTopic() {
     return TopicBuilder.name(APPLICATION_ID.concat("-events"))
-        .partitions(6)
-        .replicas(1)
+        .partitions(3)
+        .replicas(REPLICATION_FACTOR)
         .config(TopicConfig.RETENTION_MS_CONFIG, "-1")
         .build();
   }

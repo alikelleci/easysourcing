@@ -35,6 +35,9 @@ public class SnapshotStream {
   @Value("${spring.kafka.streams.application-id}")
   private String APPLICATION_ID;
 
+  @Value("${spring.kafka.streams.replication-factor:1}")
+  private int REPLICATION_FACTOR;
+
   @Autowired
   private KStream<String, Message> eventKStream;
 
@@ -47,8 +50,8 @@ public class SnapshotStream {
   @Bean
   public NewTopic snapshotsTopic() {
     return TopicBuilder.name(APPLICATION_ID.concat("-snapshots"))
-        .partitions(6)
-        .replicas(1)
+        .partitions(3)
+        .replicas(REPLICATION_FACTOR)
         .compact()
         .build();
   }
