@@ -1,6 +1,6 @@
 package com.github.easysourcing.message.snapshots;
 
-import com.github.easysourcing.message.annotations.AggregateId;
+import com.example.easysourcing.message.annotations.AggregateId;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.Value;

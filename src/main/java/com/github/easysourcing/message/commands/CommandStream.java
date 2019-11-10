@@ -1,13 +1,15 @@
 package com.github.easysourcing.message.commands;
 
 
-import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageType;
+import com.example.easysourcing.message.Message;
+import com.example.easysourcing.message.MessageType;
+import com.example.easysourcing.message.snapshots.Snapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.ValueMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class CommandStream {
   private KStream<String, Message> messageKStream;
 
   @Autowired
+  private KTable<String, Snapshot> snapshotKTable;
+
+  @Autowired
   private ConcurrentMap<String, Set<Method>> commandHandlers;
 
   @Autowired
@@ -52,7 +57,7 @@ public class CommandStream {
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getCommandHandler(payload) != null)
         .peek((key, payload) -> log.info("Command received: {}", payload))
-        .mapValues(this::invokeCommandHandler)
+        .leftJoin(snapshotKTable, (payload, snapshot) -> invokeCommandHandler(payload, snapshot != null ? snapshot.getPayload() : null))
         .filter((key, result) -> result != null)
         .branch(
             (key, result) -> !Collection.class.isAssignableFrom(result.getClass()),
@@ -95,17 +100,21 @@ public class CommandStream {
         .orElse(null);
   }
 
-  private <C> Object invokeCommandHandler(C payload) {
-    Method methodToInvoke = getCommandHandler(payload);
+  private <C, S> Object invokeCommandHandler(C command, S snapshot) {
+    Method methodToInvoke = getCommandHandler(command);
     if (methodToInvoke != null) {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
-        return methodToInvoke.invoke(bean, payload);
+        if (methodToInvoke.getParameters().length == 2) {
+          return methodToInvoke.invoke(bean, command, snapshot);
+        }
+        return methodToInvoke.invoke(bean, command);
+
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
-    log.debug("No command-handler method found for command {}", payload.getClass().getSimpleName());
+    log.debug("No command-handler method found for command {}", command.getClass().getSimpleName());
     return null;
   }
 

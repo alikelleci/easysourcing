@@ -1,14 +1,13 @@
 package com.github.easysourcing.message.snapshots;
 
 
-import com.github.easysourcing.message.Message;
+import com.example.easysourcing.message.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
@@ -16,12 +15,10 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.support.serializer.JsonSerde;
-import org.springframework.objenesis.Objenesis;
-import org.springframework.objenesis.ObjenesisStd;
-import org.springframework.objenesis.instantiator.ObjectInstantiator;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -41,7 +38,8 @@ public class SnapshotStream {
   @Autowired
   private ConcurrentMap<String, Set<Method>> eventSourcingHandlers;
 
-  private Objenesis objenesis = new ObjenesisStd();
+  @Autowired
+  private ApplicationContext applicationContext;
 
 
   @Bean
@@ -77,10 +75,10 @@ public class SnapshotStream {
 
 
     // 3. Read snapshot from output stream into a Global Table to make it globally available for querying
-    builder.globalTable(APPLICATION_ID.concat("-snapshots"), Materialized
-        .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("snapshots-store")
-        .withKeySerde(Serdes.String())
-        .withValueSerde(new JsonSerde<>(Snapshot.class)));
+//    builder.globalTable(APPLICATION_ID.concat("-snapshots"), Materialized
+//        .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("snapshots-store")
+//        .withKeySerde(Serdes.String())
+//        .withValueSerde(new JsonSerde<>(Snapshot.class)));
 
     return snapshotKTable;
   }
@@ -96,8 +94,9 @@ public class SnapshotStream {
   private <E, A> Object invokeEventSourcingHandler(E payload, A aggregate) {
     Method methodToInvoke = getEventSourcingHandler(payload);
     if (methodToInvoke != null) {
+      Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
-        return methodToInvoke.invoke(aggregate, payload);
+        return methodToInvoke.invoke(bean, payload, aggregate);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -106,19 +105,12 @@ public class SnapshotStream {
     return null;
   }
 
-  private <T> T instantiateClazz(Class<T> tClass) {
-    ObjectInstantiator instantiator = objenesis.getInstantiatorOf(tClass);
-    return (T) instantiator.newInstance();
-  }
 
   private Snapshot doAggregate(Object payload, Snapshot snapshot) {
-    Object aggregate = snapshot.getPayload();
-    if (aggregate == null) {
-      aggregate = instantiateClazz(getEventSourcingHandler(payload).getDeclaringClass());
-    }
-    aggregate = invokeEventSourcingHandler(payload, aggregate);
+    Object currentState = snapshot.getPayload();
+    Object newState = invokeEventSourcingHandler(payload, currentState);
     return snapshot.toBuilder()
-        .payload(aggregate)
+        .payload(newState)
         .build();
   }
 }
