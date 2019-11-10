@@ -5,6 +5,7 @@ import com.github.easysourcing.message.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -52,6 +53,7 @@ public class SnapshotStream {
     return TopicBuilder.name(APPLICATION_ID.concat("-snapshots"))
         .partitions(3)
         .replicas(REPLICATION_FACTOR)
+        .config(TopicConfig.RETENTION_MS_CONFIG, "604800000") // 7 days
         .compact()
         .build();
   }
