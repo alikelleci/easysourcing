@@ -68,7 +68,7 @@ public class SnapshotStream {
     KTable<String, Snapshot> snapshotKTable = eventKStream
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getEventSourcingHandler(payload) != null)
-        .peek((key, payload) -> log.info("Event received: {}", payload))
+        .peek((key, payload) -> log.debug("Event received: {}", payload))
         .groupByKey()
         .aggregate(
             () -> Snapshot.builder().build(),

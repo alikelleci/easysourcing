@@ -56,7 +56,7 @@ public class CommandStream {
     KStream<String, Object>[] branches = stream
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getCommandHandler(payload) != null)
-        .peek((key, payload) -> log.info("Command received: {}", payload))
+        .peek((key, payload) -> log.debug("Command received: {}", payload))
         .leftJoin(snapshotKTable, (payload, snapshot) -> invokeCommandHandler(payload, snapshot != null ? snapshot.getPayload() : null))
         .filter((key, result) -> result != null)
         .branch(

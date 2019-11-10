@@ -51,7 +51,7 @@ public class EventStream {
     KStream<String, Object>[] branches = stream
         .mapValues(Message::getPayload)
         .filter((key, payload) -> getEventHandler(payload) != null)
-        .peek((key, payload) -> log.info("Event received: {}", payload))
+        .peek((key, payload) -> log.debug("Event received: {}", payload))
         .mapValues(this::invokeEventHandler)
         .filter((key, result) -> result != null)
         .branch(
