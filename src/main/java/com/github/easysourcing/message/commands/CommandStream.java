@@ -1,9 +1,9 @@
 package com.github.easysourcing.message.commands;
 
 
-import com.example.easysourcing.message.Message;
-import com.example.easysourcing.message.MessageType;
-import com.example.easysourcing.message.snapshots.Snapshot;
+import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.MessageType;
+import com.github.easysourcing.message.snapshots.Snapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;

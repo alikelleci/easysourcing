@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.snapshots;
 
 
-import com.example.easysourcing.message.Message;
+import com.github.easysourcing.message.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.admin.NewTopic;

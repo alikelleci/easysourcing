@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.events;
 
-import com.example.easysourcing.message.Message;
-import com.example.easysourcing.message.MessageType;
+import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.MessageType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;

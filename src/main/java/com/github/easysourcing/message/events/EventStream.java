@@ -1,8 +1,8 @@
 package com.github.easysourcing.message.events;
 
 
-import com.example.easysourcing.message.Message;
-import com.example.easysourcing.message.MessageType;
+import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.MessageType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;
