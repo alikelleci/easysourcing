@@ -53,7 +53,7 @@ public class SnapshotStream {
     return TopicBuilder.name(APPLICATION_ID.concat("-snapshots"))
         .partitions(3)
         .replicas(REPLICATION_FACTOR)
-        .config(TopicConfig.RETENTION_MS_CONFIG, "604800000") // 7 days
+        .config(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000") // 7 days
         .compact()
         .build();
   }
