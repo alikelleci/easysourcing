@@ -20,6 +20,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.support.serializer.JsonSerde;
+import org.springframework.objenesis.Objenesis;
+import org.springframework.objenesis.ObjenesisStd;
+import org.springframework.objenesis.instantiator.ObjectInstantiator;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -44,6 +47,8 @@ public class SnapshotStream {
 
   @Autowired
   private ApplicationContext applicationContext;
+
+  private Objenesis objenesis = new ObjenesisStd();
 
 
   @Bean
@@ -110,9 +115,16 @@ public class SnapshotStream {
     return null;
   }
 
+  private <T> T instantiateClazz(Class<T> tClass) {
+    ObjectInstantiator instantiator = objenesis.getInstantiatorOf(tClass);
+    return (T) instantiator.newInstance();
+  }
 
   private Snapshot doAggregate(Object payload, Snapshot snapshot) {
     Object currentState = snapshot.getPayload();
+    if (currentState == null) {
+      currentState = instantiateClazz(getEventSourcingHandler(payload).getParameters()[1].getType());
+    }
     Object newState = invokeEventSourcingHandler(payload, currentState);
     return snapshot.toBuilder()
         .payload(newState)
