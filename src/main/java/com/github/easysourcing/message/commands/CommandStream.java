@@ -105,11 +105,7 @@ public class CommandStream {
     if (methodToInvoke != null) {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
-        if (methodToInvoke.getParameters().length == 2) {
-          return methodToInvoke.invoke(bean, command, snapshot);
-        }
-        return methodToInvoke.invoke(bean, command);
-
+        return methodToInvoke.invoke(bean, command, snapshot);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

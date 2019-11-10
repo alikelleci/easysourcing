@@ -53,7 +53,7 @@ public class EasySourcingConfiguration {
   public ConcurrentMap<String, Set<Method>> commandHandlers(Reflections reflections) {
     return reflections.getMethodsAnnotatedWith(HandleCommand.class)
         .stream()
-        .filter(method -> method.getParameterCount() == 1 || method.getParameterCount() == 2)
+        .filter(method -> method.getParameterCount() == 2)
         .collect(Collectors.groupingByConcurrent(method -> method.getParameters()[0].getType().getName(), toSet()));
   }
 
