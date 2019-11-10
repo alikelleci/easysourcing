@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.snapshots;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.message.annotations.AggregateId;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.Value;
 
@@ -35,5 +35,4 @@ public class Snapshot<T> {
     }
     return null;
   }
-
 }

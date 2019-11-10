@@ -1,7 +1,7 @@
 package com.github.easysourcing.message;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.message.annotations.AggregateId;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.Value;
 
@@ -17,7 +17,6 @@ public class Message<T> {
   private String name;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private T payload;
-
 
   @Transient
   public String getAggregateId() {
