@@ -1,6 +1,7 @@
 package com.github.easysourcing.message;
 
 
+import com.github.easysourcing.kafka.streams.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.TopicConfig;
@@ -39,7 +40,8 @@ public class MessageStream {
   @Bean
   public KStream<String, Message> messageKStream(StreamsBuilder builder) {
     return builder
-        .stream(Pattern.compile("(.*)-events"), Consumed.with(Serdes.String(), new JsonSerde<>(Message.class)))
+        .stream(Pattern.compile("(.*)-events"), Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class)))
+//        .peek((key, message) -> log.debug("Message received: {}", message))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
         .filter((key, message) -> message.getType() != null)
