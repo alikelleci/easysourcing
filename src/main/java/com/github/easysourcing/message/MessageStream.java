@@ -12,7 +12,6 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.config.TopicBuilder;
-import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
