@@ -27,6 +27,9 @@ public class KafkaStreamsConfig {
   @Value("${spring.kafka.streams.application-id}")
   private String APPLICATION_ID;
 
+  @Value("${spring.kafka.streams.replication-factor:1}")
+  private int REPLICATION_FACTOR;
+
 
   @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
   public KafkaStreamsConfiguration kafkaStreamsConfiguration() {
@@ -37,6 +40,7 @@ public class KafkaStreamsConfig {
     properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, JsonSerde.class);
     properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
+    properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, REPLICATION_FACTOR);
 //    properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
 
     return new KafkaStreamsConfiguration(properties);

@@ -36,9 +36,6 @@ public class SnapshotStream {
   @Value("${spring.kafka.streams.application-id}")
   private String APPLICATION_ID;
 
-  @Value("${spring.kafka.streams.replication-factor:1}")
-  private int REPLICATION_FACTOR;
-
   @Autowired
   private KStream<String, Message> eventKStream;
 
@@ -55,7 +52,6 @@ public class SnapshotStream {
   public NewTopic snapshotsTopic() {
     return TopicBuilder.name(APPLICATION_ID.concat("-snapshots"))
         .partitions(3)
-        .replicas(REPLICATION_FACTOR)
         .config(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000") // 7 days
         .compact()
         .build();
