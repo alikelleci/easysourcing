@@ -2,6 +2,7 @@ package com.github.easysourcing.message.snapshots;
 
 
 import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.snapshots.exceptions.AggregateInvocationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -25,6 +26,7 @@ import org.springframework.objenesis.ObjenesisStd;
 import org.springframework.objenesis.instantiator.ObjectInstantiator;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -107,8 +109,8 @@ public class SnapshotStream {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
         return methodToInvoke.invoke(bean, payload, aggregate);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        throw new AggregateInvocationException(e.getCause().getMessage(), e.getCause());
       }
     }
     log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());

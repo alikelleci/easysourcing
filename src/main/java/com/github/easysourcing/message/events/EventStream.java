@@ -3,6 +3,7 @@ package com.github.easysourcing.message.events;
 
 import com.github.easysourcing.message.Message;
 import com.github.easysourcing.message.MessageType;
+import com.github.easysourcing.message.events.exceptions.EventProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Set;
@@ -101,8 +103,8 @@ public class EventStream {
       Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
       try {
         return methodToInvoke.invoke(bean, payload);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        throw new EventProcessingException(e.getCause().getMessage(), e.getCause());
       }
     }
     log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
