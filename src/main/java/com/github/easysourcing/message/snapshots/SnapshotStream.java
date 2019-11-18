@@ -105,16 +105,17 @@ public class SnapshotStream {
 
   private <E, A> Object invokeEventSourcingHandler(E payload, A aggregate) {
     Method methodToInvoke = getEventSourcingHandler(payload);
-    if (methodToInvoke != null) {
-      Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
-      try {
-        return methodToInvoke.invoke(bean, payload, aggregate);
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new AggregateInvocationException(e.getCause().getMessage(), e.getCause());
-      }
+    if (methodToInvoke == null) {
+      log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
+      return null;
     }
-    log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
-    return null;
+
+    Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+    try {
+      return methodToInvoke.invoke(bean, payload, aggregate);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new AggregateInvocationException(e.getCause().getMessage(), e.getCause());
+    }
   }
 
   private <T> T instantiateClazz(Class<T> tClass) {

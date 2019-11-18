@@ -99,16 +99,17 @@ public class EventStream {
 
   private <E> Object invokeEventHandler(E payload) {
     Method methodToInvoke = getEventHandler(payload);
-    if (methodToInvoke != null) {
-      Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
-      try {
-        return methodToInvoke.invoke(bean, payload);
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new EventProcessingException(e.getCause().getMessage(), e.getCause());
-      }
+    if (methodToInvoke == null) {
+      log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
+      return null;
     }
-    log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
-    return null;
+
+    Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+    try {
+      return methodToInvoke.invoke(bean, payload);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new EventProcessingException(e.getCause().getMessage(), e.getCause());
+    }
   }
 
 

@@ -104,16 +104,17 @@ public class CommandStream {
 
   private <C, S> Object invokeCommandHandler(C command, S snapshot) {
     Method methodToInvoke = getCommandHandler(command);
-    if (methodToInvoke != null) {
-      Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
-      try {
-        return methodToInvoke.invoke(bean, command, snapshot);
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new CommandExecutionException(e.getCause().getMessage(), e.getCause());
-      }
+    if (methodToInvoke == null) {
+      log.debug("No command-handler method found for command {}", command.getClass().getSimpleName());
+      return null;
     }
-    log.debug("No command-handler method found for command {}", command.getClass().getSimpleName());
-    return null;
+
+    Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+    try {
+      return methodToInvoke.invoke(bean, command, snapshot);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new CommandExecutionException(e.getCause().getMessage(), e.getCause());
+    }
   }
 
 }
