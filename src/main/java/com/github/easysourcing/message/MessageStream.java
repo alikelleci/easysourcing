@@ -39,14 +39,10 @@ public class MessageStream {
   @Bean
   public KStream<String, Message> messageKStream(StreamsBuilder builder) {
     return builder
-        .stream(Pattern.compile("(.*)-events"), Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class)))
-//        .peek((key, message) -> log.debug("Message received: {}", message))
+        .stream(Pattern.compile("(.*)-events"), Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
+        .peek((key, message) -> log.debug("Message received: {}", message))
         .filter((key, message) -> key != null)
-        .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getType() != null)
-        .filter((key, message) -> message.getName() != null)
-        .filter((key, message) -> message.getPayload() != null)
-        .filter((key, message) -> message.getAggregateId() != null);
+        .filter((key, message) -> message != null);
   }
 
 

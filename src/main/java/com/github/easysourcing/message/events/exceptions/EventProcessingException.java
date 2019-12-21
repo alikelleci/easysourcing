@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.events.exceptions;
 
 public class EventProcessingException extends RuntimeException {
-  
+
   public EventProcessingException(String message) {
     super(message);
   }

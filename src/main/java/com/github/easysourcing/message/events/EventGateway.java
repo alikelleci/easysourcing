@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.events;
 
 import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageType;
+import com.github.easysourcing.message.Metadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -16,13 +16,11 @@ public class EventGateway {
   @Value("${spring.kafka.streams.application-id}")
   private String APPLICATION_ID;
 
-  public <T> void send(T payload) {
-    String topic = APPLICATION_ID.concat("-events");
-
-    Message<T> message = Message.<T>builder()
-        .type(MessageType.Event)
-        .name(payload.getClass().getSimpleName())
+  private  <T> void send(String topic, T payload, Metadata metadata) {
+    Event<T> message = Event.<T>builder()
+        .type(payload.getClass().getSimpleName())
         .payload(payload)
+        .metadata(metadata)
         .build();
 
     String aggregateId = message.getAggregateId();
@@ -32,5 +30,21 @@ public class EventGateway {
     kafkaTemplate.send(topic, aggregateId, message);
   }
 
+  public <T> void send(T payload, Metadata metadata) {
+    String topic = APPLICATION_ID.concat("-events");
+    this.send(topic, payload, metadata);
+  }
 
+  public <T> void send(T payload) {
+    this.send(payload, null);
+  }
+
+  public <T> void sendTo(String applicationId, T payload, Metadata metadata) {
+    String topic = applicationId.concat("-events");
+    this.send(topic, payload, metadata);
+  }
+
+  public <T> void sendTo(String applicationId, T payload) {
+    this.sendTo(applicationId, payload, null);
+  }
 }

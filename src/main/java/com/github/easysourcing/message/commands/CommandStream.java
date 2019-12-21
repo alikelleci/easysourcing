@@ -2,8 +2,9 @@ package com.github.easysourcing.message.commands;
 
 
 import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageType;
+import com.github.easysourcing.message.Metadata;
 import com.github.easysourcing.message.commands.exceptions.CommandExecutionException;
+import com.github.easysourcing.message.events.Event;
 import com.github.easysourcing.message.snapshots.Snapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -22,9 +23,11 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -47,74 +50,79 @@ public class CommandStream {
 
 
   @Bean
-  public KStream<String, Message> commandKStream() {
+  public KStream<String, Command> commandKStream() {
 
     // 1. Filter stream for Commands
-    KStream<String, Message> stream = messageKStream
-        .filter((key, message) -> message.getType() == MessageType.Command);
-
+    KStream<String, Command> stream = messageKStream
+        .filter((key, message) -> message instanceof Command)
+        .mapValues((key, message) -> ((Command) message))
+        .filter((key, command) -> command.getType() != null)
+        .filter((key, command) -> command.getPayload() != null)
+        .filter((key, command) -> command.getAggregateId() != null);
 
     // 2. Process Commands
-    KStream<String, Object>[] branches = stream
-        .mapValues(Message::getPayload)
-        .filter((key, payload) -> getCommandHandler(payload) != null)
-        .peek((key, payload) -> log.debug("Command received: {}", payload))
-        .leftJoin(snapshotKTable, (payload, snapshot) -> invokeCommandHandler(payload, snapshot != null ? snapshot.getPayload() : null))
-        .filter((key, result) -> result != null)
-        .branch(
-            (key, result) -> !Collection.class.isAssignableFrom(result.getClass()),
-            (key, result) -> Collection.class.isAssignableFrom(result.getClass())
-        );
-
-
-    // 2.1  Commands resulted in a single Event
-    branches[0]
-        .mapValues((key, result) -> Message.builder()
-            .type(MessageType.Event)
-            .name(result.getClass().getSimpleName())
-            .payload(result)
-            .build())
-        .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
-        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
-
-
-    // 2.2  Commands resulted in multiple Events
-    branches[1]
-        .mapValues(result -> (Collection) result)
-        .flatMapValues((ValueMapper<Collection, Iterable<?>>) collection -> collection)
-        .filter((key, result) -> result != null)
-        .mapValues((key, result) -> Message.builder()
-            .type(MessageType.Event)
-            .name(result.getClass().getSimpleName())
-            .payload(result)
-            .build())
-        .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
-        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
+    stream
+        .filter((key, command) -> getCommandHandler(command) != null)
+        .peek((key, command) -> log.debug("Command received: {}", command))
+        .leftJoin(snapshotKTable, this::invokeCommandHandler)
+        .filter((key, events) -> CollectionUtils.isNotEmpty(events))
+        .flatMapValues((ValueMapper<List<Event>, Iterable<Event>>) events -> events)
+        .filter((key, event) -> event != null)
+        .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
+        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Event.class).noTypeInfo()));
 
     return stream;
   }
 
 
-  private <C> Method getCommandHandler(C payload) {
-    return CollectionUtils.emptyIfNull(commandHandlers.get(payload.getClass().getName()))
+  private Method getCommandHandler(Command command) {
+    return CollectionUtils.emptyIfNull(commandHandlers.get(command.getPayload().getClass().getName()))
         .stream()
         .findFirst()
         .orElse(null);
   }
 
-  private <C, S> Object invokeCommandHandler(C command, S snapshot) {
+  private List<Event> invokeCommandHandler(Command command, Snapshot snapshot) {
     Method methodToInvoke = getCommandHandler(command);
     if (methodToInvoke == null) {
-      log.debug("No command-handler method found for command {}", command.getClass().getSimpleName());
+      log.debug("No command-handler method found for command {}", command.getPayload().getClass().getSimpleName());
       return null;
     }
 
     Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+    Object result;
     try {
-      return methodToInvoke.invoke(bean, command, snapshot);
+      if (methodToInvoke.getParameterCount() == 2) {
+        result = methodToInvoke.invoke(bean, snapshot != null ? snapshot.getPayload() : null, command.getPayload());
+      } else {
+        result = methodToInvoke.invoke(bean, snapshot != null ? snapshot.getPayload() : null, command.getPayload(), command.getMetadata());
+      }
+      return createEvents(result, command.getMetadata());
+
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new CommandExecutionException(e.getCause().getMessage(), e.getCause());
     }
+  }
+
+  private List<Event> createEvents(Object result, Metadata metadata) {
+    if (result == null) {
+      return new ArrayList<>();
+    }
+
+    List<Object> list = new ArrayList<>();
+    if (List.class.isAssignableFrom(result.getClass())) {
+      list.addAll((List<?>) result);
+    } else {
+      list.add(result);
+    }
+
+    return list.stream()
+        .map(payload -> Event.builder()
+            .type(payload.getClass().getSimpleName())
+            .payload(payload)
+            .metadata(metadata)
+            .build())
+        .collect(Collectors.toList());
   }
 
 }

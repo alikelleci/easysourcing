@@ -1,4 +1,4 @@
-package com.github.easysourcing.message.snapshots;
+package com.github.easysourcing.message.events;
 
 import com.github.easysourcing.message.Message;
 import com.github.easysourcing.message.Metadata;
@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 
 @Value
 @Builder(toBuilder = true)
-public class Snapshot<T> implements Message {
+public class Event<T> implements Message {
 
   private String type;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
@@ -37,4 +37,5 @@ public class Snapshot<T> implements Message {
     }
     return null;
   }
+
 }

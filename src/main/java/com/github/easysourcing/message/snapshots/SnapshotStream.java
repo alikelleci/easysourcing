@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.snapshots;
 
 
-import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.events.Event;
 import com.github.easysourcing.message.snapshots.exceptions.AggregateInvocationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -42,7 +42,7 @@ public class SnapshotStream {
   private int REPLICATION_FACTOR;
 
   @Autowired
-  private KStream<String, Message> eventKStream;
+  private KStream<String, Event> eventKStream;
 
   @Autowired
   private ConcurrentMap<String, Set<Method>> eventSourcingHandlers;
@@ -68,22 +68,21 @@ public class SnapshotStream {
 
     // 1. Process Events
     KTable<String, Snapshot> snapshotKTable = eventKStream
-        .mapValues(Message::getPayload)
-        .filter((key, payload) -> getEventSourcingHandler(payload) != null)
-        .peek((key, payload) -> log.debug("Event received: {}", payload))
+        .filter((key, event) -> getEventSourcingHandler(event) != null)
+        .peek((key, event) -> log.debug("Event received: {}", event))
         .groupByKey()
         .aggregate(
             () -> Snapshot.builder().build(),
-            (key, payload, snapshot) -> doAggregate(payload, snapshot),
+            (key, event, snapshot) -> doAggregate(event, snapshot),
             Materialized
                 .<String, Snapshot, KeyValueStore<Bytes, byte[]>>as("snapshots")
                 .withKeySerde(Serdes.String())
-                .withValueSerde(new JsonSerde<>(Snapshot.class)));
+                .withValueSerde(new JsonSerde<>(Snapshot.class).noTypeInfo()));
 
 
     // 2. Send results to output stream
     snapshotKTable.toStream()
-        .to(APPLICATION_ID.concat("-snapshots"), Produced.with(Serdes.String(), new JsonSerde<>(Snapshot.class)));
+        .to(APPLICATION_ID.concat("-snapshots"), Produced.with(Serdes.String(), new JsonSerde<>(Snapshot.class).noTypeInfo()));
 
 
     // 3. Read snapshot from output stream into a Global Table to make it globally available for querying
@@ -96,23 +95,27 @@ public class SnapshotStream {
   }
 
 
-  private <E> Method getEventSourcingHandler(E payload) {
-    return CollectionUtils.emptyIfNull(eventSourcingHandlers.get(payload.getClass().getName()))
+  private Method getEventSourcingHandler(Event event) {
+    return CollectionUtils.emptyIfNull(eventSourcingHandlers.get(event.getPayload().getClass().getName()))
         .stream()
         .findFirst()
         .orElse(null);
   }
 
-  private <E, A> Object invokeEventSourcingHandler(E payload, A aggregate) {
-    Method methodToInvoke = getEventSourcingHandler(payload);
+  private Object invokeEventSourcingHandler(Event event, Snapshot snapshot) {
+    Method methodToInvoke = getEventSourcingHandler(event);
     if (methodToInvoke == null) {
-      log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
+      log.debug("No event-sourcing-handler method found for event {}", event.getPayload().getClass().getSimpleName());
       return null;
     }
 
     Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
     try {
-      return methodToInvoke.invoke(bean, payload, aggregate);
+      if (methodToInvoke.getParameterCount() == 2) {
+        return methodToInvoke.invoke(bean, snapshot.getPayload(), event.getPayload());
+      } else {
+        return methodToInvoke.invoke(bean, snapshot.getPayload(), event.getPayload(), event.getMetadata());
+      }
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new AggregateInvocationException(e.getCause().getMessage(), e.getCause());
     }
@@ -123,14 +126,20 @@ public class SnapshotStream {
     return (T) instantiator.newInstance();
   }
 
-  private Snapshot doAggregate(Object payload, Snapshot snapshot) {
-    Object currentState = snapshot.getPayload();
-    if (currentState == null) {
-      currentState = instantiateClazz(getEventSourcingHandler(payload).getParameters()[1].getType());
+  private Snapshot doAggregate(Event event, Snapshot snapshot) {
+    if (snapshot.getPayload() == null) {
+      Object initialState = instantiateClazz(getEventSourcingHandler(event).getReturnType());
+      snapshot = snapshot.toBuilder()
+          .type(initialState.getClass().getSimpleName())
+          .payload(initialState)
+          .metadata(event.getMetadata())
+          .build();
     }
-    Object newState = invokeEventSourcingHandler(payload, currentState);
+    Object updatedState = invokeEventSourcingHandler(event, snapshot);
     return snapshot.toBuilder()
-        .payload(newState)
+        .type(updatedState.getClass().getSimpleName())
+        .payload(updatedState)
+        .metadata(event.getMetadata())
         .build();
   }
 }

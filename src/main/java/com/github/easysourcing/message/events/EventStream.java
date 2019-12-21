@@ -2,7 +2,8 @@ package com.github.easysourcing.message.events;
 
 
 import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageType;
+import com.github.easysourcing.message.Metadata;
+import com.github.easysourcing.message.commands.Command;
 import com.github.easysourcing.message.events.exceptions.EventProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -20,9 +21,11 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -42,75 +45,78 @@ public class EventStream {
 
 
   @Bean
-  public KStream<String, Message> eventKStream() {
+  public KStream<String, Event> eventKStream() {
 
     // 1. Filter stream for Events
-    KStream<String, Message> stream = messageKStream
-        .filter((key, message) -> message.getType() == MessageType.Event);
-
+    KStream<String, Event> stream = messageKStream
+        .filter((key, message) -> message instanceof Event)
+        .mapValues((key, message) -> ((Event) message))
+        .filter((key, event) -> event.getType() != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getAggregateId() != null);
 
     // 2. Process Events
-    KStream<String, Object>[] branches = stream
-        .mapValues(Message::getPayload)
-        .filter((key, payload) -> getEventHandler(payload) != null)
-        .peek((key, payload) -> log.debug("Event received: {}", payload))
+    stream
+        .filter((key, event) -> getEventHandler(event) != null)
+        .peek((key, event) -> log.debug("Event received: {}", event))
         .mapValues(this::invokeEventHandler)
-        .filter((key, result) -> result != null)
-        .branch(
-            (key, result) -> !Collection.class.isAssignableFrom(result.getClass()),
-            (key, result) -> Collection.class.isAssignableFrom(result.getClass())
-        );
-
-
-    // 2.1  Events resulted in a single Command
-    branches[0]
-        .mapValues((key, result) -> Message.builder()
-            .type(MessageType.Command)
-            .name(result.getClass().getSimpleName())
-            .payload(result)
-            .build())
-        .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
-        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
-
-
-    // 2.2  Events resulted in multiple Commands
-    branches[1]
-        .mapValues(result -> (Collection) result)
-        .flatMapValues((ValueMapper<Collection, Iterable<?>>) collection -> collection)
-        .filter((key, result) -> result != null)
-        .mapValues((key, result) -> Message.builder()
-            .type(MessageType.Command)
-            .name(result.getClass().getSimpleName())
-            .payload(result)
-            .build())
-        .map((key, message) -> KeyValue.pair(message.getAggregateId(), message))
-        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Message.class)));
+        .filter((key, commands) -> CollectionUtils.isNotEmpty(commands))
+        .flatMapValues((ValueMapper<List<Command>, Iterable<Command>>) commands -> commands)
+        .filter((key, command) -> command != null)
+        .map((key, command) -> KeyValue.pair(command.getAggregateId(), command))
+        .to(APPLICATION_ID.concat("-events"), Produced.with(Serdes.String(), new JsonSerde<>(Command.class).noTypeInfo()));
 
     return stream;
   }
 
 
-  private <E> Method getEventHandler(E payload) {
-    return CollectionUtils.emptyIfNull(eventHandlers.get(payload.getClass().getName()))
+  private Method getEventHandler(Event event) {
+    return CollectionUtils.emptyIfNull(eventHandlers.get(event.getPayload().getClass().getName()))
         .stream()
         .findFirst()
         .orElse(null);
   }
 
-  private <E> Object invokeEventHandler(E payload) {
-    Method methodToInvoke = getEventHandler(payload);
+  private List<Command> invokeEventHandler(Event event) {
+    Method methodToInvoke = getEventHandler(event);
     if (methodToInvoke == null) {
-      log.debug("No event-handler method found for event {}", payload.getClass().getSimpleName());
+      log.debug("No event-handler method found for event {}", event.getPayload().getClass().getSimpleName());
       return null;
     }
 
     Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+    Object result;
     try {
-      return methodToInvoke.invoke(bean, payload);
+      if (methodToInvoke.getParameterCount() == 1) {
+        result = methodToInvoke.invoke(bean, event.getPayload());
+      } else {
+        result = methodToInvoke.invoke(bean, event.getPayload(), event.getMetadata());
+      }
+      return createCommands(result, event.getMetadata());
+
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new EventProcessingException(e.getCause().getMessage(), e.getCause());
     }
   }
 
+  private List<Command> createCommands(Object result, Metadata metadata) {
+    if (result == null) {
+      return new ArrayList<>();
+    }
 
+    List<Object> list = new ArrayList<>();
+    if (List.class.isAssignableFrom(result.getClass())) {
+      list.addAll((List<?>) result);
+    } else {
+      list.add(result);
+    }
+
+    return list.stream()
+        .map(payload -> Command.builder()
+            .type(payload.getClass().getSimpleName())
+            .payload(payload)
+            .metadata(metadata)
+            .build())
+        .collect(Collectors.toList());
+  }
 }
