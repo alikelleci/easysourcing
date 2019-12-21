@@ -16,7 +16,7 @@ public class EventGateway {
   @Value("${spring.kafka.streams.application-id}")
   private String APPLICATION_ID;
 
-  private  <T> void send(String topic, T payload, Metadata metadata) {
+  private <T> void send(String topic, T payload, Metadata metadata) {
     Event<T> message = Event.<T>builder()
         .type(payload.getClass().getSimpleName())
         .payload(payload)
