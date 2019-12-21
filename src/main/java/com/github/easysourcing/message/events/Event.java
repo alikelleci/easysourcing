@@ -1,9 +1,9 @@
 package com.github.easysourcing.message.events;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.message.Message;
 import com.github.easysourcing.message.Metadata;
 import com.github.easysourcing.message.annotations.AggregateId;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.Value;
 
