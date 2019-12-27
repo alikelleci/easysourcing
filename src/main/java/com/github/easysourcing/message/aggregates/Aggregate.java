@@ -1,4 +1,4 @@
-package com.github.easysourcing.message.commands;
+package com.github.easysourcing.message.aggregates;
 
 import com.github.easysourcing.message.Message;
 import com.github.easysourcing.message.Metadata;
@@ -7,7 +7,7 @@ import lombok.Value;
 
 @Value
 @Builder(toBuilder = true)
-public class Command<T> implements Message<T> {
+public class Aggregate<T> implements Message<T> {
 
   private T payload;
   private Metadata metadata;

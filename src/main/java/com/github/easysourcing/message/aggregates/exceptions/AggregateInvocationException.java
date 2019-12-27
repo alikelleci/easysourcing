@@ -1,4 +1,4 @@
-package com.github.easysourcing.message.snapshots.exceptions;
+package com.github.easysourcing.message.aggregates.exceptions;
 
 public class AggregateInvocationException extends RuntimeException {
 
