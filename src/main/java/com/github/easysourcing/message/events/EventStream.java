@@ -33,7 +33,7 @@ public class EventStream {
 
   @Bean
   public KStream<String, Event> eventKStream(StreamsBuilder builder) {
-    if(eventsTopics.isEmpty()) {
+    if (eventsTopics.isEmpty()) {
       return null;
     }
 

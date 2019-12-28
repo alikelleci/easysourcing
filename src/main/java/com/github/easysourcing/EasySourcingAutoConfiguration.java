@@ -12,9 +12,9 @@ import org.reflections.scanners.MethodParameterScanner;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -33,15 +33,13 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toSet;
 
 @Slf4j
-@ComponentScan("com.github.easysourcing")
 @Configuration
-public class EasySourcingConfiguration {
+@ComponentScan("com.github.easysourcing")
+@EnableConfigurationProperties(EasySourcingProperties.class)
+public class EasySourcingAutoConfiguration {
 
-  @Value("${easysourcing.replicas:1}")
-  private int REPLICAS;
-
-  @Value("${easysourcing.partitions:1}")
-  private int PARTITIONS;
+  @Autowired
+  private EasySourcingProperties easySourcingProperties;
 
   @Autowired
   private ApplicationContext applicationContext;
@@ -100,8 +98,8 @@ public class EasySourcingConfiguration {
 
     topicInfos.stream()
         .map(topicInfo -> TopicBuilder.name(topicInfo.value())
-            .partitions(PARTITIONS)
-            .replicas(REPLICAS)
+            .partitions(easySourcingProperties.getPartitions())
+            .replicas(easySourcingProperties.getReplicas())
             .config(TopicConfig.RETENTION_MS_CONFIG, "-1")
             .build())
         .forEach(newTopic -> beanFactory.registerSingleton(newTopic.name(), newTopic));
@@ -120,8 +118,8 @@ public class EasySourcingConfiguration {
 
     topicInfos.stream()
         .map(topicInfo -> TopicBuilder.name(topicInfo.value())
-            .partitions(PARTITIONS)
-            .replicas(REPLICAS)
+            .partitions(easySourcingProperties.getPartitions())
+            .replicas(easySourcingProperties.getReplicas())
             .config(TopicConfig.RETENTION_MS_CONFIG, "-1")
             .build())
         .forEach(newTopic -> beanFactory.registerSingleton(newTopic.name(), newTopic));

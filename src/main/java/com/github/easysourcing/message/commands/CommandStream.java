@@ -2,10 +2,12 @@ package com.github.easysourcing.message.commands;
 
 
 import com.github.easysourcing.kafka.streams.serdes.CustomJsonSerde;
+import com.github.easysourcing.message.aggregates.Aggregate;
 import com.github.easysourcing.message.aggregates.AggregateService;
 import com.github.easysourcing.message.events.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -13,11 +15,13 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.ValueMapper;
+import org.apache.kafka.streams.state.Stores;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -37,9 +41,13 @@ public class CommandStream {
 
   @Bean
   public KStream<String, Command> commandKStream(StreamsBuilder builder) {
-    if(commandsTopics.isEmpty()) {
+    if (commandsTopics.isEmpty()) {
       return null;
     }
+
+    builder.addStateStore(Stores
+        .timestampedKeyValueStoreBuilder(Stores.persistentTimestampedKeyValueStore("snapshots"), Serdes.String(), new JsonSerde<>(Aggregate.class).noTypeInfo())
+        .withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000"))); // 7 days
 
     KStream<String, Command> commandKStream = builder
         .stream(commandsTopics,
