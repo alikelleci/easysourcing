@@ -3,28 +3,28 @@ package com.github.easysourcing.message;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.message.annotations.AggregateId;
 import com.github.easysourcing.message.annotations.TopicInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.beans.Transient;
 import java.lang.reflect.Field;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder(toBuilder = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
-public interface Message<T> {
-
-  default String getType() {
-    if (getPayload() == null) {
-      return null;
-    }
-    return getPayload().getClass().getSimpleName();
-  }
+public class Message {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
-  T getPayload();
-
-  Metadata getMetadata();
+  private Object payload;
+  private Metadata metadata;
 
   @Transient
-  default String getId() {
+  public String getId() {
     if (getPayload() == null) {
       return null;
     }
@@ -47,7 +47,7 @@ public interface Message<T> {
   }
 
   @Transient
-  default TopicInfo getTopicInfo() {
+  public TopicInfo getTopicInfo() {
     if (getPayload() == null) {
       return null;
     }

@@ -1,9 +1,9 @@
 package com.github.easysourcing.message.commands;
 
 
-import com.github.easysourcing.kafka.streams.serdes.CustomJsonSerde;
+import com.github.easysourcing.serdes.CustomJsonSerde;
 import com.github.easysourcing.message.aggregates.Aggregate;
-import com.github.easysourcing.message.aggregates.AggregateService;
+import com.github.easysourcing.message.aggregates.AggregateHandler;
 import com.github.easysourcing.message.events.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -16,41 +16,34 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.state.Stores;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.support.serializer.JsonSerde;
-import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
-@Component
 public class CommandStream {
 
-  @Autowired
-  private Set<String> commandsTopics;
+  private final Set<String> topics;
+  private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers;
+  private final ConcurrentMap<Class<?>, AggregateHandler> aggregateHandlers;
 
-  @Autowired
-  private CommandService commandService;
+  public CommandStream(Set<String> topics, ConcurrentMap<Class<?>, CommandHandler> commandHandlers, ConcurrentMap<Class<?>, AggregateHandler> aggregateHandlers) {
+    this.topics = topics;
+    this.commandHandlers = commandHandlers;
+    this.aggregateHandlers = aggregateHandlers;
+  }
 
-  @Autowired
-  private AggregateService aggregateService;
-
-
-  @Bean
-  public KStream<String, Command> commandKStream(StreamsBuilder builder) {
-    if (commandsTopics.isEmpty()) {
-      return null;
-    }
-
+  public void buildStream(StreamsBuilder builder) {
     builder.addStateStore(Stores
-        .timestampedKeyValueStoreBuilder(Stores.persistentTimestampedKeyValueStore("snapshots"), Serdes.String(), new JsonSerde<>(Aggregate.class).noTypeInfo())
+        .timestampedKeyValueStoreBuilder(Stores.persistentTimestampedKeyValueStore("snapshots"),
+            Serdes.String(), new JsonSerde<>(Aggregate.class).noTypeInfo())
         .withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000"))); // 7 days
 
     KStream<String, Command> commandKStream = builder
-        .stream(commandsTopics,
+        .stream(topics,
             Consumed.with(Serdes.String(), new CustomJsonSerde<>(Command.class).noTypeInfo()))
 //        .peek((key, command) -> log.debug("Message received: {}", command))
         .filter((key, command) -> key != null)
@@ -61,7 +54,7 @@ public class CommandStream {
         .filter((key, command) -> command.getPayload() != null);
 
     KStream<String, Event> eventKStream = commandKStream
-        .transformValues(() -> new CommandInvoker(commandService, aggregateService), "snapshots")
+        .transformValues(() -> new CommandTransformer(commandHandlers, aggregateHandlers), "snapshots")
         .filter((key, events) -> CollectionUtils.isNotEmpty(events))
         .flatMapValues((ValueMapper<List<Event>, Iterable<Event>>) events -> events)
         .filter((key, event) -> event != null)
@@ -70,8 +63,6 @@ public class CommandStream {
     eventKStream
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
             Produced.with(Serdes.String(), new JsonSerde<>(Event.class).noTypeInfo()));
-
-    return commandKStream;
   }
 
 }

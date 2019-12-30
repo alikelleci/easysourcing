@@ -1,4 +1,4 @@
-package com.github.easysourcing.kafka.streams.serdes;
+package com.github.easysourcing.serdes;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.springframework.kafka.support.JacksonUtils;

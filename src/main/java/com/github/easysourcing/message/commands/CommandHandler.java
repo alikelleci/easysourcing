@@ -1,56 +1,61 @@
 package com.github.easysourcing.message.commands;
 
+import com.github.easysourcing.message.Handler;
 import com.github.easysourcing.message.aggregates.Aggregate;
 import com.github.easysourcing.message.commands.exceptions.CommandExecutionException;
 import com.github.easysourcing.message.events.Event;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-
 @Slf4j
-@Service
-public class CommandService {
+public class CommandHandler implements Handler<List<Event>> {
 
-  @Autowired
-  private ApplicationContext applicationContext;
+  private Object target;
+  private Method method;
 
-  @Autowired
-  private ConcurrentMap<Class<?>, Set<Method>> commandHandlers;
-
-
-  public Method getCommandHandler(Command command) {
-    return CollectionUtils.emptyIfNull(commandHandlers.get(command.getPayload().getClass()))
-        .stream()
-        .findFirst()
-        .orElse(null);
+  public CommandHandler(Object target, Method method) {
+    this.target = target;
+    this.method = method;
   }
 
-  public List<Event> invokeCommandHandler(Method methodToInvoke, Aggregate aggregate, Command command) {
-    Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+  @Override
+  public List<Event> invoke(Object... args) {
+    Aggregate aggregate = (Aggregate) args[0];
+    Command command = (Command) args[1];
+
     Object result;
     try {
-      if (methodToInvoke.getParameterCount() == 2) {
-        result = methodToInvoke.invoke(bean, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
+      if (method.getParameterCount() == 2) {
+        result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
       } else {
-        result = methodToInvoke.invoke(bean, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
+        result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
       }
       return createEvents(command, result);
 
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new CommandExecutionException(e.getCause().getMessage(), e.getCause());
     }
+  }
+
+  @Override
+  public Object getTarget() {
+    return target;
+  }
+
+  @Override
+  public Method getMethod() {
+    return method;
+  }
+
+  @Override
+  public Class<?> getType() {
+    return method.getParameters()[1].getType();
   }
 
   private List<Event> createEvents(Command command, Object result) {

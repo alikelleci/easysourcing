@@ -5,19 +5,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 
 @Slf4j
-public class EventInvoker implements ValueTransformer<Event, List<Command>> {
+public class EventTransformer implements ValueTransformer<Event, List<Command>> {
 
   private ProcessorContext context;
-  private EventService eventService;
 
-  public EventInvoker(EventService eventService) {
-    this.eventService = eventService;
+  private final ConcurrentMap<Class<?>, EventHandler> eventHandlers;
+
+  public EventTransformer(ConcurrentMap<Class<?>, EventHandler> eventHandlers) {
+    this.eventHandlers = eventHandlers;
   }
 
   @Override
@@ -27,13 +28,13 @@ public class EventInvoker implements ValueTransformer<Event, List<Command>> {
 
   @Override
   public List<Command> transform(Event event) {
-    Method eventHandler = eventService.getEventHandler(event);
+    EventHandler eventHandler = eventHandlers.get(event.getPayload().getClass());
     if (eventHandler == null) {
       return new ArrayList<>();
     }
     log.debug("Event received: {}", event);
 
-    List<Command> commands = eventService.invokeEventHandler(eventHandler, event);
+    List<Command> commands = eventHandler.invoke(event);
 
     context.commit();
     return commands;

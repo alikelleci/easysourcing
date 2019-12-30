@@ -1,55 +1,57 @@
 package com.github.easysourcing.message.events;
 
+import com.github.easysourcing.message.Handler;
 import com.github.easysourcing.message.Metadata;
 import com.github.easysourcing.message.commands.Command;
 import com.github.easysourcing.message.events.exceptions.EventProcessingException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+public class EventHandler implements Handler<List<Command>> {
 
-@Slf4j
-@Service
-public class EventService {
+  private Object target;
+  private Method method;
 
-  @Autowired
-  private ApplicationContext applicationContext;
-
-  @Autowired
-  private ConcurrentMap<Class<?>, Set<Method>> eventHandlers;
-
-
-  public Method getEventHandler(Event event) {
-    return CollectionUtils.emptyIfNull(eventHandlers.get(event.getPayload().getClass()))
-        .stream()
-        .findFirst()
-        .orElse(null);
+  public EventHandler(Object target, Method method) {
+    this.target = target;
+    this.method = method;
   }
 
-  public List<Command> invokeEventHandler(Method methodToInvoke, Event event) {
-    Object bean = applicationContext.getBean(methodToInvoke.getDeclaringClass());
+  @Override
+  public List<Command> invoke(Object... args) {
+    Event event = (Event) args[0];
+
     Object result;
     try {
-      if (methodToInvoke.getParameterCount() == 1) {
-        result = methodToInvoke.invoke(bean, event.getPayload());
+      if (method.getParameterCount() == 1) {
+        result = method.invoke(target, event.getPayload());
       } else {
-        result = methodToInvoke.invoke(bean, event.getPayload(), event.getMetadata());
+        result = method.invoke(target, event.getPayload(), event.getMetadata());
       }
       return createCommands(result, event.getMetadata());
 
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new EventProcessingException(e.getCause().getMessage(), e.getCause());
     }
+  }
+
+  @Override
+  public Object getTarget() {
+    return target;
+  }
+
+  @Override
+  public Method getMethod() {
+    return method;
+  }
+
+  @Override
+  public Class<?> getType() {
+    return method.getParameters()[0].getType();
   }
 
   private List<Command> createCommands(Object result, Metadata metadata) {
@@ -79,6 +81,5 @@ public class EventService {
 
     return commands;
   }
-
 
 }

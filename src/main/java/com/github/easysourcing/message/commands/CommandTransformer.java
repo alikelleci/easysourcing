@@ -1,7 +1,7 @@
 package com.github.easysourcing.message.commands;
 
 import com.github.easysourcing.message.aggregates.Aggregate;
-import com.github.easysourcing.message.aggregates.AggregateService;
+import com.github.easysourcing.message.aggregates.AggregateHandler;
 import com.github.easysourcing.message.events.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -9,24 +9,24 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 
-import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 
 @Slf4j
-public class CommandInvoker implements ValueTransformer<Command, List<Event>> {
+public class CommandTransformer implements ValueTransformer<Command, List<Event>> {
 
   private ProcessorContext context;
   private KeyValueStore<String, ValueAndTimestamp<Aggregate>> store;
-  private CommandService commandService;
-  private AggregateService aggregateService;
 
+  private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers;
+  private final ConcurrentMap<Class<?>, AggregateHandler> aggregateHandlers;
 
-  public CommandInvoker(CommandService commandService, AggregateService aggregateService) {
-    this.commandService = commandService;
-    this.aggregateService = aggregateService;
+  public CommandTransformer(ConcurrentMap<Class<?>, CommandHandler> commandHandlers, ConcurrentMap<Class<?>, AggregateHandler> aggregateHandlers) {
+    this.commandHandlers = commandHandlers;
+    this.aggregateHandlers = aggregateHandlers;
   }
 
   @Override
@@ -37,7 +37,7 @@ public class CommandInvoker implements ValueTransformer<Command, List<Event>> {
 
   @Override
   public List<Event> transform(Command command) {
-    Method commandHandler = commandService.getCommandHandler(command);
+    CommandHandler commandHandler = commandHandlers.get(command.getPayload().getClass());
     if (commandHandler == null) {
       return new ArrayList<>();
     }
@@ -46,12 +46,12 @@ public class CommandInvoker implements ValueTransformer<Command, List<Event>> {
     ValueAndTimestamp<Aggregate> record = store.get(command.getId());
     Aggregate aggregate = record != null ? record.value() : null;
 
-    List<Event> events = commandService.invokeCommandHandler(commandHandler, aggregate, command);
+    List<Event> events = commandHandler.invoke(aggregate, command);
 
     for (Event event : events) {
-      Method aggregateHandler = aggregateService.getAggregateHandler(event);
+      AggregateHandler aggregateHandler = aggregateHandlers.get(event.getPayload().getClass());
       if (aggregateHandler != null) {
-        aggregate = aggregateService.invokeAggregateHandler(aggregateHandler, aggregate, event);
+        aggregate = aggregateHandler.invoke(aggregate, event);
       }
     }
 
