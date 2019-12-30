@@ -26,9 +26,8 @@ public class Config {
   private String applicationId;
   private int replicas;
   private int partitions;
-  private boolean cleanupOnStop;
 
-  protected Properties streamsConfig() {
+  public Properties streamsConfig() {
     Properties properties = new Properties();
     properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId);
@@ -44,7 +43,7 @@ public class Config {
     return properties;
   }
 
-  protected Map<String, Object> producerConfigs() {
+  public Map<String, Object> producerConfigs() {
     Map<String, Object> properties = new HashMap<>();
     properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -55,7 +54,7 @@ public class Config {
     return properties;
   }
 
-  protected Properties adminConfigs() {
+  public Properties adminConfigs() {
     Properties properties = new Properties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 

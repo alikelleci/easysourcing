@@ -1,7 +1,6 @@
 package com.github.easysourcing;
 
 import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageGateway;
 import com.github.easysourcing.message.commands.CommandGateway;
 import com.github.easysourcing.message.events.EventGateway;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ public class GatewayBuilder {
     this.kafkaTemplate = kafkaTemplate();
   }
 
-
   private DefaultKafkaProducerFactory producerFactory() {
     return new DefaultKafkaProducerFactory(config.producerConfigs(),
         new StringSerializer(),
@@ -37,14 +35,14 @@ public class GatewayBuilder {
     if (kafkaTemplate == null) {
       kafkaTemplate = kafkaTemplate();
     }
-    return new CommandGateway(new MessageGateway(kafkaTemplate));
+    return new CommandGateway(kafkaTemplate);
   }
 
   public EventGateway eventGateway() {
     if (kafkaTemplate == null) {
       kafkaTemplate = kafkaTemplate();
     }
-    return new EventGateway(new MessageGateway(kafkaTemplate));
+    return new EventGateway(kafkaTemplate);
   }
 
 }

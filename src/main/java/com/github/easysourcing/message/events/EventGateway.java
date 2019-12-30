@@ -1,14 +1,14 @@
 package com.github.easysourcing.message.events;
 
+import com.github.easysourcing.message.Message;
 import com.github.easysourcing.message.MessageGateway;
 import com.github.easysourcing.message.Metadata;
+import org.springframework.kafka.core.KafkaTemplate;
 
-public class EventGateway {
+public class EventGateway extends MessageGateway {
 
-  private final MessageGateway messageGateway;
-
-  public EventGateway(MessageGateway messageGateway) {
-    this.messageGateway = messageGateway;
+  public EventGateway(KafkaTemplate<String, Message> kafkaTemplate) {
+    super(kafkaTemplate);
   }
 
   public void send(Object payload, Metadata metadata) {
@@ -17,7 +17,7 @@ public class EventGateway {
         .metadata(metadata)
         .build();
 
-    messageGateway.send(message);
+    send(message);
   }
 
   public void send(Object payload) {

@@ -1,14 +1,14 @@
 package com.github.easysourcing.message.commands;
 
+import com.github.easysourcing.message.Message;
 import com.github.easysourcing.message.MessageGateway;
 import com.github.easysourcing.message.Metadata;
+import org.springframework.kafka.core.KafkaTemplate;
 
-public class CommandGateway {
+public class CommandGateway extends MessageGateway {
 
-  private final MessageGateway messageGateway;
-
-  public CommandGateway(MessageGateway messageGateway) {
-    this.messageGateway = messageGateway;
+  public CommandGateway(KafkaTemplate<String, Message> kafkaTemplate) {
+    super(kafkaTemplate);
   }
 
   public void send(Object payload, Metadata metadata) {
@@ -17,7 +17,7 @@ public class CommandGateway {
         .metadata(metadata)
         .build();
 
-    messageGateway.send(message);
+    send(message);
   }
 
   public void send(Object payload) {

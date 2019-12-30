@@ -1,8 +1,8 @@
 package com.github.easysourcing.message.events;
 
 
-import com.github.easysourcing.serdes.CustomJsonSerde;
 import com.github.easysourcing.message.commands.Command;
+import com.github.easysourcing.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;

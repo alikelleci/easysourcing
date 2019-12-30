@@ -75,10 +75,12 @@ public class EasySourcing {
     return builder.build();
   }
 
-  private void setUpListeners(KafkaStreams streams) {
-    streams.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
-    streams.setUncaughtExceptionHandler((t, e) -> log.error("Exception handler triggered ", e));
+  private void setUpListeners() {
+    kafkaStreams.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
+    kafkaStreams.setUncaughtExceptionHandler((t, e) -> log.error("Exception handler triggered ", e));
+  }
 
+  private void addShutdownHook() {
     CountDownLatch latch = new CountDownLatch(1);
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       stop();
@@ -96,7 +98,9 @@ public class EasySourcing {
 
     Topology topology = buildTopology();
     kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
-    setUpListeners(kafkaStreams);
+
+    addShutdownHook();
+    setUpListeners();
 
     kafkaStreams.start();
     this.running = true;
@@ -109,10 +113,8 @@ public class EasySourcing {
     }
 
     if (kafkaStreams != null) {
+      log.info("Kafka Streams is shutting down.");
       kafkaStreams.close();
-      if (config.isCleanupOnStop()) {
-        kafkaStreams.cleanUp();
-      }
       kafkaStreams = null;
       running = false;
     }
