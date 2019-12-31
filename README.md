@@ -1,4 +1,4 @@
-## Easy Sourcing
+## EasySourcing
 
 [Documentation](https://alikelleci.github.io/easysourcing)
 
