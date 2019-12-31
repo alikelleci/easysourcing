@@ -13,36 +13,38 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 public class GatewayBuilder {
 
   private Config config;
-  private KafkaTemplate<String, Message> kafkaTemplate;
 
-  public GatewayBuilder(Config config) {
-    this.config = config;
-    this.kafkaTemplate = kafkaTemplate();
+  public GatewayBuilder() {
   }
 
-  private DefaultKafkaProducerFactory producerFactory() {
-    return new DefaultKafkaProducerFactory(config.producerConfigs(),
+  public GatewayBuilder withConfig(Config config) {
+    this.config = config;
+    return this;
+  }
+
+  public CommandGateway commandGateway() {
+    if (this.config == null) {
+      throw new RuntimeException("No config provided!");
+    }
+    return new CommandGateway(kafkaTemplate());
+  }
+
+  public EventGateway eventGateway() {
+    if (this.config == null) {
+      throw new RuntimeException("No config provided!");
+    }
+    return new EventGateway(kafkaTemplate());
+  }
+
+  private DefaultKafkaProducerFactory<String, Message> producerFactory() {
+    return new DefaultKafkaProducerFactory<>(config.producerConfigs(),
         new StringSerializer(),
-        new JsonSerializer<>()
+        new JsonSerializer<Message>()
             .noTypeInfo());
   }
 
   private KafkaTemplate<String, Message> kafkaTemplate() {
     return new KafkaTemplate<>(producerFactory());
-  }
-
-  public CommandGateway commandGateway() {
-    if (kafkaTemplate == null) {
-      kafkaTemplate = kafkaTemplate();
-    }
-    return new CommandGateway(kafkaTemplate);
-  }
-
-  public EventGateway eventGateway() {
-    if (kafkaTemplate == null) {
-      kafkaTemplate = kafkaTemplate();
-    }
-    return new EventGateway(kafkaTemplate);
   }
 
 }

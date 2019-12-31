@@ -8,7 +8,7 @@ public class MessageGateway {
 
   private final KafkaTemplate<String, Message> kafkaTemplate;
 
-  public MessageGateway(KafkaTemplate<String, Message> kafkaTemplate) {
+  protected MessageGateway(KafkaTemplate<String, Message> kafkaTemplate) {
     this.kafkaTemplate = kafkaTemplate;
   }
 
