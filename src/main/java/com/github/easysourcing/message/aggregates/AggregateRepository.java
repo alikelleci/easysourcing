@@ -13,7 +13,7 @@ public class AggregateRepository {
   }
 
   public <T> T get(String id) {
-    ReadOnlyKeyValueStore<String, Aggregate> keyValueStore = kafkaStreams.store("snapshots", QueryableStoreTypes.keyValueStore());
+    ReadOnlyKeyValueStore<String, Aggregate> keyValueStore = kafkaStreams.store("snapshot-store", QueryableStoreTypes.keyValueStore());
     Aggregate snapshot = keyValueStore.get(id);
     if (snapshot != null) {
       return (T) snapshot.getPayload();

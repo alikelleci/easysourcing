@@ -37,11 +37,15 @@ public class CommandStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    builder.addStateStore(Stores
-        .timestampedKeyValueStoreBuilder(Stores.persistentTimestampedKeyValueStore("snapshots"),
-            Serdes.String(), new JsonSerde<>(Aggregate.class).noTypeInfo())
-        .withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000"))); // 7 days
+    builder.addStateStore(
+        Stores.timestampedKeyValueStoreBuilder(
+            Stores.persistentTimestampedKeyValueStore("snapshot-store"),
+            Serdes.String(),
+            new JsonSerde<>(Aggregate.class).noTypeInfo()
+        ).withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000")) // 7 days
+    );
 
+    // Commands
     KStream<String, Command> commandKStream = builder
         .stream(topics,
             Consumed.with(Serdes.String(), new CustomJsonSerde<>(Command.class).noTypeInfo()))
@@ -53,8 +57,9 @@ public class CommandStream {
         .filter((key, command) -> command.getType() != null)
         .filter((key, command) -> command.getPayload() != null);
 
+    // Commands --> Events
     KStream<String, Event> eventKStream = commandKStream
-        .transformValues(() -> new CommandTransformer(commandHandlers, aggregateHandlers), "snapshots")
+        .transformValues(() -> new CommandTransformer(commandHandlers, aggregateHandlers), "snapshot-store")
         .filter((key, events) -> CollectionUtils.isNotEmpty(events))
         .flatMapValues((ValueMapper<List<Event>, Iterable<Event>>) events -> events)
         .filter((key, event) -> event != null)

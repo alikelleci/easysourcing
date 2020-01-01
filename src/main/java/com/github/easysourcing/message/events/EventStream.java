@@ -30,6 +30,7 @@ public class EventStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
+    // Events
     KStream<String, Event> eventKStream = builder
         .stream(topics,
             Consumed.with(Serdes.String(), new CustomJsonSerde<>(Event.class).noTypeInfo()))
@@ -41,6 +42,7 @@ public class EventStream {
         .filter((key, event) -> event.getType() != null)
         .filter((key, event) -> event.getPayload() != null);
 
+    // Events --> Commands
     KStream<String, Command> commandKStream = eventKStream
         .transformValues(() -> new EventTransformer(eventHandlers))
         .filter((key, commands) -> CollectionUtils.isNotEmpty(commands))

@@ -32,7 +32,7 @@ public class CommandTransformer implements ValueTransformer<Command, List<Event>
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = (KeyValueStore<String, ValueAndTimestamp<Aggregate>>) context.getStateStore("snapshots");
+    this.store = (KeyValueStore<String, ValueAndTimestamp<Aggregate>>) context.getStateStore("snapshot-store");
   }
 
   @Override

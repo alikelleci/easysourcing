@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.Topology;
 
-import java.util.concurrent.CountDownLatch;
-
 @Slf4j
 public class EasySourcing {
 
@@ -14,7 +12,6 @@ public class EasySourcing {
   private Topology topology;
   private KafkaStreams kafkaStreams;
 
-  private CountDownLatch latch = new CountDownLatch(1);
   private boolean running = false;
 
   protected EasySourcing(Config config, Topology topology) {
@@ -24,7 +21,7 @@ public class EasySourcing {
 
   public void start() {
     if (running) {
-      log.warn("Easy Sourcing already started.");
+      log.warn("EasySourcing already started.");
       return;
     }
 
@@ -33,18 +30,19 @@ public class EasySourcing {
     addShutdownHook();
     setUpListeners();
 
+    log.info("EasySourcing is starting.");
     kafkaStreams.start();
     this.running = true;
   }
 
   public void stop() {
     if (!running) {
-      log.warn("Easy Sourcing already stopped.");
+      log.warn("EasySourcing already stopped.");
       return;
     }
 
     if (kafkaStreams != null) {
-      log.info("Kafka Streams is shutting down.");
+      log.info("EasySourcing is shutting down.");
       kafkaStreams.close();
       kafkaStreams = null;
       running = false;
@@ -57,9 +55,6 @@ public class EasySourcing {
   }
 
   private void addShutdownHook() {
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      stop();
-      latch.countDown();
-    }));
+    Runtime.getRuntime().addShutdownHook(new Thread(EasySourcing.this::stop));
   }
 }

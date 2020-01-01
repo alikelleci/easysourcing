@@ -33,6 +33,10 @@ public class AggregateHandler implements Handler<Aggregate> {
       throw new AggregateInvocationException(e.getCause().getMessage(), e.getCause());
     }
 
+    if (result == null) {
+      return null;
+    }
+
     return Aggregate.builder()
         .payload(result)
         .metadata(event.getMetadata())
