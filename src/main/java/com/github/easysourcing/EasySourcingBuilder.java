@@ -1,5 +1,7 @@
 package com.github.easysourcing;
 
+import com.github.easysourcing.message.Message;
+import com.github.easysourcing.message.MessageStream;
 import com.github.easysourcing.message.aggregates.AggregateHandler;
 import com.github.easysourcing.message.aggregates.annotations.ApplyEvent;
 import com.github.easysourcing.message.annotations.TopicInfo;
@@ -18,6 +20,7 @@ import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.kafka.config.TopicBuilder;
 
@@ -156,16 +159,16 @@ public class EasySourcingBuilder {
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
-    Set<String> commandTopics = getCommandsTopics();
-    if (!commandTopics.isEmpty()) {
-      CommandStream commandStream = new CommandStream(commandTopics, commandHandlers, aggregateHandlers);
-      commandStream.buildStream(builder);
-    }
+    Set<String> topics = getTopics();
+    if (!topics.isEmpty()) {
+      MessageStream messageStream = new MessageStream(topics);
+      KStream<String, Message> messageKStream = messageStream.buildStream(builder);
 
-    Set<String> eventTopics = getEvensTopics();
-    if (!eventTopics.isEmpty()) {
-      EventStream eventStream = new EventStream(eventTopics, eventHandlers);
-      eventStream.buildStream(builder);
+      CommandStream commandStream = new CommandStream(commandHandlers, aggregateHandlers);
+      commandStream.buildStream(messageKStream);
+
+      EventStream eventStream = new EventStream(eventHandlers);
+      eventStream.buildStream(messageKStream);
     }
 
     return builder.build();
