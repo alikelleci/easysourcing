@@ -152,7 +152,6 @@ public class EasySourcingBuilder {
 
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
-
     }
   }
 
