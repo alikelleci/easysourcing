@@ -48,14 +48,16 @@ public class CommandTransformer implements ValueTransformer<Command, List<Event>
 
     List<Event> events = commandHandler.invoke(aggregate, command);
 
+    boolean updated = false;
     for (Event event : events) {
       AggregateHandler aggregateHandler = aggregateHandlers.get(event.getPayload().getClass());
       if (aggregateHandler != null) {
         aggregate = aggregateHandler.invoke(aggregate, event);
+        updated = true;
       }
     }
 
-    if (!events.isEmpty()) {
+    if (updated) {
       store.put(command.getId(), ValueAndTimestamp
           .make(aggregate, new Timestamp(System.currentTimeMillis()).getTime()));
     }
