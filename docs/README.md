@@ -174,7 +174,7 @@ Methods annotated with `@HandleEvent`will get triggered when the corresponding e
 ## Putting it all together 
 Now that we have everything set up, its time to wiring it togetger:
 ```javascript
-public class Main {
+public class App {
   
   public static void main(String[] args) {
     Config config = Config.builder()
@@ -195,6 +195,31 @@ public class Main {
   }
 }
 ```
+
+Sending commands is as easy as:
+```javascript
+public class Sender {
+  
+  public static void main(String[] args) {
+    Config config = Config.builder()
+        .bootstrapServers("localhost:9092")
+        .build();
+
+    CommandGateway commandGateway = new GatewayBuilder()
+        .withConfig(config)
+        .commandGateway();
+        
+    CustomerCommand command = CustomerCommand.CreateCustomer.builder()
+        .customerId("cust-123")
+        .firstName("John")
+        .lastName("Doe")
+        .build();
+    
+    commandGateway.send(command);
+  }
+}
+```
+
 # Reference
 
  - - - -
