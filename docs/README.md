@@ -103,9 +103,10 @@ In the code snippets above, we have defined some commands and events for our agg
 * Avoid topic names based on information that would be stored in other places.
 
 ### Command handler
-Now that we have defined our commands and events, its time to create a command handler. You can create a command handler by simply annotating your command handling methods with `@HandleCommand`:
+Now that we have defined our commands and events, its time to create a command handler. You can create a command handler by simply annotating your command handling class with `@CommandHandler` and your command handling methods with `@HandleCommand`:
 
 ```javascript
+@CommandHandler
 public class CustomerCommandHandler {
 
   @HandleCommand
@@ -144,6 +145,7 @@ The first parameter of the command handling method is the current state of the a
 An aggregator applies events to the current state of the aggregate and returns a new updated state. Below we see an example of the customer aggregator:
 
 ```javascript
+@Aggregator
 public class CustomerAggregator {
 
   @ApplyEvent
@@ -163,7 +165,7 @@ public class CustomerAggregator {
   }
 }
 ```
-We annotate our aggregator methods with `@ApplyEvent`. These methods takes two parameters, the first one is the current state of the aggregate and the second parameter is the event to apply. The return value of an aggregator method should always be the **type of the aggregate**. In this case, we return a new copy of the customer with updated state. Although it is not required to return a new copy, it is recommended that you use immutable objects as much as possible.
+We annotate our aggregator class with `@Aggregator` and the aggregating methods with `@ApplyEvent`. These methods takes two parameters, the first one is the current state of the aggregate and the second parameter is the event to apply. The return value of an aggregator method should always be the **type of the aggregate**. In this case, we return a new copy of the customer with updated state. Although it is not required to return a new copy, it is recommended that you use immutable objects as much as possible.
 
 > **Best practises for aggregators:** 
 * Aggregators should be pure functions and should not block execution.
@@ -178,6 +180,7 @@ Event handlers are components that act on incoming events. They are often used i
 
 See below for an example of a customer event handler:
 ```javascript
+@EventHandler
 public class CustomerEventHandler {
 
   @HandleEvent
@@ -191,7 +194,7 @@ public class CustomerEventHandler {
   }
 }
 ```
-Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
+We annotate event handler classes  with `@EventHandler`. Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 
@@ -246,39 +249,6 @@ public class Sender {
   }
 }
 ```
-# Spring Boot
-- - - -
-EasySourcing also includes a `easysourcing-spring-boot-starter`, so you can benefit from auto-configuration and use it with Spring Boot. Make sure you have followed the quickstart guide before you continue reading this chapter.
-
-## Install
-Include the `easysourcing-spring-boot-starter` dependency in your project:
-```javascript
-<dependency>
-  <groupId>com.github.alikelleci</groupId>
-  <artifactId>easysourcing-spring-boot-starter</artifactId>
-  <version>VERSION</version>
-</dependency>
-```
-
-## Handlers
-There is not much of a difference in your command handlers and aggregators when using the `easysourcing-spring-boot-starter` dependency. The only difference is that you have to annotate your handlers with the appropriate annotation:
-
-* Use `@CommandHandler` for your command handlers.
-* Use `@Aggregator` for your aggregators.
-* Use `@EventHandler` for your event handlers.
-
-See below for an example:
-```javascript
-@CommandHandler
-public class CustomerCommandHandler {
-  @HandleCommand
-  public CustomerEvent handle(Customer currentState, CreateCustomer command) {
-    // logic omitted
-  }
-}
-````
->**These annotations make your handlers a spring bean, so you can do your autowiring as usual. Also, you don't have to register your handlers manually, as this is done automatically for you.**
-
 
 # Reference
 
