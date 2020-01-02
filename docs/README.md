@@ -241,7 +241,7 @@ public class EventSender {
         .withConfig(config)
         .eventGateway();
         
-    CreateCustomer event = CustomerCreated.builder()
+    CustomerCreated event = CustomerCreated.builder()
         .customerId("cust-123")
         .firstName("John")
         .lastName("Doe")
