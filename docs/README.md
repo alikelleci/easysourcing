@@ -1,5 +1,5 @@
 # Introduction
-EasySourcing is an API for building high performance Event Driven and Event Sourcing applications. It is built on top of Kafka Streams and uses Kafka as backbone. This means that applications built with EasySourcing are highly scalable and fault-tolerant.
+EasySourcing is an API for building high performance Event Driven and Event Sourcing applications. It is built on top of Apache Kafka and Kafka Streams. This means that applications built with EasySourcing are highly scalable and fault-tolerant. You can run multiple instances of your applications and loadbalancing is done for you automatically. 
 
  - - - -
 
