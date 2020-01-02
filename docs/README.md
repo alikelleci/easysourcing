@@ -236,7 +236,7 @@ Include the `spring-boot-starter` dependency in your project:
 ```javascript
 <dependency>
   <groupId>com.github.alikelleci</groupId>
-  <artifactId>easysourcing</artifactId>
+  <artifactId>easysourcing-spring-boot-starter</artifactId>
   <version>VERSION</version>
 </dependency>
 ```
