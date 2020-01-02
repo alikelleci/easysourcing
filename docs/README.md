@@ -229,6 +229,7 @@ public class Sender {
 }
 ```
 # Spring Boot
+- - - -
 EasySourcing also includes a `easysourcing-spring-boot-starter`, so you can benefit from auto-configuration and use it with Spring Boot. Make sure you have followed the quickstart guide before you continue reading this chapter.
 
 ## Install
