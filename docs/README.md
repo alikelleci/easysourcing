@@ -175,7 +175,7 @@ We annotate our aggregator class with `@Aggregator` and the aggregating methods 
 
 Sending commands is as easy as:
 ```javascript
-public class Sender {
+public class CommandSender {
   
   public static void main(String[] args) {
     Config config = Config.builder()
@@ -227,6 +227,34 @@ We annotate event handler classes  with `@EventHandler`. Methods annotated with 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 
 ### Dispatching events
+
+Sending events is as follows:
+```javascript
+public class EventSender {
+  
+  public static void main(String[] args) {
+    Config config = Config.builder()
+        .bootstrapServers("localhost:9092")
+        .build();
+
+    EventGateway eventGateway = new GatewayBuilder()
+        .withConfig(config)
+        .eventGateway();
+        
+    CreateCustomer event = CustomerCreated.builder()
+        .customerId("cust-123")
+        .firstName("John")
+        .lastName("Doe")
+        .build();
+    
+    eventGateway.send(event);
+  }
+}
+```
+
+> **Spring Boot** 
+
+When using Spring Boot, you can just autowire an instance of `EventGateway`.
 
 
 ## Putting it all together 
