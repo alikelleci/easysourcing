@@ -172,11 +172,11 @@ Methods annotated with `@HandleEvent`will get triggered when the corresponding e
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 
 ## Putting it all together 
-Now that we have everything in place, its time to wiring it togetger:
+Now that we have everything set up, its time to wiring it togetger:
 ```javascript
 public class Main {
   
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     Config config = Config.builder()
         .applicationId("customer-service")
         .bootstrapServers("localhost:9092")
