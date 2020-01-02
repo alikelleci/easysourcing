@@ -26,7 +26,7 @@ Each aggregate is required to have an aggregate identifier annotated with `@Aggr
 
 The next step is to create commands and events for our aggregate.
 
-#### Commands
+**Commands**
 ```javascript
 @TopicInfo("customer-commands")
 public interface CustomerCommand {
@@ -50,7 +50,7 @@ public interface CustomerCommand {
 }
 ```
 
-#### Events
+**Events**
 ```javascript
 @TopicInfo("customer-events")
 public interface CustomerEvent {
@@ -75,6 +75,12 @@ public interface CustomerEvent {
 ```
 
 In the code snipsets above, we have defined some commands and events for our aggregate. We annotate our target aggregate identifier with `@AggregateId`. Another important annotation is `@TopicInfo`. In here, we specifiy in which topic to store our commands and events.
+
+> **Best practises for choosing topic names:** 
+* Choose different topic names for commands and events.
+* Choose different topic names for each aggregate type, for example 'customer-events' and 'order-events'.
+* Avoid topic names based on things that change, for example team name, topic owner, service name, product name, and consumer name.
+* Avoid topic names based on information that would be stored in other places.
 
 ## Command handler
 Now that we have defined our commands and events, its time to create a command handler. You can create a command handler by simply annotating your command handling methods with `@HandleCommand`:
@@ -108,6 +114,11 @@ public class CustomerCommandHandler {
 ```
 The first parameter of the command handling method is the current state of the aggregate. The second parameter is the command that is being handeled. A command handler's responsibility is to validate a command against the current state of the aggregate. If the command is valid, we return one or more events.
 
+> **Best practises for command handlers:** 
+* Command handlers should be pure functions and should not block execution.
+* Command handlers should only perform validation checks and return 0..n events.
+* Don't call external systems to validate your aggregate. If you need to, then consider if you got your aggregate boundaries correct.
+* Don't put logic like sending out emails or updating view models in command handlers. These kind of logic should rather be executed in event handlers. 
 
 ## Aggregator
 An aggregator applies events to the current state of the aggregate and returns a new updated state. Below we see an example of the customer aggregator:
@@ -134,9 +145,31 @@ public class CustomerAggregator {
 ```
 We annotate our aggregator methods with `@ApplyEvent`. These methods takes two parameters, the first one is the current state of the aggregate and the second parameter is the event to apply. The return value of an aggregator method should always be the **type of the aggregate**. In this case, we return a new copy of the customer with updated state. Although it is not required to return a new copy, it is recommended that you use immutable objects as much as possible.
 
+> **Best practises for aggregators:** 
+* Aggregators should be pure functions and should not block execution.
+* Aggregators should not have any side effects and they should not modify the passed aggregate state. They should rather do a deep copy of the passed aggregate, apply the event and return this altered aggregate.
+
 ## Event handler
+Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that happened. In reaction to that, event handlers can execute ther own logic. Usually, this involves updating view models or forwarding updates to other components.
 
+Below we see an example of an event handler where we react on customer events:
+```javascript
+public class CustomerEventHandler {
 
+  @HandleEvent
+  public void handle(CustomerCreated event) {
+    emailClient.sendEmail("Welcome " + event.getFirstName())  // Send a welcome email
+  }
+
+  @HandleEvent
+  public SomeCommand handle(FirstNameChanged event) {
+    return new SomeCommand(); // send a command
+  }
+}
+```
+Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also send a list of commands. 
+
+> **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 # Reference
 
  - - - -
