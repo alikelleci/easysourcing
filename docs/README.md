@@ -159,9 +159,9 @@ We annotate our aggregator methods with `@ApplyEvent`. These methods takes two p
 * Aggregators should not have any side effects and they should not modify the passed aggregate state. They should rather do a deep copy of the passed aggregate, apply the event and return this altered aggregate.
 
 ## Event handler
-Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that happened. In reaction to that, event handlers can execute ther own logic. Usually, this involves updating view models or forwarding updates to other components.
+Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that happened. In reaction to that, event handlers can execute their own logic. Usually, this involves updating view models or forwarding updates to other components.
 
-Below we see an example of an event handler where we react on customer events:
+See below for an example of a customer event handler:
 ```javascript
 public class CustomerEventHandler {
 
@@ -176,7 +176,7 @@ public class CustomerEventHandler {
   }
 }
 ```
-Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also send a list of commands. 
+Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 
@@ -242,7 +242,7 @@ Include the `spring-boot-starter` dependency in your project:
 ```
 
 ## Handlers
-There is not much of a difference when you create your command handlers and aggregators using the `easysourcing-spring-boot-starter`. The only difference is that you have to annotate your handlers with the appropriate annotation:
+There is not much of a difference in your command handlers and aggregators when using the `easysourcing-spring-boot-starter` dependency. The only difference is that you have to annotate your handlers with the appropriate annotation:
 
 * Use `@CommandHandler` for your command handlers.
 * Use `@Aggregator` for your aggregators.
