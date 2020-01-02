@@ -5,6 +5,15 @@ EasySourcing is an API for building high performance Event Driven and Event Sour
 
 # Quick Start
 - - - -
+## Install
+Include the `easysourcing` dependency in your project:
+```javascript
+<dependency>
+  <groupId>com.github.alikelleci</groupId>
+  <artifactId>easysourcing</artifactId>
+  <version>VERSION</version>
+</dependency>
+```
 
 ## Aggregate
 The very first step is to model our domain. In the following example customer is considered as our aggregate: 
@@ -219,6 +228,38 @@ public class Sender {
   }
 }
 ```
+# Spring Boot
+EasySourcing also includes a `easysourcing-spring-boot-starter`, so you can benefit from auto-configuration and use it with Spring Boot. Make sure you have followed the quickstart guide before you continue reading this chapter.
+
+## Install
+Include the `spring-boot-starter` dependency in your project:
+```javascript
+<dependency>
+  <groupId>com.github.alikelleci</groupId>
+  <artifactId>easysourcing</artifactId>
+  <version>VERSION</version>
+</dependency>
+```
+
+## Handlers
+There is not much of a difference when you create your command handlers and aggregators using the `easysourcing-spring-boot-starter`. The only difference is that you have to annotate your handlers with the appropriate annotation:
+
+* Use `@CommandHandler` for your command handlers.
+* Use `@Aggregator` for your aggregators.
+* Use `@EventHandler` for your event handlers.
+
+See below for an example:
+```javascript
+@CommandHandler
+public class CustomerCommandHandler {
+  @HandleCommand
+  public CustomerEvent handle(Customer currentState, CreateCustomer command) {
+    // logic omitted
+  }
+}
+````
+These annotations make your handlers a spring bean, so you can do your autowiring as usual. Also, you **don't** have to register your handlers, as this is done **automatically** for you.
+
 
 # Reference
 
