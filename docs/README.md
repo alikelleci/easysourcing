@@ -218,7 +218,7 @@ public class Sender {
         .withConfig(config)
         .commandGateway();
         
-    CustomerCommand command = CustomerCommand.CreateCustomer.builder()
+    CreateCustomer command = CreateCustomer.builder()
         .customerId("cust-123")
         .firstName("John")
         .lastName("Doe")
