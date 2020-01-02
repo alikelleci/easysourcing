@@ -83,7 +83,7 @@ public interface CustomerEvent {
 }
 ```
 
-In the code snipsets above, we have defined some commands and events for our aggregate. We annotate our target aggregate identifier with `@AggregateId`. Another important annotation is `@TopicInfo`. In here, we specifiy in which topic to store our commands and events.
+In the code snippets above, we have defined some commands and events for our aggregate. We annotate our target aggregate identifier with `@AggregateId`. Another important annotation is `@TopicInfo`. In here, we specifiy in which topic to store our commands and events.
 
 > **Best practises for choosing topic names:** 
 * Choose different topic names for commands and events.
