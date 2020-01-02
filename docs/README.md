@@ -6,7 +6,7 @@ EasySourcing is an API for building high performance Event Driven and Event Sour
 # Quick Start
 - - - -
 ## Install
-Include the `easysourcing` dependency in your project:
+Include the dependency in your project:
 ```javascript
 <dependency>
   <groupId>com.github.alikelleci</groupId>
@@ -15,7 +15,18 @@ Include the `easysourcing` dependency in your project:
 </dependency>
 ```
 
-## Aggregate
+Alternatively, if you are using **Spring Boot**, you can include the `easysourcing-spring-boot-starter` dependency and benefit from auto-configuration:
+```javascript
+<dependency>
+  <groupId>com.github.alikelleci</groupId>
+  <artifactId>easysourcing-spring-boot-starter</artifactId>
+  <version>VERSION</version>
+</dependency>
+```
+
+## Command handling
+
+### Aggregate
 The very first step is to model our domain. In the following example customer is considered as our aggregate: 
 
 ```javascript
@@ -91,7 +102,7 @@ In the code snippets above, we have defined some commands and events for our agg
 * Avoid topic names based on things that change, for example team name, topic owner, service name, product name, and consumer name.
 * Avoid topic names based on information that would be stored in other places.
 
-## Command handler
+### Command handler
 Now that we have defined our commands and events, its time to create a command handler. You can create a command handler by simply annotating your command handling methods with `@HandleCommand`:
 
 ```javascript
@@ -129,7 +140,7 @@ The first parameter of the command handling method is the current state of the a
 * Don't call external systems to validate your aggregate. If you need to, then consider if you got your aggregate boundaries correct.
 * Don't put logic like sending out emails or updating view models in command handlers. These kind of logic should rather be executed in event handlers. 
 
-## Aggregator
+### Aggregator
 An aggregator applies events to the current state of the aggregate and returns a new updated state. Below we see an example of the customer aggregator:
 
 ```javascript
@@ -158,7 +169,11 @@ We annotate our aggregator methods with `@ApplyEvent`. These methods takes two p
 * Aggregators should be pure functions and should not block execution.
 * Aggregators should not have any side effects and they should not modify the passed aggregate state. They should rather do a deep copy of the passed aggregate, apply the event and return this altered aggregate.
 
-## Event handler
+### Dispatching commands
+
+## Event handling
+
+### Event handler
 Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that happened. In reaction to that, event handlers can execute their own logic. Usually, this involves updating view models or forwarding updates to other components.
 
 See below for an example of a customer event handler:
@@ -179,6 +194,9 @@ public class CustomerEventHandler {
 Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
+
+### Dispatching events
+
 
 ## Putting it all together 
 Now that we have everything set up, its time to wiring it togetger:
@@ -233,7 +251,7 @@ public class Sender {
 EasySourcing also includes a `easysourcing-spring-boot-starter`, so you can benefit from auto-configuration and use it with Spring Boot. Make sure you have followed the quickstart guide before you continue reading this chapter.
 
 ## Install
-Include the `spring-boot-starter` dependency in your project:
+Include the `easysourcing-spring-boot-starter` dependency in your project:
 ```javascript
 <dependency>
   <groupId>com.github.alikelleci</groupId>
