@@ -170,6 +170,31 @@ public class CustomerEventHandler {
 Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also send a list of commands. 
 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
+
+## Putting it all together 
+Now that we have everything set up, its time to wiring it togetger:
+```javascript
+public class Main {
+  
+  public static void main(String[] args) throws InterruptedException {
+    Config config = Config.builder()
+        .applicationId("customer-service")
+        .bootstrapServers("localhost:9092")
+        .partitions(1)
+        .replicas(1)
+        .build();
+
+    EasySourcing app = new EasySourcingBuilder()
+        .withConfig(config)
+        .registerHandler(new CustomerCommandHandler())
+        .registerHandler(new CustomerAggregator())
+        .registerHandler(new CustomerEventHandler())
+        .build();
+        
+    app.start();
+  }
+}
+```
 # Reference
 
  - - - -
