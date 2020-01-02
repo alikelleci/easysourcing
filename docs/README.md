@@ -173,6 +173,34 @@ We annotate our aggregator class with `@Aggregator` and the aggregating methods 
 
 ### Dispatching commands
 
+Sending commands is as easy as:
+```javascript
+public class Sender {
+  
+  public static void main(String[] args) {
+    Config config = Config.builder()
+        .bootstrapServers("localhost:9092")
+        .build();
+
+    CommandGateway commandGateway = new GatewayBuilder()
+        .withConfig(config)
+        .commandGateway();
+        
+    CreateCustomer command = CreateCustomer.builder()
+        .customerId("cust-123")
+        .firstName("John")
+        .lastName("Doe")
+        .build();
+    
+    commandGateway.send(command);
+  }
+}
+```
+
+> **Spring Boot** 
+
+When using Spring Boot, you can just autowire an instance of `CommandGateway`.
+
 ## Event handling
 
 ### Event handler
@@ -203,6 +231,7 @@ We annotate event handler classes  with `@EventHandler`. Methods annotated with 
 
 ## Putting it all together 
 Now that we have everything set up, its time to wiring it togetger:
+
 ```javascript
 public class App {
   
@@ -226,29 +255,15 @@ public class App {
 }
 ```
 
-Sending commands is as easy as:
-```javascript
-public class Sender {
-  
-  public static void main(String[] args) {
-    Config config = Config.builder()
-        .bootstrapServers("localhost:9092")
-        .build();
+> **Spring Boot**
 
-    CommandGateway commandGateway = new GatewayBuilder()
-        .withConfig(config)
-        .commandGateway();
-        
-    CreateCustomer command = CreateCustomer.builder()
-        .customerId("cust-123")
-        .firstName("John")
-        .lastName("Doe")
-        .build();
-    
-    commandGateway.send(command);
-  }
-}
-```
+If you are using Spring Boot with the `easysourcing-spring-boot-starter` dependency, then you don't have to do the steps above. Just add the following in your `application.properties`:
+
+* easysourcing.application-id=customer-service
+* easysourcing.bootstrap-servers=localhost:9092
+* easysourcing.partitions=1
+* easysourcing.replicas=1
+
 
 # Reference
 
