@@ -258,7 +258,7 @@ public class CustomerCommandHandler {
   }
 }
 ````
->**These annotations make your handlers a spring bean, so you can do your autowiring as usual. Also, you don't have to register your handlers, as this is done automatically for you.**
+>**These annotations make your handlers a spring bean, so you can do your autowiring as usual. Also, you don't have to register your handlers manually, as this is done automatically for you.**
 
 
 # Reference
