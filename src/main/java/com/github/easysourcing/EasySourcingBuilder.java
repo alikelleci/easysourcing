@@ -1,16 +1,16 @@
 package com.github.easysourcing;
 
-import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.MessageStream;
-import com.github.easysourcing.message.aggregates.AggregateHandler;
-import com.github.easysourcing.message.aggregates.annotations.ApplyEvent;
-import com.github.easysourcing.message.annotations.TopicInfo;
-import com.github.easysourcing.message.commands.CommandHandler;
-import com.github.easysourcing.message.commands.CommandStream;
-import com.github.easysourcing.message.commands.annotations.HandleCommand;
-import com.github.easysourcing.message.events.EventHandler;
-import com.github.easysourcing.message.events.EventStream;
-import com.github.easysourcing.message.events.annotations.HandleEvent;
+import com.github.easysourcing.messages.Message;
+import com.github.easysourcing.messages.MessageStream;
+import com.github.easysourcing.messages.aggregates.Aggregator;
+import com.github.easysourcing.messages.aggregates.annotations.ApplyEvent;
+import com.github.easysourcing.messages.annotations.TopicInfo;
+import com.github.easysourcing.messages.commands.CommandHandler;
+import com.github.easysourcing.messages.commands.CommandStream;
+import com.github.easysourcing.messages.commands.annotations.HandleCommand;
+import com.github.easysourcing.messages.events.EventHandler;
+import com.github.easysourcing.messages.events.EventStream;
+import com.github.easysourcing.messages.events.annotations.HandleEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -43,7 +43,7 @@ public class EasySourcingBuilder {
 
   //  Handlers
   private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers = new ConcurrentHashMap<>();
-  private final ConcurrentMap<Class<?>, AggregateHandler> aggregateHandlers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<?>, Aggregator> aggregators = new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<?>, EventHandler> eventHandlers = new ConcurrentHashMap<>();
 
 
@@ -56,17 +56,17 @@ public class EasySourcingBuilder {
   }
 
   public EasySourcingBuilder registerHandler(Object handler) {
-    List<Method> commandHanderMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleCommand.class);
-    List<Method> aggregateHanderMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), ApplyEvent.class);
-    List<Method> eventHanderMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleEvent.class);
+    List<Method> commandHandlerMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleCommand.class);
+    List<Method> aggregatorMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), ApplyEvent.class);
+    List<Method> eventHandlerMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleEvent.class);
 
-    commandHanderMethods
+    commandHandlerMethods
         .forEach(method -> addCommandHandler(handler, method));
 
-    aggregateHanderMethods
-        .forEach(method -> addAggregateHandler(handler, method));
+    aggregatorMethods
+        .forEach(method -> addAggregator(handler, method));
 
-    eventHanderMethods
+    eventHandlerMethods
         .forEach(method -> addEventHandler(handler, method));
 
     return this;
@@ -90,10 +90,10 @@ public class EasySourcingBuilder {
     }
   }
 
-  private void addAggregateHandler(Object listener, Method method) {
+  private void addAggregator(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();
-      aggregateHandlers.put(type, new AggregateHandler(listener, method));
+      aggregators.put(type, new Aggregator(listener, method));
     }
   }
 
@@ -113,7 +113,7 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getEvensTopics() {
-    return Stream.of(eventHandlers.keySet(), aggregateHandlers.keySet())
+    return Stream.of(eventHandlers.keySet(), aggregators.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
@@ -163,7 +163,7 @@ public class EasySourcingBuilder {
       MessageStream messageStream = new MessageStream(topics);
       KStream<String, Message> messageKStream = messageStream.buildStream(builder);
 
-      CommandStream commandStream = new CommandStream(commandHandlers, aggregateHandlers);
+      CommandStream commandStream = new CommandStream(commandHandlers, aggregators);
       commandStream.buildStream(messageKStream);
 
       EventStream eventStream = new EventStream(eventHandlers);

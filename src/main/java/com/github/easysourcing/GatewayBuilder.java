@@ -1,8 +1,8 @@
 package com.github.easysourcing;
 
-import com.github.easysourcing.message.Message;
-import com.github.easysourcing.message.commands.CommandGateway;
-import com.github.easysourcing.message.events.EventGateway;
+import com.github.easysourcing.messages.Message;
+import com.github.easysourcing.messages.commands.CommandGateway;
+import com.github.easysourcing.messages.events.EventGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;

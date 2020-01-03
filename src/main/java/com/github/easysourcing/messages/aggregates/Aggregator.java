@@ -1,0 +1,61 @@
+package com.github.easysourcing.messages.aggregates;
+
+import com.github.easysourcing.messages.Handler;
+import com.github.easysourcing.messages.aggregates.exceptions.AggregateInvocationException;
+import com.github.easysourcing.messages.events.Event;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+public class Aggregator implements Handler<Aggregate> {
+
+  private Object target;
+  private Method method;
+
+  public Aggregator(Object target, Method method) {
+    this.target = target;
+    this.method = method;
+  }
+
+  @Override
+  public Aggregate invoke(Object... args) {
+    Aggregate aggregate = (Aggregate) args[0];
+    Event event = (Event) args[1];
+
+    Object result;
+    try {
+      if (method.getParameterCount() == 2) {
+        result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
+      } else {
+        result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata());
+      }
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new AggregateInvocationException(e.getCause().getMessage(), e.getCause());
+    }
+
+    if (result == null) {
+      return null;
+    }
+
+    return Aggregate.builder()
+        .payload(result)
+        .metadata(event.getMetadata())
+        .build();
+  }
+
+  @Override
+  public Object getTarget() {
+    return target;
+  }
+
+  @Override
+  public Method getMethod() {
+    return method;
+  }
+
+  @Override
+  public Class<?> getType() {
+    return method.getParameters()[1].getType();
+  }
+
+}
