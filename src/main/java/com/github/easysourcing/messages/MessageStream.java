@@ -31,7 +31,7 @@ public class MessageStream {
             Stores.persistentTimestampedKeyValueStore("snapshot-store"),
             Serdes.String(),
             new JsonSerde<>(Aggregate.class).noTypeInfo()
-        ).withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "604800000")) // 7 days
+        ).withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "1209600000")) // 14 days
     );
 
     // --> Messages
