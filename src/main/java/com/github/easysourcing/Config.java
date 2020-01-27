@@ -60,20 +60,4 @@ public class Config {
 
     return properties;
   }
-
-  public String getBootstrapServers() {
-    return bootstrapServers;
-  }
-
-  public String getApplicationId() {
-    return applicationId;
-  }
-
-  public int getReplicas() {
-    return replicas;
-  }
-
-  public int getPartitions() {
-    return partitions;
-  }
 }
