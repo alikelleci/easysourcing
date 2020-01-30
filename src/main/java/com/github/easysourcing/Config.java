@@ -21,11 +21,11 @@ import java.util.Properties;
 @Builder(toBuilder = true)
 public class Config {
 
-  // Other
   private String bootstrapServers;
   private String applicationId;
   private int replicas;
   private int partitions;
+  private String securityProtocol;
 
   public Properties streamsConfig() {
     Properties properties = new Properties();
@@ -37,6 +37,7 @@ public class Config {
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
     properties.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+    properties.put(StreamsConfig.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 //    properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
 //    properties.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
 
@@ -57,6 +58,7 @@ public class Config {
   public Properties adminConfigs() {
     Properties properties = new Properties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    properties.put(AdminClientConfig.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;
   }
