@@ -3,6 +3,7 @@ package com.github.easysourcing;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -37,7 +38,7 @@ public class Config {
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
     properties.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
-    properties.put(StreamsConfig.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+    properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 //    properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
 //    properties.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
 
@@ -51,6 +52,7 @@ public class Config {
     properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
     properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
     properties.put(ProducerConfig.ACKS_CONFIG, "all");
+    properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;
   }
@@ -58,7 +60,7 @@ public class Config {
   public Properties adminConfigs() {
     Properties properties = new Properties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    properties.put(AdminClientConfig.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+    properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;
   }
