@@ -27,7 +27,6 @@ public class EasySourcing {
 
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
 
-    addShutdownHook();
     setUpListeners();
 
     log.info("EasySourcing is starting.");
@@ -51,10 +50,13 @@ public class EasySourcing {
 
   private void setUpListeners() {
     kafkaStreams.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
-    kafkaStreams.setUncaughtExceptionHandler((t, e) -> log.error("Exception handler triggered ", e));
+    kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> {
+      log.error("Exception handler triggered ", throwable);
+      if (!kafkaStreams.state().isRunning()) {
+        log.error("This instance is in error state and will now exit.");
+        System.exit(0);
+      }
+    });
   }
 
-  private void addShutdownHook() {
-    Runtime.getRuntime().addShutdownHook(new Thread(EasySourcing.this::stop));
-  }
 }
