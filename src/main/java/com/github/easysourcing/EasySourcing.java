@@ -49,14 +49,15 @@ public class EasySourcing {
   }
 
   private void setUpListeners() {
-    kafkaStreams.setStateListener((newState, oldState) -> log.warn("State changed from {} to {}", oldState, newState));
-    kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> {
-      log.error("Exception handler triggered ", throwable);
+    kafkaStreams.setStateListener((newState, oldState) -> {
+      log.warn("State changed from {} to {}", oldState, newState);
       if (!kafkaStreams.state().isRunning()) {
-        log.error("This instance is in error state and will now exit.");
+        log.error("This stream instance is not running anymore and will now exit.");
         System.exit(0);
       }
     });
+
+    kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> log.error("Exception handler triggered ", throwable));
   }
 
 }
