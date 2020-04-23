@@ -33,7 +33,7 @@ public class EventTransformer implements ValueTransformer<Event, List<Command>> 
       return new ArrayList<>();
     }
 
-    log.debug("Handling event: {}", event);
+    log.info("Handling event: {}", event);
     List<Command> commands = eventHandler.invoke(event);
 
     context.commit();
