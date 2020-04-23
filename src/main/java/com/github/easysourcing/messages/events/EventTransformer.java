@@ -32,7 +32,7 @@ public class EventTransformer implements ValueTransformer<Event, List<Command>> 
     if (eventHandler == null) {
       return new ArrayList<>();
     }
-    log.debug("Event received: {}", event);
+    log.debug("Handling event: {}", event);
 
     List<Command> commands = eventHandler.invoke(event);
 
