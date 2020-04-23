@@ -41,11 +41,11 @@ public class CommandTransformer implements ValueTransformer<Command, List<Event>
     if (commandHandler == null) {
       return new ArrayList<>();
     }
-    log.debug("Handling command: {}", command);
 
     ValueAndTimestamp<Aggregate> record = store.get(command.getId());
     Aggregate aggregate = record != null ? record.value() : null;
 
+    log.debug("Handling command: {}", command);
     List<Event> events = commandHandler.invoke(aggregate, command);
 
     boolean updated = false;
