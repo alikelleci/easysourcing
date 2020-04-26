@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.util.ReflectionUtils;
 
 import java.beans.Transient;
 
@@ -33,11 +34,8 @@ public class Message {
         .filter(field -> field.getType() == String.class)
         .findFirst()
         .map(field -> {
-          try {
-            return (String) FieldUtils.readField(field, getPayload(), true);
-          } catch (IllegalAccessException e) {
-            return null;
-          }
+          field.setAccessible(true);
+          return (String) ReflectionUtils.getField(field, getPayload());
         })
         .orElse(null);
   }
