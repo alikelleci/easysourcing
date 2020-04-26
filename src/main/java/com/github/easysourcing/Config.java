@@ -24,9 +24,12 @@ public class Config {
 
   private String bootstrapServers;
   private String applicationId;
-  private int replicas;
-  private int partitions;
-  private String securityProtocol;
+  @Builder.Default
+  private int replicas = 1;
+  @Builder.Default
+  private int partitions = 1;
+  @Builder.Default
+  private String securityProtocol = "PLAINTEXT";
 
   public Properties streamsConfig() {
     Properties properties = new Properties();
