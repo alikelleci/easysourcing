@@ -258,7 +258,7 @@ When using Spring Boot, you can just autowire an instance of `EventGateway`.
 
 
 ## Putting it all together 
-Now that we have everything set up, its time to wiring it togetger:
+Now that we have everything set up, its time to wiring it together:
 
 ```javascript
 public class App {

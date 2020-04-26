@@ -7,10 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.beans.Transient;
-import java.lang.reflect.Field;
 
 @Data
 @NoArgsConstructor
@@ -29,21 +29,17 @@ public class Message {
       return null;
     }
 
-    for (Field field : getPayload().getClass().getDeclaredFields()) {
-      AggregateId annotation = field.getAnnotation(AggregateId.class);
-      if (annotation != null) {
-        field.setAccessible(true);
-        try {
-          Object value = field.get(getPayload());
-          if (value instanceof String) {
-            return (String) value;
+    return FieldUtils.getFieldsListWithAnnotation(getPayload().getClass(), AggregateId.class).stream()
+        .filter(field -> field.getType() == String.class)
+        .findFirst()
+        .map(field -> {
+          try {
+            return (String) FieldUtils.readField(field, getPayload(), true);
+          } catch (IllegalAccessException e) {
+            return null;
           }
-        } catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    return null;
+        })
+        .orElse(null);
   }
 
   @Transient

@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages;
 
 import com.github.easysourcing.messages.annotations.TopicInfo;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.kafka.core.KafkaTemplate;
 
 public class MessageGateway {
@@ -17,7 +16,7 @@ public class MessageGateway {
       throw new IllegalArgumentException("You are trying to dispatch a message without a payload.");
     }
 
-    TopicInfo topicInfo = AnnotationUtils.findAnnotation(message.getPayload().getClass(), TopicInfo.class);
+    TopicInfo topicInfo = message.getTopicInfo();
     if (topicInfo == null) {
       throw new IllegalArgumentException("You are trying to dispatch a message without any topic information. Please annotate your message with @TopicInfo.");
     }
