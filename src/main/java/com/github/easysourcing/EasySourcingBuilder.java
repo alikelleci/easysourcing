@@ -15,8 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
+import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
@@ -131,10 +131,9 @@ public class EasySourcingBuilder {
 
   private void createTopics() {
     try (AdminClient adminClient = AdminClient.create(config.adminConfigs())) {
-      Set<String> brokerTopics = adminClient.listTopics().listings().get()
-          .stream()
-          .map(TopicListing::name)
-          .collect(Collectors.toSet());
+      ListTopicsOptions listTopicsOptions = new ListTopicsOptions();
+      listTopicsOptions.timeoutMs(15000);
+      Set<String> brokerTopics = adminClient.listTopics(listTopicsOptions).names().get();
 
       Set<NewTopic> topicsToCreate = getTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
@@ -147,7 +146,6 @@ public class EasySourcingBuilder {
 
       CreateTopicsOptions options = new CreateTopicsOptions();
       options.timeoutMs(15000);
-
       adminClient.createTopics(topicsToCreate, options).all().get();
 
     } catch (InterruptedException | ExecutionException e) {

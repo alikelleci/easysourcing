@@ -37,11 +37,11 @@ public class MessageStream {
     // --> Messages
     return builder.stream(topics,
         Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
-        .filter((key, event) -> key != null)
-        .filter((key, event) -> event != null)
-        .filter((key, event) -> event.getId() != null)
-        .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getPayload() != null);
+        .filter((key, message) -> key != null)
+        .filter((key, message) -> message != null)
+        .filter((key, message) -> message.getId() != null)
+        .filter((key, message) -> message.getPayload() != null)
+        .filter((key, message) -> message.getTopicInfo() != null);
   }
 
 }
