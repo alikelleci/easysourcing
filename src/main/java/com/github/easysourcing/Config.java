@@ -42,8 +42,6 @@ public class Config {
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
     properties.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
     properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
-//    properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
-//    properties.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
 
     return properties;
   }
