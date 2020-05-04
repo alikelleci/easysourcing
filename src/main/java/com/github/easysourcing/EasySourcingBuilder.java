@@ -1,7 +1,5 @@
 package com.github.easysourcing;
 
-import com.github.easysourcing.messages.Message;
-import com.github.easysourcing.messages.MessageStream;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.aggregates.annotations.ApplyEvent;
 import com.github.easysourcing.messages.annotations.TopicInfo;
@@ -20,7 +18,6 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.kafka.config.TopicBuilder;
 
@@ -105,7 +102,8 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getCommandsTopics() {
-    return commandHandlers.keySet().stream()
+    return Stream.of(commandHandlers.keySet())
+        .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
@@ -113,7 +111,7 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getEvensTopics() {
-    return Stream.of(eventHandlers.keySet(), aggregators.keySet())
+    return Stream.of(eventHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
@@ -156,16 +154,16 @@ public class EasySourcingBuilder {
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
-    Set<String> topics = getTopics();
-    if (!topics.isEmpty()) {
-      MessageStream messageStream = new MessageStream(topics);
-      KStream<String, Message> messageKStream = messageStream.buildStream(builder);
+    Set<String> commandsTopics = getCommandsTopics();
+    if (!commandsTopics.isEmpty()) {
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, config.isFrequentCommits());
+      commandStream.buildStream(builder);
+    }
 
-      CommandStream commandStream = new CommandStream(commandHandlers, aggregators);
-      commandStream.buildStream(messageKStream);
-
-      EventStream eventStream = new EventStream(eventHandlers);
-      eventStream.buildStream(messageKStream);
+    Set<String> evensTopics = getEvensTopics();
+    if (!evensTopics.isEmpty()) {
+      EventStream eventStream = new EventStream(evensTopics, eventHandlers, config.isFrequentCommits());
+      eventStream.buildStream(builder);
     }
 
     return builder.build();

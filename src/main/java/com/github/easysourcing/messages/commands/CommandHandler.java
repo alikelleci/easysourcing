@@ -2,10 +2,17 @@ package com.github.easysourcing.messages.commands;
 
 import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.aggregates.Aggregate;
+import com.github.easysourcing.messages.commands.exceptions.AggregateIdMismatchException;
 import com.github.easysourcing.messages.commands.exceptions.CommandExecutionException;
 import com.github.easysourcing.messages.events.Event;
+import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
+import com.github.easysourcing.retry.Retry;
+import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,10 +25,18 @@ public class CommandHandler implements Handler<List<Event>> {
 
   private Object target;
   private Method method;
+  private RetryPolicy<Object> retryPolicy;
 
   public CommandHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
+    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class));
+
+    if (retryPolicy != null) {
+      retryPolicy
+          .onRetry(e -> log.warn("Handling command failed, retrying... ({})", e.getAttemptCount()))
+          .onFailure(e -> log.error("Handling command failed after {} attempts.", e.getAttemptCount()));
+    }
   }
 
   @Override
@@ -29,18 +44,26 @@ public class CommandHandler implements Handler<List<Event>> {
     Aggregate aggregate = (Aggregate) args[0];
     Command command = (Command) args[1];
 
-    Object result;
-    try {
-      if (method.getParameterCount() == 2) {
-        result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
-      } else {
-        result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
-      }
-      return createEvents(command, result);
+    log.info("Handling command: {}", command);
 
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new CommandExecutionException(e.getCause().getMessage(), e.getCause());
+    try {
+      if (retryPolicy == null) {
+        return doInvoke(aggregate, command);
+      }
+      return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
+    } catch (Exception e) {
+      throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
+  }
+
+  private List<Event> doInvoke(Aggregate aggregate, Command command) throws InvocationTargetException, IllegalAccessException {
+    Object result;
+    if (method.getParameterCount() == 2) {
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
+    } else {
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
+    }
+    return createEvents(command, result);
   }
 
   @Override
@@ -79,10 +102,10 @@ public class CommandHandler implements Handler<List<Event>> {
 
     events.forEach(event -> {
       if (event.getId() == null) {
-        throw new CommandExecutionException("You are trying to dispatch an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
+        throw new AggregateIdMissingException("You are trying to dispatch an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
       }
       if (!StringUtils.equals(event.getId(), command.getId())) {
-        throw new CommandExecutionException("A command-handler can only produce events about the aggregate a given command was targeted to.");
+        throw new AggregateIdMismatchException("A command-handler can only produce events about the aggregate a given command was targeted to.");
       }
     });
 

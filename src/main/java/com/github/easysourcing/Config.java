@@ -30,6 +30,8 @@ public class Config {
   private int partitions = 1;
   @Builder.Default
   private String securityProtocol = "PLAINTEXT";
+  @Builder.Default
+  private boolean frequentCommits = false;
 
   public Properties streamsConfig() {
     Properties properties = new Properties();
@@ -51,8 +53,9 @@ public class Config {
     properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-    properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
     properties.put(ProducerConfig.ACKS_CONFIG, "all");
+    properties.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
+    properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
     properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;

@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages.events;
 
 import com.github.easysourcing.messages.commands.Command;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -10,15 +9,16 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 
-@Slf4j
 public class EventTransformer implements ValueTransformer<Event, List<Command>> {
 
   private ProcessorContext context;
 
   private final ConcurrentMap<Class<?>, EventHandler> eventHandlers;
+  private final boolean frequentCommits;
 
-  public EventTransformer(ConcurrentMap<Class<?>, EventHandler> eventHandlers) {
+  public EventTransformer(ConcurrentMap<Class<?>, EventHandler> eventHandlers, boolean frequentCommits) {
     this.eventHandlers = eventHandlers;
+    this.frequentCommits = frequentCommits;
   }
 
   @Override
@@ -33,10 +33,11 @@ public class EventTransformer implements ValueTransformer<Event, List<Command>> 
       return new ArrayList<>();
     }
 
-    log.info("Handling event: {}", event);
     List<Command> commands = eventHandler.invoke(event);
 
-    context.commit();
+    if (frequentCommits) {
+      context.commit();
+    }
     return commands;
   }
 

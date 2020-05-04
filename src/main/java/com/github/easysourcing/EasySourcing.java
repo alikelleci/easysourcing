@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.Topology;
 
+import java.time.Duration;
+
 @Slf4j
 public class EasySourcing {
 
@@ -12,52 +14,49 @@ public class EasySourcing {
   private Topology topology;
   private KafkaStreams kafkaStreams;
 
-  private boolean running = false;
-
   protected EasySourcing(Config config, Topology topology) {
     this.config = config;
     this.topology = topology;
   }
 
   public void start() {
-    if (running) {
-      log.warn("EasySourcing already started.");
+    if (kafkaStreams != null) {
+      log.info("EasySourcing already started.");
       return;
     }
 
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
-
     setUpListeners();
 
-    log.info("EasySourcing is starting.");
+    log.info("EasySourcing is starting...");
     kafkaStreams.start();
-    this.running = true;
   }
 
   public void stop() {
-    if (!running) {
-      log.warn("EasySourcing already stopped.");
+    if (kafkaStreams == null) {
+      log.info("EasySourcing already stopped.");
       return;
     }
 
-    if (kafkaStreams != null) {
-      log.info("EasySourcing is shutting down.");
-      kafkaStreams.close();
-      kafkaStreams = null;
-      running = false;
-    }
+    log.info("EasySourcing is shutting down...");
+    kafkaStreams.close(Duration.ofMillis(1000));
+    kafkaStreams = null;
   }
 
   private void setUpListeners() {
     kafkaStreams.setStateListener((newState, oldState) -> {
       log.warn("State changed from {} to {}", oldState, newState);
-      if (!kafkaStreams.state().isRunning()) {
-        log.error("This stream instance is not running anymore and will now exit.");
-        System.exit(0);
-      }
     });
 
-    kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> log.error("Exception handler triggered ", throwable));
+    kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> {
+      log.error("EasySourcing will now exit because of the following error: ", throwable);
+      System.exit(1);
+    });
+
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      log.info("EasySourcing is shutting down...");
+      kafkaStreams.close(Duration.ofMillis(1000));
+    }));
   }
 
 }
