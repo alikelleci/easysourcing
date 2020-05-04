@@ -306,7 +306,7 @@ The essential configurations for EasySourcing are the following:
 
 
 ## Retries
-EasySourcing has a built in mechanism for retrying command handling and/or event handling. To enable retry, simply annotate your handler method with `@Retry`:
+EasySourcing has a built in mechanism for retrying command handling and/or event handling. To enable retries, simply annotate your handler method with `@Retry`:
 
 ```javascript
 @EventHandler
