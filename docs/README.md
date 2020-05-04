@@ -4,7 +4,7 @@ EasySourcing is an API for building high performance Event Driven and Event Sour
  - - - -
 
 # Quick Start
-- - - -
+
 ## Install
 Include the dependency in your project:
 ```javascript
@@ -267,8 +267,6 @@ public class App {
     Config config = Config.builder()
         .applicationId("customer-service")
         .bootstrapServers("localhost:9092")
-        .partitions(1)
-        .replicas(1)
         .build();
 
     EasySourcing app = new EasySourcingBuilder()
@@ -285,14 +283,56 @@ public class App {
 
 > **Spring Boot**
 
-If you are using Spring Boot with the `easysourcing-spring-boot-starter` dependency, then you don't have to do the steps above. Just add the following in your `application.properties`:
+If you are using Spring Boot with the `easysourcing-spring-boot-starter` dependency, then you don't have to do the steps above. Just add the essential configurations in your `application.properties`:
 
 * easysourcing.application-id=customer-service
 * easysourcing.bootstrap-servers=localhost:9092
-* easysourcing.partitions=1
-* easysourcing.replicas=1
-
-
-# Reference
 
  - - - -
+ 
+# Reference
+ 
+## Configuration
+The essential configurations for EasySourcing are the following:
+
+| Option           	| Default value 	| Description                                                                                                                    	|
+|------------------	|---------------	|--------------------------------------------------------------------------------------------------------------------------------	|
+| applicationId    	|               	| An identifier for the stream processing application. Must be unique within the Kafka cluster.                                  	|
+| bootstrapServers 	|               	| Comma-seperated host/port pairs to use for establishing the initial connection to the Kafka cluster.                           	|
+| partitions       	| 1             	| Sets the amount of partitions for the topics created by the applicaiton.                                                       	|
+| replicas         	| 1             	| Sets the replication factor for the topics created by the applicaiton.                                                         	|
+| securityProtocol 	| PLAINTEXT     	| Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.                         	|
+| frequentCommits  	| false         	| Sets frequent commits on or off. Setting this option to 'true' will increase reliability but will drastically reduce performance. |
+
+
+## Retries
+EasySourcing has a built in mechanism for retrying command handling and/or event handling. To enable retry, simply annotate your handler method with `@Retry`:
+
+```javascript
+@EventHandler
+public class CustomerEventHandler {
+
+  @Retry
+  @HandleEvent
+  public void handle(SomeEvent event) {
+     // Some operation that can throw an Exception
+  }
+
+  @Retry(exceptions = {TimeoutException.class, SocketTimeoutException.class}, attempts = 3, delay = 3000, backoff = Backoff.EXPONENTIAL)
+  @HandleEvent
+  public SomeCommand handle(AnotherEvent event) {
+     // Some operation that can throw a TimeoutException or SocketTimeoutException
+  }
+
+}
+```
+> **Options**
+
+Several options are available to configure retry policy based on your needs:
+
+| Option     	| Default value 	| Description                                                                                           	|
+|------------	|---------------	|-------------------------------------------------------------------------------------------------------	|
+| exceptions 	|               	| Exception types that are retryable. Defaults to any exception.                                        	|
+| attempts   	| 3             	| The maximum number of attempts before failure.                                                        	|
+| delay      	| 1000          	| The maximimum wait (in milliseconds) between retries.                                                 	|
+| backoff    	| FIXED         	| Specify the backoff strategy for retrying this operation. Valid values are 'FIXED' and 'EXPONENTIAL'. 	|
