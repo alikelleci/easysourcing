@@ -14,10 +14,15 @@ public class CommandGateway extends MessageGateway {
   }
 
   public void send(Object payload, Metadata metadata) {
+    if (metadata == null) {
+      metadata = Metadata.builder().build();
+    }
+
     Command message = Command.builder()
-        .uuid(UUID.randomUUID().toString())
         .payload(payload)
-        .metadata(metadata)
+        .metadata(metadata.toBuilder()
+            .entry("_commandId", UUID.randomUUID().toString())
+            .build())
         .build();
 
     send(message);

@@ -38,7 +38,6 @@ public class EventStream {
         Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getUuid() != null)
         .filter((key, message) -> message.getAggregateId() != null)
         .filter((key, message) -> message.getPayload() != null)
         .filter((key, message) -> message.getTopicInfo() != null)

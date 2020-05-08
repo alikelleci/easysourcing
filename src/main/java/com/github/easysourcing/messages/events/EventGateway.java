@@ -14,10 +14,15 @@ public class EventGateway extends MessageGateway {
   }
 
   public void send(Object payload, Metadata metadata) {
+    if (metadata == null) {
+      metadata = Metadata.builder().build();
+    }
+
     Event message = Event.builder()
-        .uuid(UUID.randomUUID().toString())
         .payload(payload)
-        .metadata(metadata)
+        .metadata(metadata.toBuilder()
+            .entry("_eventId", UUID.randomUUID().toString())
+            .build())
         .build();
 
     send(message);

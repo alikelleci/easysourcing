@@ -96,10 +96,11 @@ public class CommandHandler implements Handler<List<Event>> {
 
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
-            .uuid(UUID.randomUUID().toString())
-            .reference(command.getUuid())
             .payload(payload)
-            .metadata(command.getMetadata())
+            .metadata(command.getMetadata().toBuilder()
+                .entry("_eventId", UUID.randomUUID().toString())
+                .entry("_commandId", command.getMetadata().getEntries().get("_commandId"))
+                .build())
             .build())
         .collect(Collectors.toList());
 

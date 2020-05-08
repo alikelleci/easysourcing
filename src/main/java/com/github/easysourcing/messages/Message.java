@@ -20,9 +20,6 @@ import java.beans.Transient;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public class Message {
 
-  private String uuid;
-  private String reference;
-
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private Object payload;
   private Metadata metadata;
