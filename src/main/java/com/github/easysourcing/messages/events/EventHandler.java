@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages.events;
 
 import com.github.easysourcing.messages.Handler;
-import com.github.easysourcing.messages.Metadata;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.messages.events.exceptions.EventProcessingException;
 import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
@@ -16,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -60,7 +60,7 @@ public class EventHandler implements Handler<List<Command>> {
     } else {
       result = method.invoke(target, event.getPayload(), event.getMetadata());
     }
-    return createCommands(result, event.getMetadata());
+    return createCommands(event, result);
   }
 
   @Override
@@ -78,7 +78,7 @@ public class EventHandler implements Handler<List<Command>> {
     return method.getParameters()[0].getType();
   }
 
-  private List<Command> createCommands(Object result, Metadata metadata) {
+  private List<Command> createCommands(Event event, Object result) {
     if (result == null) {
       return new ArrayList<>();
     }
@@ -92,13 +92,15 @@ public class EventHandler implements Handler<List<Command>> {
 
     List<Command> commands = list.stream()
         .map(payload -> Command.builder()
+            .uuid(UUID.randomUUID().toString())
+            .reference(event.getUuid())
             .payload(payload)
-            .metadata(metadata)
+            .metadata(event.getMetadata())
             .build())
         .collect(Collectors.toList());
 
     commands.forEach(command -> {
-      if (command.getId() == null) {
+      if (command.getAggregateId() == null) {
         throw new AggregateIdMissingException("You are trying to dispatch a command without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
       }
     });

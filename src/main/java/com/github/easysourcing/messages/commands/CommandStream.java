@@ -56,7 +56,8 @@ public class CommandStream {
         Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getId() != null)
+        .filter((key, message) -> message.getUuid() != null)
+        .filter((key, message) -> message.getAggregateId() != null)
         .filter((key, message) -> message.getPayload() != null)
         .filter((key, message) -> message.getTopicInfo() != null)
         .filter((key, message) -> message instanceof Command)
@@ -68,7 +69,7 @@ public class CommandStream {
         .filter((key, events) -> CollectionUtils.isNotEmpty(events))
         .flatMapValues((ValueMapper<List<Event>, Iterable<Event>>) events -> events)
         .filter((key, event) -> event != null)
-        .map((key, event) -> KeyValue.pair(event.getId(), event))
+        .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
             Produced.with(Serdes.String(), new JsonSerde<>(Event.class).noTypeInfo()));
 

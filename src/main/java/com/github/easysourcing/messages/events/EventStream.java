@@ -38,7 +38,8 @@ public class EventStream {
         Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getId() != null)
+        .filter((key, message) -> message.getUuid() != null)
+        .filter((key, message) -> message.getAggregateId() != null)
         .filter((key, message) -> message.getPayload() != null)
         .filter((key, message) -> message.getTopicInfo() != null)
         .filter((key, message) -> message instanceof Event)
@@ -50,7 +51,7 @@ public class EventStream {
         .filter((key, commands) -> CollectionUtils.isNotEmpty(commands))
         .flatMapValues((ValueMapper<List<Command>, Iterable<Command>>) commands -> commands)
         .filter((key, command) -> command != null)
-        .map((key, command) -> KeyValue.pair(command.getId(), command))
+        .map((key, command) -> KeyValue.pair(command.getAggregateId(), command))
         .to((key, command, recordContext) -> command.getTopicInfo().value(),
             Produced.with(Serdes.String(), new JsonSerde<>(Command.class).noTypeInfo()));
 

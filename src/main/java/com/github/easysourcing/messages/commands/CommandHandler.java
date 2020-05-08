@@ -18,6 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -95,16 +96,18 @@ public class CommandHandler implements Handler<List<Event>> {
 
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
+            .uuid(UUID.randomUUID().toString())
+            .reference(command.getUuid())
             .payload(payload)
             .metadata(command.getMetadata())
             .build())
         .collect(Collectors.toList());
 
     events.forEach(event -> {
-      if (event.getId() == null) {
+      if (event.getAggregateId() == null) {
         throw new AggregateIdMissingException("You are trying to dispatch an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
       }
-      if (!StringUtils.equals(event.getId(), command.getId())) {
+      if (!StringUtils.equals(event.getAggregateId(), command.getAggregateId())) {
         throw new AggregateIdMismatchException("A command-handler can only produce events about the aggregate a given command was targeted to.");
       }
     });

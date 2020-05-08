@@ -5,6 +5,8 @@ import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.util.UUID;
+
 public class EventGateway extends MessageGateway {
 
   public EventGateway(KafkaTemplate<String, Message> kafkaTemplate) {
@@ -13,6 +15,7 @@ public class EventGateway extends MessageGateway {
 
   public void send(Object payload, Metadata metadata) {
     Event message = Event.builder()
+        .uuid(UUID.randomUUID().toString())
         .payload(payload)
         .metadata(metadata)
         .build();

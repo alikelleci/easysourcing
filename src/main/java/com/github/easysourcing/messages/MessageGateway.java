@@ -24,7 +24,7 @@ public class MessageGateway {
       throw new TopicInfoMissingException("You are trying to dispatch a message without any topic information. Please annotate your message with @TopicInfo.");
     }
 
-    String aggregateId = message.getId();
+    String aggregateId = message.getAggregateId();
     if (aggregateId == null) {
       throw new AggregateIdMissingException("You are trying to dispatch a message without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
     }
