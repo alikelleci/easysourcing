@@ -21,7 +21,7 @@ public class EventGateway extends MessageGateway {
     Event message = Event.builder()
         .payload(payload)
         .metadata(metadata.toBuilder()
-            .entry("_eventId", UUID.randomUUID().toString())
+            .entry("_correlationId", UUID.randomUUID().toString())
             .build())
         .build();
 

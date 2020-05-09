@@ -15,7 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -93,10 +92,7 @@ public class EventHandler implements Handler<List<Command>> {
     List<Command> commands = list.stream()
         .map(payload -> Command.builder()
             .payload(payload)
-            .metadata(event.getMetadata().toBuilder()
-                .entry("_commandId", UUID.randomUUID().toString())
-                .entry("_eventId", event.getMetadata().getEntries().get("_eventId"))
-                .build())
+            .metadata(event.getMetadata())
             .build())
         .collect(Collectors.toList());
 

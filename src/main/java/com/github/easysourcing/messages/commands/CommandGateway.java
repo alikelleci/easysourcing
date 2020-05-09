@@ -21,7 +21,7 @@ public class CommandGateway extends MessageGateway {
     Command message = Command.builder()
         .payload(payload)
         .metadata(metadata.toBuilder()
-            .entry("_commandId", UUID.randomUUID().toString())
+            .entry("_correlationId", UUID.randomUUID().toString())
             .build())
         .build();
 
