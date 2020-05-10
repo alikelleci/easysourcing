@@ -110,7 +110,7 @@ public class EasySourcingBuilder {
         .collect(Collectors.toSet());
   }
 
-  private Set<String> getEvensTopics() {
+  private Set<String> getEventsTopics() {
     return Stream.of(eventHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
@@ -122,7 +122,7 @@ public class EasySourcingBuilder {
   private Set<String> getTopics() {
     Set<String> topics = new HashSet<>();
     topics.addAll(getCommandsTopics());
-    topics.addAll(getEvensTopics());
+    topics.addAll(getEventsTopics());
 
     return topics;
   }
@@ -160,9 +160,9 @@ public class EasySourcingBuilder {
       commandStream.buildStream(builder);
     }
 
-    Set<String> evensTopics = getEvensTopics();
-    if (!evensTopics.isEmpty()) {
-      EventStream eventStream = new EventStream(evensTopics, eventHandlers, config.isFrequentCommits());
+    Set<String> eventsTopics = getEventsTopics();
+    if (!eventsTopics.isEmpty()) {
+      EventStream eventStream = new EventStream(eventsTopics, eventHandlers, config.isFrequentCommits());
       eventStream.buildStream(builder);
     }
 
