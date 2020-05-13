@@ -3,11 +3,16 @@ package com.github.easysourcing.messages.aggregates;
 import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.aggregates.exceptions.AggregateInvocationException;
 import com.github.easysourcing.messages.events.Event;
+import com.github.easysourcing.messages.exceptions.AggregateIdMismatchException;
+import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
+import com.github.easysourcing.messages.exceptions.PayloadMissingException;
+import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,15 +61,7 @@ public class Aggregator implements Handler<Aggregate> {
     } else {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata());
     }
-
-    if (result == null) {
-      return null;
-    }
-
-    return Aggregate.builder()
-        .payload(result)
-        .metadata(event.getMetadata())
-        .build();
+    return createAggregate(event, result);
   }
 
   @Override
@@ -80,6 +77,28 @@ public class Aggregator implements Handler<Aggregate> {
   @Override
   public Class<?> getType() {
     return method.getParameters()[1].getType();
+  }
+
+  private Aggregate createAggregate(Event event, Object result) {
+    Aggregate aggregate = Aggregate.builder()
+        .payload(result)
+        .metadata(event.getMetadata())
+        .build();
+
+    if (aggregate.getPayload() == null) {
+      throw new PayloadMissingException("You are trying to dispatch an aggregate without a payload.");
+    }
+    if (aggregate.getTopicInfo() == null) {
+      throw new TopicInfoMissingException("You are trying to dispatch an aggregate without any topic information. Please annotate your aggregate with @TopicInfo.");
+    }
+    if (aggregate.getAggregateId() == null) {
+      throw new AggregateIdMissingException("You are trying to dispatch an aggregate without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
+    }
+    if (!StringUtils.equals(aggregate.getAggregateId(), event.getAggregateId())) {
+      throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + event.getAggregateId() + ", but was " + aggregate.getAggregateId());
+    }
+
+    return aggregate;
   }
 
 }

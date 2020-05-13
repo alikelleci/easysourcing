@@ -2,19 +2,22 @@ package com.github.easysourcing.messages.commands;
 
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
+import com.github.easysourcing.messages.commands.results.CommandResult;
+import com.github.easysourcing.messages.commands.results.Success;
 import com.github.easysourcing.messages.events.Event;
+import com.github.easysourcing.messages.snapshots.Snapshot;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
 
-public class CommandTransformer implements ValueTransformer<Command, List<Event>> {
+public class CommandTransformer implements ValueTransformer<Command, CommandResult> {
 
   private ProcessorContext context;
   private KeyValueStore<String, ValueAndTimestamp<Aggregate>> store;
@@ -36,15 +39,13 @@ public class CommandTransformer implements ValueTransformer<Command, List<Event>
   }
 
   @Override
-  public List<Event> transform(Command command) {
+  public CommandResult transform(Command command) {
     CommandHandler commandHandler = commandHandlers.get(command.getPayload().getClass());
     if (commandHandler == null) {
-      return new ArrayList<>();
+      return null;
     }
 
-    ValueAndTimestamp<Aggregate> record = store.get(command.getAggregateId());
-    Aggregate aggregate = record != null ? record.value() : null;
-
+    Aggregate aggregate = loadAggregate(command.getAggregateId());
     List<Event> events = commandHandler.invoke(aggregate, command);
 
     boolean updated = false;
@@ -56,15 +57,24 @@ public class CommandTransformer implements ValueTransformer<Command, List<Event>
       }
     }
 
+    Snapshot snapshot = null;
     if (updated) {
       store.put(command.getAggregateId(), ValueAndTimestamp
           .make(aggregate, new Timestamp(System.currentTimeMillis()).getTime()));
+
+      snapshot = Snapshot.builder()
+          .payload(aggregate.getPayload())
+          .metadata(aggregate.getMetadata())
+          .build();
     }
 
     if (frequentCommits) {
       context.commit();
     }
-    return events;
+    return Success.builder()
+        .snapshot(snapshot)
+        .events(events)
+        .build();
   }
 
   @Override
@@ -72,5 +82,11 @@ public class CommandTransformer implements ValueTransformer<Command, List<Event>
 
   }
 
+  private Aggregate loadAggregate(String id) {
+    ValueAndTimestamp<Aggregate> record = store.get(id);
+    return Optional.ofNullable(record)
+        .map(ValueAndTimestamp::value)
+        .orElse(null);
+  }
 
 }

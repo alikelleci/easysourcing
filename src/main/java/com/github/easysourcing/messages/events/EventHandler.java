@@ -4,6 +4,8 @@ import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.messages.events.exceptions.EventProcessingException;
 import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
+import com.github.easysourcing.messages.exceptions.PayloadMissingException;
+import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +99,12 @@ public class EventHandler implements Handler<List<Command>> {
         .collect(Collectors.toList());
 
     commands.forEach(command -> {
+      if (command.getPayload() == null) {
+        throw new PayloadMissingException("You are trying to dispatch a command without a payload.");
+      }
+      if (command.getTopicInfo() == null) {
+        throw new TopicInfoMissingException("You are trying to dispatch a command without any topic information. Please annotate your command with @TopicInfo.");
+      }
       if (command.getAggregateId() == null) {
         throw new AggregateIdMissingException("You are trying to dispatch a command without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
       }

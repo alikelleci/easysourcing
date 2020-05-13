@@ -1,4 +1,4 @@
-package com.github.easysourcing.messages.commands.exceptions;
+package com.github.easysourcing.messages.exceptions;
 
 public class AggregateIdMismatchException extends RuntimeException {
 

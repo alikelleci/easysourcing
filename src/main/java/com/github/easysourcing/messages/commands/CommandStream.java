@@ -4,7 +4,11 @@ package com.github.easysourcing.messages.commands;
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
+import com.github.easysourcing.messages.commands.results.CommandResult;
+import com.github.easysourcing.messages.commands.results.Failure;
+import com.github.easysourcing.messages.commands.results.Success;
 import com.github.easysourcing.messages.events.Event;
+import com.github.easysourcing.messages.snapshots.Snapshot;
 import com.github.easysourcing.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,11 +52,11 @@ public class CommandStream {
             Stores.persistentTimestampedKeyValueStore("snapshot-store"),
             Serdes.String(),
             new JsonSerde<>(Aggregate.class).noTypeInfo()
-        ).withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "1209600000")) // 14 days
+        ).withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "86400000")) // 1 day
     );
 
     // --> Commands
-    KStream<String, Command> commandKStream = builder.stream(topics,
+    KStream<String, Command> commandsKStream = builder.stream(topics,
         Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
@@ -62,9 +66,31 @@ public class CommandStream {
         .filter((key, message) -> message instanceof Command)
         .mapValues((key, message) -> (Command) message);
 
-    // Commands --> Events
-    commandKStream
+    // Commands --> Results
+    KStream<String, CommandResult> resultsKStream = commandsKStream
         .transformValues(() -> new CommandTransformer(commandHandlers, aggregators, frequentCommits), "snapshot-store")
+        .filter((key, result) -> result != null);
+
+    // Results --> Success
+    KStream<String, Success> successKStream = resultsKStream
+        .filter((key, result) -> result instanceof Success)
+        .mapValues((key, result) -> (Success) result);
+
+    // Results --> Failures
+    KStream<String, Failure> failureKStream = resultsKStream
+        .filter((key, result) -> result instanceof Failure)
+        .mapValues((key, result) -> (Failure) result);
+
+    // Success --> Snapshots
+    successKStream
+        .mapValues(Success::getSnapshot)
+        .filter((key, snapshot) -> snapshot != null)
+        .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
+            Produced.with(Serdes.String(), new JsonSerde<>(Snapshot.class).noTypeInfo()));
+
+    // Success --> Events
+    successKStream
+        .mapValues(Success::getEvents)
         .filter((key, events) -> CollectionUtils.isNotEmpty(events))
         .flatMapValues((ValueMapper<List<Event>, Iterable<Event>>) events -> events)
         .filter((key, event) -> event != null)
@@ -72,7 +98,7 @@ public class CommandStream {
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
             Produced.with(Serdes.String(), new JsonSerde<>(Event.class).noTypeInfo()));
 
-    return commandKStream;
+    return commandsKStream;
   }
 
 }
