@@ -2,10 +2,12 @@ package com.github.easysourcing.messages.commands;
 
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
-import com.github.easysourcing.messages.commands.results.CommandResult;
-import com.github.easysourcing.messages.commands.results.Success;
+import com.github.easysourcing.messages.commands.CommandResult.Failure;
+import com.github.easysourcing.messages.commands.CommandResult.Success;
+import com.github.easysourcing.messages.commands.exceptions.InvalidCommandException;
 import com.github.easysourcing.messages.events.Event;
 import com.github.easysourcing.messages.snapshots.Snapshot;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
@@ -15,7 +17,6 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
-
 
 public class CommandTransformer implements ValueTransformer<Command, CommandResult> {
 
@@ -46,7 +47,23 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
     }
 
     Aggregate aggregate = loadAggregate(command.getAggregateId());
-    List<Event> events = commandHandler.invoke(aggregate, command);
+    List<Event> events;
+    try {
+      events = commandHandler.invoke(aggregate, command);
+    } catch (Exception e) {
+      if (ExceptionUtils.getRootCause(e) instanceof InvalidCommandException) {
+        String message = ExceptionUtils.getRootCauseMessage(e);
+        return Failure.builder()
+            .message(message)
+            .command(command.toBuilder()
+                .metadata(command.getMetadata().toBuilder()
+                    .entry("$failure", message)
+                    .build())
+                .build())
+            .build();
+      }
+      throw e;
+    }
 
     boolean updated = false;
     for (Event event : events) {

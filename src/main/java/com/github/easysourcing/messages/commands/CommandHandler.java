@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,13 +33,9 @@ public class CommandHandler implements Handler<List<Event>> {
   public CommandHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
-    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class));
-
-    if (retryPolicy != null) {
-      retryPolicy
-          .onRetry(e -> log.warn("Handling command failed, retrying... ({})", e.getAttemptCount()))
-          .onFailure(e -> log.error("Handling command failed after {} attempts.", e.getAttemptCount()));
-    }
+    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
+        .onRetry(e -> log.warn("Handling command failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Handling command failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
@@ -49,9 +46,6 @@ public class CommandHandler implements Handler<List<Event>> {
     log.info("Handling command: {}", command);
 
     try {
-      if (retryPolicy == null) {
-        return doInvoke(aggregate, command);
-      }
       return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
@@ -98,7 +92,9 @@ public class CommandHandler implements Handler<List<Event>> {
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
             .payload(payload)
-            .metadata(command.getMetadata())
+            .metadata(command.getMetadata().toBuilder()
+                .entry("$id", UUID.randomUUID().toString())
+                .build())
             .build())
         .collect(Collectors.toList());
 

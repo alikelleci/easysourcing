@@ -17,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,13 +30,9 @@ public class EventHandler implements Handler<List<Command>> {
   public EventHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
-    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class));
-
-    if (retryPolicy != null) {
-      retryPolicy
-          .onRetry(e -> log.warn("Handling event failed, retrying... ({})", e.getAttemptCount()))
-          .onFailure(e -> log.error("Handling event failed after {} attempts.", e.getAttemptCount()));
-    }
+    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
+        .onRetry(e -> log.warn("Handling event failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Handling event failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
@@ -45,9 +42,6 @@ public class EventHandler implements Handler<List<Command>> {
     log.info("Handling event: {}", event);
 
     try {
-      if (retryPolicy == null) {
-        return doInvoke(event);
-      }
       return (List<Command>) Failsafe.with(retryPolicy).get(() -> doInvoke(event));
     } catch (Exception e) {
       throw new EventProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
@@ -94,7 +88,9 @@ public class EventHandler implements Handler<List<Command>> {
     List<Command> commands = list.stream()
         .map(payload -> Command.builder()
             .payload(payload)
-            .metadata(event.getMetadata())
+            .metadata(event.getMetadata().toBuilder()
+                .entry("$id", UUID.randomUUID().toString())
+                .build())
             .build())
         .collect(Collectors.toList());
 

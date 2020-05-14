@@ -22,13 +22,9 @@ public class SnapshotHandler implements Handler<Void> {
   public SnapshotHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
-    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class));
-
-    if (retryPolicy != null) {
-      retryPolicy
-          .onRetry(e -> log.warn("Handling snapshot failed, retrying... ({})", e.getAttemptCount()))
-          .onFailure(e -> log.error("Handling snapshot failed after {} attempts.", e.getAttemptCount()));
-    }
+    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
+        .onRetry(e -> log.warn("Handling snapshot failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Handling snapshot failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
@@ -38,9 +34,6 @@ public class SnapshotHandler implements Handler<Void> {
     log.info("Handling snapshot: {}", snapshot);
 
     try {
-      if (retryPolicy == null) {
-        return doInvoke(snapshot);
-      }
       return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot));
     } catch (Exception e) {
       throw new SnapshotProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));

@@ -17,6 +17,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 @Slf4j
 public class Aggregator implements Handler<Aggregate> {
@@ -28,13 +29,9 @@ public class Aggregator implements Handler<Aggregate> {
   public Aggregator(Object target, Method method) {
     this.target = target;
     this.method = method;
-    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class));
-
-    if (retryPolicy != null) {
-      retryPolicy
-          .onRetry(e -> log.warn("Applying event failed, retrying... ({})", e.getAttemptCount()))
-          .onFailure(e -> log.error("Applying event failed after {} attempts.", e.getAttemptCount()));
-    }
+    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
+        .onRetry(e -> log.warn("Applying event failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Applying event failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
@@ -45,9 +42,6 @@ public class Aggregator implements Handler<Aggregate> {
     log.info("Applying event: {}", event);
 
     try {
-      if (retryPolicy == null) {
-        return doInvoke(aggregate, event);
-      }
       return (Aggregate) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
@@ -82,7 +76,9 @@ public class Aggregator implements Handler<Aggregate> {
   private Aggregate createAggregate(Event event, Object result) {
     Aggregate aggregate = Aggregate.builder()
         .payload(result)
-        .metadata(event.getMetadata())
+        .metadata(event.getMetadata().toBuilder()
+            .entry("$id", UUID.randomUUID().toString())
+            .build())
         .build();
 
     if (aggregate.getPayload() == null) {

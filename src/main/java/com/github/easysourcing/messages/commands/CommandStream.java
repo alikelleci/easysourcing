@@ -4,9 +4,8 @@ package com.github.easysourcing.messages.commands;
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
-import com.github.easysourcing.messages.commands.results.CommandResult;
-import com.github.easysourcing.messages.commands.results.Failure;
-import com.github.easysourcing.messages.commands.results.Success;
+import com.github.easysourcing.messages.commands.CommandResult.Failure;
+import com.github.easysourcing.messages.commands.CommandResult.Success;
 import com.github.easysourcing.messages.events.Event;
 import com.github.easysourcing.messages.snapshots.Snapshot;
 import com.github.easysourcing.serdes.CustomJsonSerde;
@@ -66,20 +65,21 @@ public class CommandStream {
         .filter((key, message) -> message instanceof Command)
         .mapValues((key, message) -> (Command) message);
 
-    // Commands --> Results
+    // Commands --> CommandResults
     KStream<String, CommandResult> resultsKStream = commandsKStream
         .transformValues(() -> new CommandTransformer(commandHandlers, aggregators, frequentCommits), "snapshot-store")
         .filter((key, result) -> result != null);
 
-    // Results --> Success
+    // CommandResults --> Success
     KStream<String, Success> successKStream = resultsKStream
         .filter((key, result) -> result instanceof Success)
         .mapValues((key, result) -> (Success) result);
 
-    // Results --> Failures
+    // CommandResults --> Failures
     KStream<String, Failure> failureKStream = resultsKStream
         .filter((key, result) -> result instanceof Failure)
-        .mapValues((key, result) -> (Failure) result);
+        .mapValues((key, result) -> (Failure) result)
+        .peek((key, failure) -> log.warn("Command rejected: {}", failure.getMessage()));
 
     // Success --> Snapshots
     successKStream
