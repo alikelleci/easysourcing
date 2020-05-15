@@ -1,6 +1,5 @@
 package com.github.easysourcing.retry;
 
-import com.github.easysourcing.messages.commands.exceptions.InvalidCommandException;
 import com.github.easysourcing.messages.exceptions.AggregateIdMismatchException;
 import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
 import com.github.easysourcing.messages.exceptions.PayloadMissingException;
@@ -12,6 +11,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import javax.validation.ValidationException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class RetryUtil {
     CollectionUtils.addAll(included, retry.exceptions());
 
     List<Class<? extends Throwable>> excluded = Arrays.asList(
-        InvalidCommandException.class,
+        ValidationException.class,
         AggregateIdMissingException.class,
         AggregateIdMismatchException.class,
         PayloadMissingException.class,

@@ -16,10 +16,15 @@ import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,12 +35,16 @@ public class CommandHandler implements Handler<List<Event>> {
   private Method method;
   private RetryPolicy<Object> retryPolicy;
 
+  private Validator validator;
+
   public CommandHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
     this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
         .onRetry(e -> log.warn("Handling command failed, retrying... ({})", e.getAttemptCount()))
         .onRetriesExceeded(e -> log.error("Handling command failed after {} attempts.", e.getAttemptCount()));
+
+    this.validator = Validation.buildDefaultValidatorFactory().getValidator();
   }
 
   @Override
@@ -45,6 +54,7 @@ public class CommandHandler implements Handler<List<Event>> {
 
     log.info("Handling command: {}", command);
 
+    validate(command);
     try {
       return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
     } catch (Exception e) {
@@ -114,6 +124,15 @@ public class CommandHandler implements Handler<List<Event>> {
     });
 
     return events;
+  }
+
+  private void validate(Command command) {
+    Set<ConstraintViolation<Object>> violations = validator.validate(command.getPayload());
+    violations.stream()
+        .findFirst()
+        .ifPresent(violation -> {
+          throw new ConstraintViolationException(violations);
+        });
   }
 
 }
