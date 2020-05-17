@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.alikelleci</groupId>
     <artifactId>easysourcing</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
     <name>easysourcing</name>
     <description>A Java library for Event Sourcing using Kafka</description>
 
@@ -83,10 +83,27 @@
             <artifactId>failsafe</artifactId>
             <version>2.3.5</version>
         </dependency>
+
+        <!--JSR 380 -->
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>6.1.5.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator-annotation-processor</artifactId>
+            <version>6.1.5.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.el</groupId>
+            <artifactId>javax.el-api</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>javax.el</artifactId>
+            <version>2.2.6</version>
         </dependency>
     </dependencies>
 

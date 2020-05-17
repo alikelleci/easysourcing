@@ -33,6 +33,16 @@ public class Config {
   @Builder.Default
   private boolean frequentCommits = false;
 
+  @Builder.Default
+  private long commandsRetention = 604800000; // 7 days
+  @Builder.Default
+  private long resultsRetention = 604800000; // 7 days
+  @Builder.Default
+  private long snapshotsRetention = 86400000; // 1 day
+  @Builder.Default
+  private long eventsRetention = -1; // infinite
+
+
   public Properties streamsConfig() {
     Properties properties = new Properties();
     properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);

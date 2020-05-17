@@ -1,12 +1,13 @@
 package com.github.easysourcing.messages.snapshots;
 
+import com.github.easysourcing.messages.aggregates.Aggregate;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.concurrent.ConcurrentMap;
 
 
-public class SnapshotTransformer implements ValueTransformer<Snapshot, Void> {
+public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
 
   private ProcessorContext context;
 
@@ -24,7 +25,7 @@ public class SnapshotTransformer implements ValueTransformer<Snapshot, Void> {
   }
 
   @Override
-  public Void transform(Snapshot snapshot) {
+  public Void transform(Aggregate snapshot) {
     SnapshotHandler snapshotHandler = snapshotHandlers.get(snapshot.getPayload().getClass());
     if (snapshotHandler == null) {
       return null;

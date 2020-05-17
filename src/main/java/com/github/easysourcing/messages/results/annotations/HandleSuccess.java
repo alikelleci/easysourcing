@@ -1,15 +1,13 @@
-package com.github.easysourcing.messages.snapshots.annotations;
-
-import com.github.easysourcing.messages.annotations.Handler;
+package com.github.easysourcing.messages.results.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Handler
-@Target(ElementType.TYPE)
+@HandleResult
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SnapshotHandler {
+public @interface HandleSuccess {
 
 }

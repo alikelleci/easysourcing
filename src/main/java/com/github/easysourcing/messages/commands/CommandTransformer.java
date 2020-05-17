@@ -5,7 +5,6 @@ import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Failure;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
 import com.github.easysourcing.messages.events.Event;
-import com.github.easysourcing.messages.snapshots.Snapshot;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -52,14 +51,9 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
       events = commandHandler.invoke(aggregate, command);
     } catch (Exception e) {
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
-        String message = ExceptionUtils.getRootCauseMessage(e);
         return Failure.builder()
-            .message(message)
-            .command(command.toBuilder()
-                .metadata(command.getMetadata().toBuilder()
-                    .entry("$failure", message)
-                    .build())
-                .build())
+            .command(command)
+            .message(ExceptionUtils.getRootCauseMessage(e))
             .build();
       }
       throw e;
@@ -74,22 +68,17 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
       }
     }
 
-    Snapshot snapshot = null;
     if (updated) {
       store.put(command.getAggregateId(), ValueAndTimestamp
           .make(aggregate, new Timestamp(System.currentTimeMillis()).getTime()));
-
-      snapshot = Snapshot.builder()
-          .payload(aggregate.getPayload())
-          .metadata(aggregate.getMetadata())
-          .build();
     }
 
     if (frequentCommits) {
       context.commit();
     }
     return Success.builder()
-        .snapshot(snapshot)
+        .command(command)
+        .snapshot(updated ? aggregate : null)
         .events(events)
         .build();
   }

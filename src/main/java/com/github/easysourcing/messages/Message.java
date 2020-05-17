@@ -3,15 +3,19 @@ package com.github.easysourcing.messages;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.easysourcing.messages.annotations.AggregateId;
 import com.github.easysourcing.messages.annotations.TopicInfo;
+import com.github.easysourcing.messages.commands.Command;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.beans.Transient;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -48,4 +52,22 @@ public class Message {
     return AnnotationUtils.findAnnotation(getPayload().getClass(), TopicInfo.class);
   }
 
+
+  public Metadata getMetadata() {
+    if (metadata == null) {
+      metadata = Metadata.builder().build();
+    }
+
+    if (!(this instanceof Command)) {
+      Map<String, String> modified = new HashMap<>(metadata.getEntries());
+      modified.keySet().removeIf(key ->
+          StringUtils.equalsAny(key, "$result", "$events", "$failure"));
+
+      return metadata.toBuilder()
+          .clearEntries()
+          .entries(modified)
+          .build();
+    }
+    return metadata;
+  }
 }

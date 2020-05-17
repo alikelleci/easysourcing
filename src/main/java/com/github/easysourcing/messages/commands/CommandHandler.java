@@ -13,12 +13,14 @@ import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
+import javax.validation.ValidationException;
 import javax.validation.Validator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -54,10 +56,14 @@ public class CommandHandler implements Handler<List<Event>> {
 
     log.info("Handling command: {}", command);
 
-    validate(command);
     try {
+      validate(command);
       return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
     } catch (Exception e) {
+      if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
+        log.warn("Command rejected: {}", ExceptionUtils.getRootCauseMessage(e));
+        throw e;
+      }
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
@@ -128,11 +134,9 @@ public class CommandHandler implements Handler<List<Event>> {
 
   private void validate(Command command) {
     Set<ConstraintViolation<Object>> violations = validator.validate(command.getPayload());
-    violations.stream()
-        .findFirst()
-        .ifPresent(violation -> {
-          throw new ConstraintViolationException(violations);
-        });
+    if (!CollectionUtils.isEmpty(violations)) {
+      throw new ConstraintViolationException(violations);
+    }
   }
 
 }

@@ -9,11 +9,14 @@ import com.github.easysourcing.messages.commands.annotations.HandleCommand;
 import com.github.easysourcing.messages.events.EventHandler;
 import com.github.easysourcing.messages.events.EventStream;
 import com.github.easysourcing.messages.events.annotations.HandleEvent;
+import com.github.easysourcing.messages.results.ResultHandler;
+import com.github.easysourcing.messages.results.ResultStream;
+import com.github.easysourcing.messages.results.annotations.HandleResult;
 import com.github.easysourcing.messages.snapshots.SnapshotHandler;
 import com.github.easysourcing.messages.snapshots.SnapshotStream;
 import com.github.easysourcing.messages.snapshots.annotations.HandleSnapshot;
+import com.github.easysourcing.utils.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
@@ -44,9 +47,9 @@ public class EasySourcingBuilder {
   //  Handlers
   private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers = new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<?>, Aggregator> aggregators = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<?>, ResultHandler> resultHandlers = new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<?>, SnapshotHandler> snapshotHandlers = new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<?>, EventHandler> eventHandlers = new ConcurrentHashMap<>();
-
 
   public EasySourcingBuilder() {
   }
@@ -57,16 +60,20 @@ public class EasySourcingBuilder {
   }
 
   public EasySourcingBuilder registerHandler(Object handler) {
-    List<Method> commandHandlerMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleCommand.class);
-    List<Method> aggregatorMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), ApplyEvent.class);
-    List<Method> snapshotHandlerMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleSnapshot.class);
-    List<Method> eventHandlerMethods = MethodUtils.getMethodsListWithAnnotation(handler.getClass(), HandleEvent.class);
+    List<Method> commandHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleCommand.class);
+    List<Method> aggregatorMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
+    List<Method> resultHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleResult.class);
+    List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
+    List<Method> eventHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
 
     commandHandlerMethods
         .forEach(method -> addCommandHandler(handler, method));
 
     aggregatorMethods
         .forEach(method -> addAggregator(handler, method));
+
+    resultHandlerMethods
+        .forEach(method -> addResultHandler(handler, method));
 
     snapshotHandlerMethods
         .forEach(method -> addSnapshotHandler(handler, method));
@@ -102,6 +109,13 @@ public class EasySourcingBuilder {
     }
   }
 
+  private void addResultHandler(Object listener, Method method) {
+    if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
+      Class<?> type = method.getParameters()[0].getType();
+      resultHandlers.put(type, new ResultHandler(listener, method));
+    }
+  }
+
   private void addSnapshotHandler(Object listener, Method method) {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
@@ -130,6 +144,30 @@ public class EasySourcingBuilder {
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
+        .collect(Collectors.toSet());
+
+    Set<String> topics = new HashSet<>();
+    topics.addAll(list1);
+    topics.addAll(list2);
+
+    return topics;
+  }
+
+  private Set<String> getResultTopics() {
+    Set<String> list1 = Stream.of(resultHandlers.keySet())
+        .flatMap(Collection::stream)
+        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
+        .filter(Objects::nonNull)
+        .map(TopicInfo::value)
+        .map(s -> s.concat(".results"))
+        .collect(Collectors.toSet());
+
+    Set<String> list2 = Stream.of(commandHandlers.keySet())
+        .flatMap(Collection::stream)
+        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
+        .filter(Objects::nonNull)
+        .map(TopicInfo::value)
+        .map(s -> s.concat(".results"))
         .collect(Collectors.toSet());
 
     Set<String> topics = new HashSet<>();
@@ -196,7 +234,16 @@ public class EasySourcingBuilder {
           .map(topic -> TopicBuilder.name(topic)
               .partitions(config.getPartitions())
               .replicas(config.getReplicas())
-              .config(TopicConfig.RETENTION_MS_CONFIG, "-1") // infinite
+              .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getCommandsRetention()))
+              .build())
+          .collect(Collectors.toSet());
+
+      Set<NewTopic> resultTopicsToCreate = getResultTopics().stream()
+          .filter(topic -> !brokerTopics.contains(topic))
+          .map(topic -> TopicBuilder.name(topic)
+              .partitions(config.getPartitions())
+              .replicas(config.getReplicas())
+              .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getResultsRetention()))
               .build())
           .collect(Collectors.toSet());
 
@@ -206,7 +253,7 @@ public class EasySourcingBuilder {
               .partitions(config.getPartitions())
               .replicas(config.getReplicas())
               .config(TopicConfig.CLEANUP_POLICY_CONFIG, "compact")
-              .config(TopicConfig.DELETE_RETENTION_MS_CONFIG, "1209600000") // 14 days
+              .config(TopicConfig.DELETE_RETENTION_MS_CONFIG, String.valueOf(config.getSnapshotsRetention()))
               .build())
           .collect(Collectors.toSet());
 
@@ -215,12 +262,13 @@ public class EasySourcingBuilder {
           .map(topic -> TopicBuilder.name(topic)
               .partitions(config.getPartitions())
               .replicas(config.getReplicas())
-              .config(TopicConfig.RETENTION_MS_CONFIG, "-1") // infinite
+              .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getEventsRetention()))
               .build())
           .collect(Collectors.toSet());
 
       Set<NewTopic> topicsToCreate = new HashSet<>();
       topicsToCreate.addAll(commandTopicsToCreate);
+      topicsToCreate.addAll(resultTopicsToCreate);
       topicsToCreate.addAll(snapshotTopicsToCreate);
       topicsToCreate.addAll(eventTopicsToCreate);
 
@@ -240,6 +288,12 @@ public class EasySourcingBuilder {
     if (!commandsTopics.isEmpty() && !commandHandlers.isEmpty()) {
       CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, config.isFrequentCommits());
       commandStream.buildStream(builder);
+    }
+
+    Set<String> resultTopics = getResultTopics();
+    if (!resultTopics.isEmpty() && !resultHandlers.isEmpty()) {
+      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers, config.isFrequentCommits());
+      resultStream.buildStream(builder);
     }
 
     Set<String> snapshotTopics = getSnapshotTopics();

@@ -1,4 +1,4 @@
-package com.github.easysourcing.messages.snapshots.annotations;
+package com.github.easysourcing.messages.results.annotations;
 
 import com.github.easysourcing.messages.annotations.Handler;
 
@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 @Handler
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SnapshotHandler {
+public @interface ResultHandler {
 
 }

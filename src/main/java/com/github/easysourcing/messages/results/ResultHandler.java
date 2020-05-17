@@ -1,8 +1,8 @@
-package com.github.easysourcing.messages.snapshots;
+package com.github.easysourcing.messages.results;
 
 import com.github.easysourcing.messages.Handler;
-import com.github.easysourcing.messages.aggregates.Aggregate;
-import com.github.easysourcing.messages.snapshots.exceptions.SnapshotProcessingException;
+import com.github.easysourcing.messages.commands.Command;
+import com.github.easysourcing.messages.results.exceptions.ResultProcessingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -14,39 +14,39 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @Slf4j
-public class SnapshotHandler implements Handler<Void> {
+public class ResultHandler implements Handler<Void> {
 
   private Object target;
   private Method method;
   private RetryPolicy<Object> retryPolicy;
 
-  public SnapshotHandler(Object target, Method method) {
+  public ResultHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
     this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
-        .onRetry(e -> log.warn("Handling snapshot failed, retrying... ({})", e.getAttemptCount()))
-        .onRetriesExceeded(e -> log.error("Handling snapshot failed after {} attempts.", e.getAttemptCount()));
+        .onRetry(e -> log.warn("Handling result failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Handling result failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
   public Void invoke(Object... args) {
-    Aggregate snapshot = (Aggregate) args[0];
+    Command command = (Command) args[0];
 
-    log.info("Handling snapshot: {}", snapshot);
+    log.info("Handling result: {}", command);
 
     try {
-      return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot));
+      return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(command));
     } catch (Exception e) {
-      throw new SnapshotProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
+      throw new ResultProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Aggregate snapshot) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Command command) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
-      result = method.invoke(target, snapshot.getPayload());
+      result = method.invoke(target, command.getPayload());
     } else {
-      result = method.invoke(target, snapshot.getPayload(), snapshot.getMetadata());
+      result = method.invoke(target, command.getPayload(), command.getMetadata());
     }
     return null;
   }

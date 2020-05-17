@@ -32,19 +32,19 @@ public class EventStream {
     this.frequentCommits = frequentCommits;
   }
 
-  public KStream<String, Event> buildStream(StreamsBuilder builder) {
+  public void buildStream(StreamsBuilder builder) {
     // --> Events
     KStream<String, Event> eventKStream = builder.stream(topics,
         Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
         .filter((key, message) -> key != null)
         .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getAggregateId() != null)
         .filter((key, message) -> message.getPayload() != null)
         .filter((key, message) -> message.getTopicInfo() != null)
+        .filter((key, message) -> message.getAggregateId() != null)
         .filter((key, message) -> message instanceof Event)
         .mapValues((key, message) -> (Event) message);
 
-    // Events --> Commands
+    // Events --> Commands Push
     eventKStream
         .transformValues(() -> new EventTransformer(eventHandlers, frequentCommits))
         .filter((key, commands) -> CollectionUtils.isNotEmpty(commands))
@@ -53,8 +53,6 @@ public class EventStream {
         .map((key, command) -> KeyValue.pair(command.getAggregateId(), command))
         .to((key, command, recordContext) -> command.getTopicInfo().value(),
             Produced.with(Serdes.String(), new JsonSerde<>(Command.class).noTypeInfo()));
-
-    return eventKStream;
   }
 
 }
