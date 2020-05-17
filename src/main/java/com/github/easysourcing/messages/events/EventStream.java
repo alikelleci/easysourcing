@@ -12,10 +12,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.ValueMapper;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -48,7 +46,7 @@ public class EventStream {
     eventKStream
         .transformValues(() -> new EventTransformer(eventHandlers, frequentCommits))
         .filter((key, commands) -> CollectionUtils.isNotEmpty(commands))
-        .flatMapValues((ValueMapper<List<Command>, Iterable<Command>>) commands -> commands)
+        .flatMapValues(commands -> commands)
         .filter((key, command) -> command != null)
         .map((key, command) -> KeyValue.pair(command.getAggregateId(), command))
         .to((key, command, recordContext) -> command.getTopicInfo().value(),

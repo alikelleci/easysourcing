@@ -16,12 +16,10 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.state.Stores;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -89,9 +87,8 @@ public class CommandStream {
 
     // Success --> Events Push
     successKStream
-        .mapValues(Success::getEvents)
-        .filter((key, events) -> CollectionUtils.isNotEmpty(events))
-        .flatMapValues((ValueMapper<List<Event>, Iterable<Event>>) events -> events)
+        .filter((key, success) -> CollectionUtils.isNotEmpty(success.getEvents()))
+        .flatMapValues(Success::getEvents)
         .filter((key, event) -> event != null)
         .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
