@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages.results;
 
 
-import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +28,12 @@ public class ResultStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Results
     KStream<String, Command> resultKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
-        .filter((key, message) -> key != null)
-        .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getPayload() != null)
-        .filter((key, message) -> message.getTopicInfo() != null)
-        .filter((key, message) -> message.getAggregateId() != null)
-        .filter((key, message) -> message instanceof Command)
-        .mapValues((key, message) -> (Command) message);
+        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Command.class).noTypeInfo()))
+        .filter((key, command) -> key != null)
+        .filter((key, command) -> command != null)
+        .filter((key, command) -> command.getPayload() != null)
+        .filter((key, command) -> command.getTopicInfo() != null)
+        .filter((key, command) -> command.getAggregateId() != null);
 
     // Results --> Void
     resultKStream

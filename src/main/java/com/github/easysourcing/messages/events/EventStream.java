@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages.events;
 
 
-import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
@@ -33,14 +32,12 @@ public class EventStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Events
     KStream<String, Event> eventKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
-        .filter((key, message) -> key != null)
-        .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getPayload() != null)
-        .filter((key, message) -> message.getTopicInfo() != null)
-        .filter((key, message) -> message.getAggregateId() != null)
-        .filter((key, message) -> message instanceof Event)
-        .mapValues((key, message) -> (Event) message);
+        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Event.class).noTypeInfo()))
+        .filter((key, event) -> key != null)
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null);
 
     // Events --> Commands Push
     eventKStream

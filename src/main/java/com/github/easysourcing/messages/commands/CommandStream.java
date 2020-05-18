@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages.commands;
 
 
-import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
@@ -52,14 +51,12 @@ public class CommandStream {
 
     // --> Commands
     KStream<String, Command> commandsKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
-        .filter((key, message) -> key != null)
-        .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getPayload() != null)
-        .filter((key, message) -> message.getTopicInfo() != null)
-        .filter((key, message) -> message.getAggregateId() != null)
-        .filter((key, message) -> message instanceof Command)
-        .mapValues((key, message) -> (Command) message);
+        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Command.class).noTypeInfo()))
+        .filter((key, command) -> key != null)
+        .filter((key, command) -> command != null)
+        .filter((key, command) -> command.getPayload() != null)
+        .filter((key, command) -> command.getTopicInfo() != null)
+        .filter((key, command) -> command.getAggregateId() != null);
 
     // Commands --> Results
     KStream<String, CommandResult> resultsKStream = commandsKStream

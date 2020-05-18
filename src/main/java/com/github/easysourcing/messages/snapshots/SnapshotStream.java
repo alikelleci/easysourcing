@@ -1,7 +1,6 @@
 package com.github.easysourcing.messages.snapshots;
 
 
-import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +28,12 @@ public class SnapshotStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Snapshots
     KStream<String, Aggregate> snapshotKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Message.class).noTypeInfo()))
-        .filter((key, message) -> key != null)
-        .filter((key, message) -> message != null)
-        .filter((key, message) -> message.getPayload() != null)
-        .filter((key, message) -> message.getTopicInfo() != null)
-        .filter((key, message) -> message.getAggregateId() != null)
-        .filter((key, message) -> message instanceof Aggregate)
-        .mapValues((key, message) -> (Aggregate) message);
+        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Aggregate.class).noTypeInfo()))
+        .filter((key, aggregate) -> key != null)
+        .filter((key, aggregate) -> aggregate != null)
+        .filter((key, aggregate) -> aggregate.getPayload() != null)
+        .filter((key, aggregate) -> aggregate.getTopicInfo() != null)
+        .filter((key, aggregate) -> aggregate.getAggregateId() != null);
 
     // Snapshots --> Void
     snapshotKStream
