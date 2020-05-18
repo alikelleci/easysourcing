@@ -1,2 +1,2 @@
-# EasySourcing
+# Initial page
 
