@@ -20,7 +20,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
-import javax.validation.ValidationException;
 import javax.validation.Validator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -60,10 +59,6 @@ public class CommandHandler implements Handler<List<Event>> {
       validate(command);
       return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
     } catch (Exception e) {
-      if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
-        log.warn("Command rejected: {}", ExceptionUtils.getRootCauseMessage(e));
-        throw e;
-      }
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }

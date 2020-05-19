@@ -5,6 +5,7 @@ import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Failure;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
 import com.github.easysourcing.messages.events.Event;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
+@Slf4j
 public class CommandTransformer implements ValueTransformer<Command, CommandResult> {
 
   private ProcessorContext context;
@@ -51,6 +53,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
       events = commandHandler.invoke(aggregate, command);
     } catch (Exception e) {
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
+        log.warn("Command rejected: {}", ExceptionUtils.getRootCauseMessage(e));
         return Failure.builder()
             .command(command)
             .message(ExceptionUtils.getRootCauseMessage(e))
