@@ -10,6 +10,7 @@ import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
+import com.github.easysourcing.utils.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -103,7 +104,7 @@ public class CommandHandler implements Handler<List<Event>> {
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
             .payload(payload)
-            .metadata(command.getMetadata().toBuilder()
+            .metadata(MetadataUtils.filterMetadata(command.getMetadata()).toBuilder()
                 .entry("$id", UUID.randomUUID().toString())
                 .build())
             .build())

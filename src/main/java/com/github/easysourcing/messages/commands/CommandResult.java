@@ -2,6 +2,7 @@ package com.github.easysourcing.messages.commands;
 
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.events.Event;
+import com.github.easysourcing.utils.MetadataUtils;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -26,7 +27,8 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       return command.toBuilder()
-          .metadata(command.getMetadata().toBuilder()
+          .metadata(MetadataUtils.filterMetadata(command.getMetadata()).toBuilder()
+              .entry("$id", command.getMetadata().getEntries().get("$id"))
               .entry("$result", "success")
               .entry("$snapshot", Optional.ofNullable(snapshot)
                   .map(s -> s.getMetadata().getEntries().get("$id"))
@@ -49,7 +51,8 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       return command.toBuilder()
-          .metadata(command.getMetadata().toBuilder()
+          .metadata(MetadataUtils.filterMetadata(command.getMetadata()).toBuilder()
+              .entry("$id", command.getMetadata().getEntries().get("$id"))
               .entry("$result", "failed")
               .entry("$failure", message)
               .build())

@@ -7,10 +7,12 @@ import com.github.easysourcing.messages.results.annotations.HandleSuccess;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 
-public class ResultTransformer implements ValueTransformer<Command, Void> {
+public class ResultTransformer implements ValueTransformer<Command, List<Command>> {
 
   private ProcessorContext context;
 
@@ -28,7 +30,7 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
   }
 
   @Override
-  public Void transform(Command command) {
+  public List<Command> transform(Command command) {
     ResultHandler resultHandler = resultHandlers.get(command.getPayload().getClass());
     if (resultHandler == null) {
       return null;
@@ -39,20 +41,20 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
     boolean handleFailed = resultHandler.getMethod().isAnnotationPresent(HandleError.class);
 
     String result = command.getMetadata().getEntries().get("$result");
-    Void v = null;
+    List<Command> commands = new ArrayList<>();
 
     if (handleAll) {
-      v = resultHandler.invoke(command);
+      commands = resultHandler.invoke(command);
     } else if (handleSuccess && result.equals("success")) {
-      v = resultHandler.invoke(command);
+      commands = resultHandler.invoke(command);
     } else if (handleFailed && result.equals("failed")) {
-      v = resultHandler.invoke(command);
+      commands = resultHandler.invoke(command);
     }
 
     if (frequentCommits) {
       context.commit();
     }
-    return v;
+    return commands;
   }
 
   @Override

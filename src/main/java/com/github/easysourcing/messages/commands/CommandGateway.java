@@ -3,6 +3,7 @@ package com.github.easysourcing.messages.commands;
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
+import com.github.easysourcing.utils.MetadataUtils;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
@@ -20,7 +21,7 @@ public class CommandGateway extends MessageGateway {
 
     Command message = Command.builder()
         .payload(payload)
-        .metadata(metadata.toBuilder()
+        .metadata(MetadataUtils.filterMetadata(metadata).toBuilder()
             .entry("$id", UUID.randomUUID().toString())
             .entry("$correlationId", UUID.randomUUID().toString())
             .build())
