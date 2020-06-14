@@ -48,9 +48,7 @@ public class SnapshotHandler implements Handler<Void> {
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, snapshot.getPayload());
     } else {
-      result = method.invoke(target, snapshot.getPayload(), snapshot.getMetadata().toBuilder()
-          .entry("$timestamp", String.valueOf(context.timestamp()))
-          .build());
+      result = method.invoke(target, snapshot.getPayload(), snapshot.getMetadata().inject(context));
     }
     return null;
   }

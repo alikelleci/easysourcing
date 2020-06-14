@@ -24,6 +24,13 @@ public class Message {
   private Object payload;
   private Metadata metadata;
 
+  public Metadata getMetadata() {
+    if (metadata == null) {
+      return Metadata.builder().build();
+    }
+    return metadata;
+  }
+
   @Transient
   public String getAggregateId() {
     if (getPayload() == null) {

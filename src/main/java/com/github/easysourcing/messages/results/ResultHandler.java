@@ -8,7 +8,6 @@ import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.messages.results.exceptions.ResultProcessingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
-import com.github.easysourcing.utils.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -56,9 +55,7 @@ public class ResultHandler implements Handler<List<Command>> {
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, command.getPayload());
     } else {
-      result = method.invoke(target, command.getPayload(), command.getMetadata().toBuilder()
-          .entry("$timestamp", String.valueOf(context.timestamp()))
-          .build());
+      result = method.invoke(target, command.getPayload(), command.getMetadata().inject(context));
     }
     return createCommands(command, result);
   }
@@ -93,7 +90,7 @@ public class ResultHandler implements Handler<List<Command>> {
     List<Command> commands = list.stream()
         .map(payload -> Command.builder()
             .payload(payload)
-            .metadata(MetadataUtils.filterMetadata(command.getMetadata()).toBuilder()
+            .metadata(command.getMetadata().filter().toBuilder()
                 .entry("$id", UUID.randomUUID().toString())
                 .build())
             .build())

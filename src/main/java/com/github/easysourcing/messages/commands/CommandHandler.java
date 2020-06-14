@@ -10,7 +10,6 @@ import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
-import com.github.easysourcing.utils.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -71,9 +70,7 @@ public class CommandHandler implements Handler<List<Event>> {
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata().toBuilder()
-          .entry("$timestamp", String.valueOf(context.timestamp()))
-          .build());
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata().inject(context));
     }
     return createEvents(command, result);
   }
@@ -108,7 +105,7 @@ public class CommandHandler implements Handler<List<Event>> {
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
             .payload(payload)
-            .metadata(MetadataUtils.filterMetadata(command.getMetadata()).toBuilder()
+            .metadata(command.getMetadata().filter().toBuilder()
                 .entry("$id", UUID.randomUUID().toString())
                 .build())
             .build())

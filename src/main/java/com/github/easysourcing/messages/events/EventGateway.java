@@ -3,7 +3,6 @@ package com.github.easysourcing.messages.events;
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
-import com.github.easysourcing.utils.MetadataUtils;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
@@ -21,7 +20,7 @@ public class EventGateway extends MessageGateway {
 
     Event message = Event.builder()
         .payload(payload)
-        .metadata(MetadataUtils.filterMetadata(metadata).toBuilder()
+        .metadata(metadata.filter().toBuilder()
             .entry("$id", UUID.randomUUID().toString())
             .entry("$correlationId", UUID.randomUUID().toString())
             .build())

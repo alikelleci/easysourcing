@@ -9,7 +9,6 @@ import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
-import com.github.easysourcing.utils.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -57,9 +56,7 @@ public class Aggregator implements Handler<Aggregate> {
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata().toBuilder()
-          .entry("$timestamp", String.valueOf(context.timestamp()))
-          .build());
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata().inject(context));
     }
     return createAggregate(event, result);
   }
@@ -82,7 +79,7 @@ public class Aggregator implements Handler<Aggregate> {
   private Aggregate createAggregate(Event event, Object result) {
     Aggregate aggregate = Aggregate.builder()
         .payload(result)
-        .metadata(MetadataUtils.filterMetadata(event.getMetadata()).toBuilder()
+        .metadata(event.getMetadata().filter().toBuilder()
             .entry("$id", UUID.randomUUID().toString())
             .build())
         .build();
