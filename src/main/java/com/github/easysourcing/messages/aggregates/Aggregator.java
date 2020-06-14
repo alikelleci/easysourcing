@@ -15,6 +15,7 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,22 +40,26 @@ public class Aggregator implements Handler<Aggregate> {
   public Aggregate invoke(Object... args) {
     Aggregate aggregate = (Aggregate) args[0];
     Event event = (Event) args[1];
+    ProcessorContext context = (ProcessorContext) args[2];
+
 
     log.info("Applying event: {}", event);
 
     try {
-      return (Aggregate) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event));
+      return (Aggregate) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event, context));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Aggregate doInvoke(Aggregate aggregate, Event event) throws InvocationTargetException, IllegalAccessException {
+  private Aggregate doInvoke(Aggregate aggregate, Event event, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata());
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata().toBuilder()
+          .entry("$timestamp", String.valueOf(context.timestamp()))
+          .build());
     }
     return createAggregate(event, result);
   }

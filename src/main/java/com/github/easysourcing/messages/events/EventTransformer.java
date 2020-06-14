@@ -33,7 +33,7 @@ public class EventTransformer implements ValueTransformer<Event, List<Command>> 
       return new ArrayList<>();
     }
 
-    List<Command> commands = eventHandler.invoke(event);
+    List<Command> commands = eventHandler.invoke(event, context);
 
     if (frequentCommits) {
       context.commit();

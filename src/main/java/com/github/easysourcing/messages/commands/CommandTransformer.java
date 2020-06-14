@@ -13,7 +13,6 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import javax.validation.ValidationException;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
@@ -50,7 +49,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
     Aggregate aggregate = loadAggregate(command.getAggregateId());
     List<Event> events;
     try {
-      events = commandHandler.invoke(aggregate, command);
+      events = commandHandler.invoke(aggregate, command, context);
     } catch (Exception e) {
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.warn("Command rejected: {}", ExceptionUtils.getRootCauseMessage(e));
@@ -66,14 +65,14 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
     for (Event event : events) {
       Aggregator aggregator = aggregators.get(event.getPayload().getClass());
       if (aggregator != null) {
-        aggregate = aggregator.invoke(aggregate, event);
+        aggregate = aggregator.invoke(aggregate, event, context);
         updated = true;
       }
     }
 
     if (updated) {
       store.put(command.getAggregateId(), ValueAndTimestamp
-          .make(aggregate, new Timestamp(System.currentTimeMillis()).getTime()));
+          .make(aggregate, context.timestamp()));
     }
 
     if (frequentCommits) {

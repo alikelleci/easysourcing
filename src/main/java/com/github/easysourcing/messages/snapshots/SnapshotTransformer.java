@@ -31,7 +31,7 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
       return null;
     }
 
-    Void v = snapshotHandler.invoke(snapshot);
+    Void v = snapshotHandler.invoke(snapshot, context);
 
     if (frequentCommits) {
       context.commit();

@@ -104,10 +104,9 @@ In the code snippets above, we have created some commands and events for our agg
 * Avoid topic names based on information that would be stored in other places.
 
 ### Command handler
-Now that we have created our commands and events, its time to create a command handler. You can create a command handler by simply annotating your command handling class with `@CommandHandler` and your command handling methods with `@HandleCommand`:
+Now that we have created our commands and events, its time to create a command handler. You can create a command handler by simply annotating your command handling  methods with `@HandleCommand`:
 
 ```javascript
-@CommandHandler
 public class CustomerCommandHandler {
 
   @HandleCommand
@@ -146,7 +145,6 @@ The first parameter of the command handling method is the current state of the a
 An aggregator applies events to the current state of the aggregate and returns a new updated state. Below we see an example of the customer aggregator:
 
 ```javascript
-@Aggregator
 public class CustomerAggregator {
 
   @ApplyEvent
@@ -166,7 +164,7 @@ public class CustomerAggregator {
   }
 }
 ```
-We annotate our aggregator class with `@Aggregator` and the aggregating methods with `@ApplyEvent`. These methods takes two parameters, the first one is the current state of the aggregate and the second parameter is the event to apply. The return value of an aggregator method should always be the **type of the aggregate**. In this case, we return a new copy of the customer with updated state. Although it is not required to return a new copy, it is recommended that you use immutable objects as much as possible.
+We annotate our aggregating methods with `@ApplyEvent`. These methods takes two parameters, the first one is the current state of the aggregate and the second parameter is the event to apply. The return value of an aggregator method should always be the **type of the aggregate**. In this case, we return a new copy of the customer with updated state. Although it is not required to return a new copy, it is recommended that you use immutable objects as much as possible.
 
 > **Best practises for aggregators:** 
 * Aggregators should be pure functions and should not block execution.
@@ -209,7 +207,6 @@ Event handlers are components that act on incoming events. They are often used i
 
 See below for an example of a customer event handler:
 ```javascript
-@EventHandler
 public class CustomerEventHandler {
 
   @HandleEvent
@@ -223,7 +220,7 @@ public class CustomerEventHandler {
   }
 }
 ```
-We annotate event handler classes  with `@EventHandler`. Methods annotated with `@HandleEvent`will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
+Methods annotated with `@HandleEvent` will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 
@@ -262,9 +259,8 @@ When using Spring Boot, you can just autowire an instance of `EventGateway`.
 ### Snapshot handler
 Sometimes you are only just interested in the latest state of an aggregate. Instead of listening to individual events, it is also possible to listen to state changes. EasySourcing provides you a way to get notified when an aggregate updates to a new state. Everytime when an aggregate is updated, a new snapshot is created.
 
-To listen for new snapshots, annotate your method with `@HandleSnapshot` and the declaring class with `@SnapshotHandler`:
+To listen for new snapshots, annotate your method with `@HandleSnapshot`:
 ```javascript
-@SnapshotHandler
 public class CustomerSnapshotHandler {
 
   @HandleSnapshot
@@ -328,7 +324,6 @@ The essential configurations for EasySourcing are the following:
 EasySourcing has a built in mechanism for retrying command handling and/or event handling. To enable retries, simply annotate your handler method with `@Retry`:
 
 ```javascript
-@EventHandler
 public class CustomerEventHandler {
 
   @Retry

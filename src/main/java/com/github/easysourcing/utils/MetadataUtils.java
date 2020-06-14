@@ -18,7 +18,7 @@ public class MetadataUtils {
 
     Map<String, String> modified = new HashMap<>(metadata.getEntries());
     modified.keySet().removeIf(key ->
-        StringUtils.equalsAny(key, "$id", "$result", "$snapshot", "$events", "$failure"));
+        StringUtils.equalsAny(key,"$id", "$result", "$snapshot", "$events", "$failure", "$timestamp"));
 
     return metadata.toBuilder()
         .clearEntries()

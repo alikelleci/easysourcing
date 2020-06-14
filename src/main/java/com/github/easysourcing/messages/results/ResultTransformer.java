@@ -44,11 +44,11 @@ public class ResultTransformer implements ValueTransformer<Command, List<Command
     List<Command> commands = new ArrayList<>();
 
     if (handleAll) {
-      commands = resultHandler.invoke(command);
+      commands = resultHandler.invoke(command, context);
     } else if (handleSuccess && result.equals("success")) {
-      commands = resultHandler.invoke(command);
+      commands = resultHandler.invoke(command, context);
     } else if (handleFailed && result.equals("failed")) {
-      commands = resultHandler.invoke(command);
+      commands = resultHandler.invoke(command, context);
     }
 
     if (frequentCommits) {

@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,22 +40,25 @@ public class ResultHandler implements Handler<List<Command>> {
   @Override
   public List<Command> invoke(Object... args) {
     Command command = (Command) args[0];
+    ProcessorContext context = (ProcessorContext) args[1];
 
     log.info("Handling result: {}", command);
 
     try {
-      return (List<Command>) Failsafe.with(retryPolicy).get(() -> doInvoke(command));
+      return (List<Command>) Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));
     } catch (Exception e) {
       throw new ResultProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Command> doInvoke(Command command) throws InvocationTargetException, IllegalAccessException {
+  private List<Command> doInvoke(Command command, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, command.getPayload());
     } else {
-      result = method.invoke(target, command.getPayload(), command.getMetadata());
+      result = method.invoke(target, command.getPayload(), command.getMetadata().toBuilder()
+          .entry("$timestamp", String.valueOf(context.timestamp()))
+          .build());
     }
     return createCommands(command, result);
   }

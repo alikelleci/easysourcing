@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,22 +40,25 @@ public class EventHandler implements Handler<List<Command>> {
   @Override
   public List<Command> invoke(Object... args) {
     Event event = (Event) args[0];
+    ProcessorContext context = (ProcessorContext) args[1];
 
     log.info("Handling event: {}", event);
 
     try {
-      return (List<Command>) Failsafe.with(retryPolicy).get(() -> doInvoke(event));
+      return (List<Command>) Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));
     } catch (Exception e) {
       throw new EventProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Command> doInvoke(Event event) throws InvocationTargetException, IllegalAccessException {
+  private List<Command> doInvoke(Event event, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, event.getPayload());
     } else {
-      result = method.invoke(target, event.getPayload(), event.getMetadata());
+      result = method.invoke(target, event.getPayload(), event.getMetadata().toBuilder()
+          .entry("$timestamp", String.valueOf(context.timestamp()))
+          .build());
     }
     return createCommands(event, result);
   }

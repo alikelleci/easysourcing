@@ -17,6 +17,7 @@ import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -53,23 +54,26 @@ public class CommandHandler implements Handler<List<Event>> {
   public List<Event> invoke(Object... args) {
     Aggregate aggregate = (Aggregate) args[0];
     Command command = (Command) args[1];
+    ProcessorContext context = (ProcessorContext) args[2];
 
     log.info("Handling command: {}", command);
 
     try {
       validate(command);
-      return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
+      return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command, context));
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Event> doInvoke(Aggregate aggregate, Command command) throws InvocationTargetException, IllegalAccessException {
+  private List<Event> doInvoke(Aggregate aggregate, Command command, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata().toBuilder()
+          .entry("$timestamp", String.valueOf(context.timestamp()))
+          .build());
     }
     return createEvents(command, result);
   }
