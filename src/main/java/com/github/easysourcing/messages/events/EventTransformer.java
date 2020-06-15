@@ -1,15 +1,12 @@
 package com.github.easysourcing.messages.events;
 
-import com.github.easysourcing.messages.commands.Command;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 
-public class EventTransformer implements ValueTransformer<Event, List<Command>> {
+public class EventTransformer implements ValueTransformer<Event, Void> {
 
   private ProcessorContext context;
 
@@ -27,18 +24,18 @@ public class EventTransformer implements ValueTransformer<Event, List<Command>> 
   }
 
   @Override
-  public List<Command> transform(Event event) {
+  public Void transform(Event event) {
     EventHandler eventHandler = eventHandlers.get(event.getPayload().getClass());
     if (eventHandler == null) {
-      return new ArrayList<>();
+      return null;
     }
 
-    List<Command> commands = eventHandler.invoke(event, context);
+    Void v = eventHandler.invoke(event, context);
 
     if (frequentCommits) {
       context.commit();
     }
-    return commands;
+    return v;
   }
 
   @Override

@@ -26,8 +26,7 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       return command.toBuilder()
-          .metadata(command.getMetadata().filter().toBuilder()
-              .entry("$id", command.getMetadata().getEntries().get("$id"))
+          .metadata(command.getMetadata().toBuilder()
               .entry("$result", "success")
               .entry("$snapshot", Optional.ofNullable(snapshot)
                   .map(s -> s.getMetadata().getEntries().get("$id"))
@@ -50,8 +49,7 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       return command.toBuilder()
-          .metadata(command.getMetadata().filter().toBuilder()
-              .entry("$id", command.getMetadata().getEntries().get("$id"))
+          .metadata(command.getMetadata().toBuilder()
               .entry("$result", "failed")
               .entry("$failure", message)
               .build())

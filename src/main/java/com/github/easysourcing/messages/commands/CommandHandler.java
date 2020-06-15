@@ -105,7 +105,7 @@ public class CommandHandler implements Handler<List<Event>> {
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
             .payload(payload)
-            .metadata(command.getMetadata().filter().toBuilder()
+            .metadata(command.getMetadata().toBuilder()
                 .entry("$id", UUID.randomUUID().toString())
                 .build())
             .build())

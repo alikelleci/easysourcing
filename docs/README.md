@@ -213,14 +213,9 @@ public class CustomerEventHandler {
   public void handle(CustomerCreated event) {
     emailClient.sendEmail("Welcome " + event.getFirstName())  // Send a welcome email
   }
-
-  @HandleEvent
-  public SomeCommand handle(FirstNameChanged event) {
-    return new SomeCommand(); // send a command
-  }
 }
 ```
-Methods annotated with `@HandleEvent` will get triggered when the corresponding event occurs. Event handlers can also send commands in reaction to an event. This is usefull when you implement a saga-pattern. To send a command, simply return a java object that represents your command. You can also return a list of commands. 
+Methods annotated with `@HandleEvent` will get triggered when the corresponding event occurs.
 
 > **Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.**
 

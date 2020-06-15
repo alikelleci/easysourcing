@@ -22,7 +22,7 @@ public class Metadata {
   public Metadata filter() {
     Map<String, String> map = new HashMap<>(entries);
     map.keySet().removeIf(key ->
-        StringUtils.equalsAny(key, "$id", "$result", "$snapshot", "$events", "$failure", "$timestamp"));
+        StringUtils.equalsAny(key, "$id", "$correlationId", "$timestamp", "$result", "$snapshot", "$events", "$failure"));
 
     return this.toBuilder()
         .clearEntries()

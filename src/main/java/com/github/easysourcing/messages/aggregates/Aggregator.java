@@ -79,7 +79,7 @@ public class Aggregator implements Handler<Aggregate> {
   private Aggregate createAggregate(Event event, Object result) {
     Aggregate aggregate = Aggregate.builder()
         .payload(result)
-        .metadata(event.getMetadata().filter().toBuilder()
+        .metadata(event.getMetadata().toBuilder()
             .entry("$id", UUID.randomUUID().toString())
             .build())
         .build();

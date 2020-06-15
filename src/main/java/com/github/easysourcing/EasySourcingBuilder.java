@@ -131,35 +131,12 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getCommandsTopics() {
-    Set<String> list1 = Stream.of(commandHandlers.keySet())
+    return Stream.of(commandHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
         .collect(Collectors.toSet());
-
-    Set<String> list2 = Stream.of(eventHandlers.values())
-        .flatMap(Collection::stream)
-        .map(eventHandler -> eventHandler.getMethod().getReturnType())
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-
-    Set<String> list3 = Stream.of(resultHandlers.values())
-        .flatMap(Collection::stream)
-        .map(eventHandler -> eventHandler.getMethod().getReturnType())
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-
-    Set<String> topics = new HashSet<>();
-    topics.addAll(list1);
-    topics.addAll(list2);
-    topics.addAll(list3);
-
-    return topics;
   }
 
   private Set<String> getResultTopics() {
