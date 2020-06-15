@@ -173,7 +173,7 @@ public class EasySourcingBuilder {
 
     Set<String> list2 = Stream.of(aggregators.values())
         .flatMap(Collection::stream)
-        .map(eventHandler -> eventHandler.getMethod().getReturnType())
+        .map(aggregator -> aggregator.getMethod().getReturnType())
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
@@ -196,7 +196,7 @@ public class EasySourcingBuilder {
 
     Set<String> list2 = Stream.of(commandHandlers.values())
         .flatMap(Collection::stream)
-        .map(eventHandler -> eventHandler.getMethod().getReturnType())
+        .map(commandHandler -> commandHandler.getMethod().getReturnType())
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
