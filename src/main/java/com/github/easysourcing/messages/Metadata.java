@@ -22,7 +22,12 @@ public class Metadata {
   public Metadata filter() {
     Map<String, String> map = new HashMap<>(entries);
     map.keySet().removeIf(key ->
-        StringUtils.equalsAny(key, "$id", "$correlationId", "$timestamp", "$result", "$snapshot", "$events", "$failure"));
+        StringUtils.equalsAny(key,
+            // persisted
+            "$id", "$correlationId", "$result", "$snapshot", "$events", "$failure",
+            // non-persisted (injected)
+            "$timestamp", "$topic", "$partition", "$offset"
+        ));
 
     return this.toBuilder()
         .clearEntries()
@@ -34,6 +39,9 @@ public class Metadata {
   public Metadata inject(ProcessorContext context) {
     return this.toBuilder()
         .entry("$timestamp", String.valueOf(context.timestamp()))
+        .entry("$topic", String.valueOf(context.topic()))
+        .entry("$partition", String.valueOf(context.partition()))
+        .entry("$offset", String.valueOf(context.offset()))
         .build();
   }
 }
