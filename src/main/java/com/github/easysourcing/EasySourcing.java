@@ -28,6 +28,11 @@ public class EasySourcing {
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
     setUpListeners();
 
+    if (config.isDeleteLocalStateOnStartup()) {
+      log.info("Deleting local state...");
+      kafkaStreams.cleanUp();
+    }
+
     log.info("EasySourcing is starting...");
     kafkaStreams.start();
   }
