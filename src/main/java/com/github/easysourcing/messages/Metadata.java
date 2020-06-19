@@ -21,13 +21,7 @@ public class Metadata {
   @Transient
   public Metadata filter() {
     Map<String, String> map = new HashMap<>(entries);
-    map.keySet().removeIf(key ->
-        StringUtils.equalsAny(key,
-            // persisted
-            "$id", "$correlationId", "$result", "$snapshot", "$events", "$failure",
-            // non-persisted (injected)
-            "$timestamp", "$topic", "$partition", "$offset"
-        ));
+    map.keySet().removeIf(key -> StringUtils.startsWithIgnoreCase(key, "$"));
 
     return this.toBuilder()
         .clearEntries()
