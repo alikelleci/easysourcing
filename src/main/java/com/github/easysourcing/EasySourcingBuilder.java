@@ -215,6 +215,7 @@ public class EasySourcingBuilder {
       listTopicsOptions.timeoutMs(15000);
       Set<String> brokerTopics = adminClient.listTopics(listTopicsOptions).names().get();
 
+      // Commands topic
       Set<NewTopic> commandTopicsToCreate = getCommandsTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
           .map(topic -> TopicBuilder.name(topic)
@@ -224,6 +225,7 @@ public class EasySourcingBuilder {
               .build())
           .collect(Collectors.toSet());
 
+      // Results topic
       Set<NewTopic> resultTopicsToCreate = getResultTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
           .map(topic -> TopicBuilder.name(topic)
@@ -233,6 +235,7 @@ public class EasySourcingBuilder {
               .build())
           .collect(Collectors.toSet());
 
+      // Snapshots topic
       Set<NewTopic> snapshotTopicsToCreate = getSnapshotTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
           .map(topic -> TopicBuilder.name(topic)
@@ -243,6 +246,7 @@ public class EasySourcingBuilder {
               .build())
           .collect(Collectors.toSet());
 
+      // Events topic
       Set<NewTopic> eventTopicsToCreate = getEventsTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
           .map(topic -> TopicBuilder.name(topic)

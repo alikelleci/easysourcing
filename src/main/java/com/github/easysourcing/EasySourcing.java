@@ -25,6 +25,11 @@ public class EasySourcing {
       return;
     }
 
+    if (topology.describe().subtopologies().isEmpty()) {
+      log.warn("EasySourcing could not be started: consumer is not subscribed to any topics or assigned any partitions");
+      return;
+    }
+
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
     setUpListeners();
 
