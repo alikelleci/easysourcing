@@ -41,11 +41,9 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
     String result = command.getMetadata().getEntries().get("$result");
     Void v = null;
 
-    if (handleAll) {
-      v = resultHandler.invoke(command, context);
-    } else if (handleSuccess && result.equals("success")) {
-      v = resultHandler.invoke(command, context);
-    } else if (handleFailed && result.equals("failed")) {
+    if (handleAll ||
+        (handleSuccess && result.equals("success")) ||
+        (handleFailed && result.equals("failed"))) {
       v = resultHandler.invoke(command, context);
     }
 
