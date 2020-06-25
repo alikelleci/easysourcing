@@ -4,6 +4,7 @@ import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.messages.results.annotations.HandleError;
 import com.github.easysourcing.messages.results.annotations.HandleResult;
 import com.github.easysourcing.messages.results.annotations.HandleSuccess;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -42,8 +43,8 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
     Void v = null;
 
     if (handleAll ||
-        (handleSuccess && result.equals("success")) ||
-        (handleFailed && result.equals("failed"))) {
+        (handleSuccess && StringUtils.equals(result, "success")) ||
+        (handleFailed && StringUtils.equals(result, "failed"))) {
       v = resultHandler.invoke(command, context);
     }
 
