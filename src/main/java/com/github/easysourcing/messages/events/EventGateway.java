@@ -3,10 +3,12 @@ package com.github.easysourcing.messages.events;
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
 
+@Slf4j
 public class EventGateway extends MessageGateway {
 
   public EventGateway(KafkaTemplate<String, Message> kafkaTemplate) {
@@ -18,7 +20,7 @@ public class EventGateway extends MessageGateway {
       metadata = Metadata.builder().build();
     }
 
-    Event message = Event.builder()
+    Event event = Event.builder()
         .payload(payload)
         .metadata(metadata.filter().toBuilder()
             .entry("$id", UUID.randomUUID().toString())
@@ -26,7 +28,8 @@ public class EventGateway extends MessageGateway {
             .build())
         .build();
 
-    send(message);
+    log.info("Sending event: {}", event);
+    send(event);
   }
 
   public void send(Object payload) {

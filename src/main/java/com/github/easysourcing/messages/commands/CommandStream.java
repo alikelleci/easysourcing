@@ -30,9 +30,7 @@ public class CommandStream {
   private final ConcurrentMap<Class<?>, Aggregator> aggregators;
   private final boolean frequentCommits;
 
-  public CommandStream(Set<String> topics,
-                       ConcurrentMap<Class<?>, CommandHandler> commandHandlers,
-                       ConcurrentMap<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
+  public CommandStream(Set<String> topics, ConcurrentMap<Class<?>, CommandHandler> commandHandlers, ConcurrentMap<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.aggregators = aggregators;
