@@ -23,9 +23,9 @@ import java.util.UUID;
 @Slf4j
 public class Aggregator implements Handler<Aggregate> {
 
-  private Object target;
-  private Method method;
-  private RetryPolicy<Object> retryPolicy;
+  private final Object target;
+  private final Method method;
+  private final RetryPolicy<Object> retryPolicy;
 
   public Aggregator(Object target, Method method) {
     this.target = target;

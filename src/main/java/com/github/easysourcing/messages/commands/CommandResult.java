@@ -18,10 +18,10 @@ public interface CommandResult {
   @Value
   @Builder
   class Success implements CommandResult {
-    private Command command;
-    private Aggregate snapshot;
+    Command command;
+    Aggregate snapshot;
     @Singular
-    private List<Event> events;
+    List<Event> events;
 
     @Override
     public Command getCommand() {
@@ -43,8 +43,8 @@ public interface CommandResult {
   @Value
   @Builder
   class Failure implements CommandResult {
-    private Command command;
-    private String message;
+    Command command;
+    String message;
 
     @Override
     public Command getCommand() {

@@ -24,14 +24,14 @@ public class GatewayBuilder {
 
   public CommandGateway commandGateway() {
     if (this.config == null) {
-      throw new RuntimeException("No config provided!");
+      throw new IllegalStateException("No config provided!");
     }
     return new CommandGateway(kafkaTemplate());
   }
 
   public EventGateway eventGateway() {
     if (this.config == null) {
-      throw new RuntimeException("No config provided!");
+      throw new IllegalStateException("No config provided!");
     }
     return new EventGateway(kafkaTemplate());
   }

@@ -16,9 +16,9 @@ import java.lang.reflect.Method;
 @Slf4j
 public class EventHandler implements Handler<Void> {
 
-  private Object target;
-  private Method method;
-  private RetryPolicy<Object> retryPolicy;
+  private final Object target;
+  private final Method method;
+  private final RetryPolicy<Object> retryPolicy;
 
   public EventHandler(Object target, Method method) {
     this.target = target;

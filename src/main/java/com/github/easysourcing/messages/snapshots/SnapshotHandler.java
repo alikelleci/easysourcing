@@ -17,9 +17,9 @@ import java.lang.reflect.Method;
 @Slf4j
 public class SnapshotHandler implements Handler<Void> {
 
-  private Object target;
-  private Method method;
-  private RetryPolicy<Object> retryPolicy;
+  private final Object target;
+  private final Method method;
+  private final RetryPolicy<Object> retryPolicy;
 
   public SnapshotHandler(Object target, Method method) {
     this.target = target;

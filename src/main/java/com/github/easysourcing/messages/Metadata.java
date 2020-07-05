@@ -15,7 +15,7 @@ import java.util.Map;
 public class Metadata {
 
   @Singular
-  private Map<String, String> entries;
+  Map<String, String> entries;
 
 
   @Transient

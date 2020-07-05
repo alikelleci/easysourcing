@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CommandHandler implements Handler<List<Event>> {
 
-  private Object target;
-  private Method method;
-  private RetryPolicy<Object> retryPolicy;
+  private final Object target;
+  private final Method method;
+  private final RetryPolicy<Object> retryPolicy;
 
-  private Validator validator;
+  private final Validator validator;
 
   public CommandHandler(Object target, Method method) {
     this.target = target;

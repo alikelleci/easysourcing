@@ -9,9 +9,9 @@ import java.time.Duration;
 @Slf4j
 public class EasySourcing {
 
-  private Config config;
+  private final Config config;
 
-  private Topology topology;
+  private final Topology topology;
   private KafkaStreams kafkaStreams;
 
   protected EasySourcing(Config config, Topology topology) {
