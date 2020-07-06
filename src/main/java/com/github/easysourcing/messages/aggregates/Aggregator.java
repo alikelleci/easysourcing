@@ -42,7 +42,7 @@ public class Aggregator implements Handler<Aggregate> {
     ProcessorContext context = (ProcessorContext) args[2];
 
 
-    log.info("Applying event: {}", event);
+    log.info("Applying event: {}", StringUtils.truncate(event.toString(), 1000));
 
     try {
       return (Aggregate) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event, context));

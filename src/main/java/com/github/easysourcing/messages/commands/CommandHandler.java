@@ -55,7 +55,7 @@ public class CommandHandler implements Handler<List<Event>> {
     Command command = (Command) args[1];
     ProcessorContext context = (ProcessorContext) args[2];
 
-    log.info("Handling command: {}", command);
+    log.info("Handling command: {}", StringUtils.truncate(command.toString(), 1000));
 
     try {
       validate(command);

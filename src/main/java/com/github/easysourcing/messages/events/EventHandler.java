@@ -7,6 +7,7 @@ import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -33,7 +34,7 @@ public class EventHandler implements Handler<Void> {
     Event event = (Event) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    log.info("Handling event: {}", event);
+    log.info("Handling event: {}", StringUtils.truncate(event.toString(), 1000));
 
     try {
       return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));

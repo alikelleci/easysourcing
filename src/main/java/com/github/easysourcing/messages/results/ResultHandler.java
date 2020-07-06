@@ -8,6 +8,7 @@ import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -34,7 +35,7 @@ public class ResultHandler implements Handler<Void> {
     Command command = (Command) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    log.info("Handling command result: {}", command);
+    log.info("Handling command result: {}", StringUtils.truncate(command.toString(), 1000));
 
     try {
       return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));
