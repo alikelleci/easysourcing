@@ -20,6 +20,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+import static com.github.easysourcing.messages.Metadata.ID;
+
 @Slf4j
 public class Aggregator implements Handler<Aggregate> {
 
@@ -80,7 +82,7 @@ public class Aggregator implements Handler<Aggregate> {
     Aggregate aggregate = Aggregate.builder()
         .payload(result)
         .metadata(event.getMetadata().toBuilder()
-            .entry("$id", UUID.randomUUID().toString())
+            .entry(ID, UUID.randomUUID().toString())
             .build())
         .build();
 

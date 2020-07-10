@@ -11,6 +11,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.github.easysourcing.messages.Metadata.EVENTS;
+import static com.github.easysourcing.messages.Metadata.ID;
+import static com.github.easysourcing.messages.Metadata.RESULT;
+import static com.github.easysourcing.messages.Metadata.SNAPSHOT;
+
 public interface CommandResult {
 
   Command getCommand();
@@ -27,12 +32,12 @@ public interface CommandResult {
     public Command getCommand() {
       return command.toBuilder()
           .metadata(command.getMetadata().toBuilder()
-              .entry("$result", "success")
-              .entry("$snapshot", Optional.ofNullable(snapshot)
-                  .map(s -> s.getMetadata().getEntries().get("$id"))
+              .entry(RESULT, "success")
+              .entry(SNAPSHOT, Optional.ofNullable(snapshot)
+                  .map(s -> s.getMetadata().get(ID))
                   .orElse(""))
-              .entry("$events", ListUtils.emptyIfNull(events).stream()
-                  .map(event -> event.getMetadata().getEntries().get("$id"))
+              .entry(EVENTS, ListUtils.emptyIfNull(events).stream()
+                  .map(event -> event.getMetadata().get(ID))
                   .collect(Collectors.joining(",")))
               .build())
           .build();

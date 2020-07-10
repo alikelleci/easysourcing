@@ -9,6 +9,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
 
+import static com.github.easysourcing.messages.Metadata.CORRELATION_ID;
+import static com.github.easysourcing.messages.Metadata.ID;
+
 @Slf4j
 public class CommandGateway extends MessageGateway {
 
@@ -24,8 +27,8 @@ public class CommandGateway extends MessageGateway {
     Command command = Command.builder()
         .payload(payload)
         .metadata(metadata.filter().toBuilder()
-            .entry("$id", UUID.randomUUID().toString())
-            .entry("$correlationId", UUID.randomUUID().toString())
+            .entry(ID, UUID.randomUUID().toString())
+            .entry(CORRELATION_ID, UUID.randomUUID().toString())
             .build())
         .build();
 
