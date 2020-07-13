@@ -10,6 +10,8 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.concurrent.ConcurrentMap;
 
+import static com.github.easysourcing.messages.Metadata.RESULT;
+
 
 public class ResultTransformer implements ValueTransformer<Command, Void> {
 
@@ -39,7 +41,7 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
     boolean handleSuccess = resultHandler.getMethod().isAnnotationPresent(HandleSuccess.class);
     boolean handleFailed = resultHandler.getMethod().isAnnotationPresent(HandleError.class);
 
-    String result = command.getMetadata().getEntries().get("$result");
+    String result = command.getMetadata().get(RESULT);
     Void v = null;
 
     if (handleAll ||

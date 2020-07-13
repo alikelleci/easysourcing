@@ -13,10 +13,18 @@ import java.util.Map;
 @Value
 @Builder(toBuilder = true)
 public class Metadata {
+  public static final String ID = "$id";
+  public static final String CORRELATION_ID = "$correlationId";
+  public static final String TIMESTAMP = "$timestamp";
+  public static final String TOPIC = "$topic";
+  public static final String PARTITION = "$partition";
+  public static final String OFFSET = "$offset";
+  public static final String RESULT = "$result";
+  public static final String SNAPSHOT = "$snapshot";
+  public static final String EVENTS = "$events";
 
   @Singular
   Map<String, String> entries;
-
 
   @Transient
   public Metadata filter() {
@@ -32,10 +40,15 @@ public class Metadata {
   @Transient
   public Metadata inject(ProcessorContext context) {
     return this.toBuilder()
-        .entry("$timestamp", String.valueOf(context.timestamp()))
-        .entry("$topic", String.valueOf(context.topic()))
-        .entry("$partition", String.valueOf(context.partition()))
-        .entry("$offset", String.valueOf(context.offset()))
+        .entry(TIMESTAMP, String.valueOf(context.timestamp()))
+        .entry(TOPIC, String.valueOf(context.topic()))
+        .entry(PARTITION, String.valueOf(context.partition()))
+        .entry(OFFSET, String.valueOf(context.offset()))
         .build();
+  }
+
+  @Transient
+  public String get(String key) {
+    return entries.get(key);
   }
 }
