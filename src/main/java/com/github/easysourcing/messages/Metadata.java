@@ -10,18 +10,15 @@ import java.beans.Transient;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.github.easysourcing.messages.MetadataKeys.OFFSET;
+import static com.github.easysourcing.messages.MetadataKeys.PARTITION;
+import static com.github.easysourcing.messages.MetadataKeys.TIMESTAMP;
+import static com.github.easysourcing.messages.MetadataKeys.TOPIC;
+
+
 @Value
 @Builder(toBuilder = true)
 public class Metadata {
-  public static final String ID = "$id";
-  public static final String CORRELATION_ID = "$correlationId";
-  public static final String TIMESTAMP = "$timestamp";
-  public static final String TOPIC = "$topic";
-  public static final String PARTITION = "$partition";
-  public static final String OFFSET = "$offset";
-  public static final String RESULT = "$result";
-  public static final String SNAPSHOT = "$snapshot";
-  public static final String EVENTS = "$events";
 
   @Singular
   Map<String, String> entries;

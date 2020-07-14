@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.github.easysourcing.messages.Metadata.EVENTS;
-import static com.github.easysourcing.messages.Metadata.ID;
-import static com.github.easysourcing.messages.Metadata.RESULT;
-import static com.github.easysourcing.messages.Metadata.SNAPSHOT;
+import static com.github.easysourcing.messages.MetadataKeys.EVENTS;
+import static com.github.easysourcing.messages.MetadataKeys.FAILURE;
+import static com.github.easysourcing.messages.MetadataKeys.ID;
+import static com.github.easysourcing.messages.MetadataKeys.RESULT;
+import static com.github.easysourcing.messages.MetadataKeys.SNAPSHOT;
+
 
 public interface CommandResult {
 
@@ -55,8 +57,8 @@ public interface CommandResult {
     public Command getCommand() {
       return command.toBuilder()
           .metadata(command.getMetadata().toBuilder()
-              .entry("$result", "failed")
-              .entry("$failure", message)
+              .entry(RESULT, "failed")
+              .entry(FAILURE, message)
               .build())
           .build();
     }

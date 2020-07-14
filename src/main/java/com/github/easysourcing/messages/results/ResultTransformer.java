@@ -10,7 +10,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.concurrent.ConcurrentMap;
 
-import static com.github.easysourcing.messages.Metadata.RESULT;
+import static com.github.easysourcing.messages.MetadataKeys.RESULT;
 
 
 public class ResultTransformer implements ValueTransformer<Command, Void> {

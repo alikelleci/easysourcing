@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.github.easysourcing.messages.Metadata.ID;
+import static com.github.easysourcing.messages.MetadataKeys.ID;
 
 @Slf4j
 public class CommandHandler implements Handler<List<Event>> {

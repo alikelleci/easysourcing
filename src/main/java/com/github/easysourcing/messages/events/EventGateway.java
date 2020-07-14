@@ -9,8 +9,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
 
-import static com.github.easysourcing.messages.Metadata.CORRELATION_ID;
-import static com.github.easysourcing.messages.Metadata.ID;
+import static com.github.easysourcing.messages.MetadataKeys.CORRELATION_ID;
+import static com.github.easysourcing.messages.MetadataKeys.ID;
 
 @Slf4j
 public class EventGateway extends MessageGateway {

@@ -20,7 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
-import static com.github.easysourcing.messages.Metadata.ID;
+import static com.github.easysourcing.messages.MetadataKeys.ID;
 
 @Slf4j
 public class Aggregator implements Handler<Aggregate> {
