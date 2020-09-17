@@ -4,9 +4,8 @@ import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.commands.CommandGateway;
 import com.github.easysourcing.messages.events.EventGateway;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @Slf4j
@@ -26,25 +25,21 @@ public class GatewayBuilder {
     if (this.config == null) {
       throw new IllegalStateException("No config provided!");
     }
-    return new CommandGateway(kafkaTemplate());
+    return new CommandGateway(KafkaProducer());
   }
 
   public EventGateway eventGateway() {
     if (this.config == null) {
       throw new IllegalStateException("No config provided!");
     }
-    return new EventGateway(kafkaTemplate());
+    return new EventGateway(KafkaProducer());
   }
 
-  private DefaultKafkaProducerFactory<String, Message> producerFactory() {
-    return new DefaultKafkaProducerFactory<>(config.producerConfigs(),
+  private KafkaProducer<String, Message> KafkaProducer() {
+    return new KafkaProducer<>(config.producerConfigs(),
         new StringSerializer(),
         new JsonSerializer<Message>()
             .noTypeInfo());
-  }
-
-  private KafkaTemplate<String, Message> kafkaTemplate() {
-    return new KafkaTemplate<>(producerFactory());
   }
 
 }

@@ -5,7 +5,7 @@ import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.util.UUID;
 
@@ -15,8 +15,8 @@ import static com.github.easysourcing.messages.MetadataKeys.ID;
 @Slf4j
 public class CommandGateway extends MessageGateway {
 
-  public CommandGateway(KafkaTemplate<String, Message> kafkaTemplate) {
-    super(kafkaTemplate);
+  public CommandGateway(KafkaProducer<String, Message> kafkaProducer) {
+    super(kafkaProducer);
   }
 
   public void send(Object payload, Metadata metadata) {
