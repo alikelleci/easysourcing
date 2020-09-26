@@ -11,7 +11,7 @@ public class MessageGateway {
 
   private final KafkaProducer<String, Message> kafkaProducer;
 
-  protected MessageGateway(KafkaProducer<String, Message> kafkaProducer) {
+  public MessageGateway(KafkaProducer<String, Message> kafkaProducer) {
     this.kafkaProducer = kafkaProducer;
   }
 
