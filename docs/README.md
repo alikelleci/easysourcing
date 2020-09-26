@@ -128,7 +128,7 @@ public class CustomerCommandHandler {
     }
     return FirstNameChanged.builder()
         .customerId(command.getCustomerId())
-        .firtname(command.getFirstName())
+        .firstName(command.getFirstName())
         .build();
   }
 }
