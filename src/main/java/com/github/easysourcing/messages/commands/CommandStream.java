@@ -19,18 +19,18 @@ import org.apache.kafka.streams.state.Stores;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 public class CommandStream {
 
   private final Set<String> topics;
-  private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers;
-  private final ConcurrentMap<Class<?>, Aggregator> aggregators;
+  private final Map<Class<?>, CommandHandler> commandHandlers;
+  private final Map<Class<?>, Aggregator> aggregators;
   private final boolean frequentCommits;
 
-  public CommandStream(Set<String> topics, ConcurrentMap<Class<?>, CommandHandler> commandHandlers, ConcurrentMap<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.aggregators = aggregators;

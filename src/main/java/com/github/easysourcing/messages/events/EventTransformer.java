@@ -1,19 +1,21 @@
 package com.github.easysourcing.messages.events;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collection;
 
 
 public class EventTransformer implements ValueTransformer<Event, Void> {
 
   private ProcessorContext context;
 
-  private final ConcurrentMap<Class<?>, EventHandler> eventHandlers;
+  private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
   private final boolean frequentCommits;
 
-  public EventTransformer(ConcurrentMap<Class<?>, EventHandler> eventHandlers, boolean frequentCommits) {
+  public EventTransformer(MultiValuedMap<Class<?>, EventHandler> eventHandlers, boolean frequentCommits) {
     this.eventHandlers = eventHandlers;
     this.frequentCommits = frequentCommits;
   }
@@ -25,17 +27,18 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
 
   @Override
   public Void transform(Event event) {
-    EventHandler eventHandler = eventHandlers.get(event.getPayload().getClass());
-    if (eventHandler == null) {
+    Collection<EventHandler> handlers = eventHandlers.get(event.getPayload().getClass());
+    if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }
 
-    Void v = eventHandler.invoke(event, context);
+    handlers.forEach(handler ->
+        handler.invoke(event, context));
 
     if (frequentCommits) {
       context.commit();
     }
-    return v;
+    return null;
   }
 
   @Override

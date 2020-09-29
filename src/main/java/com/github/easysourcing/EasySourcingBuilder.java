@@ -17,6 +17,8 @@ import com.github.easysourcing.messages.snapshots.SnapshotStream;
 import com.github.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import com.github.easysourcing.utils.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
@@ -29,12 +31,12 @@ import org.springframework.kafka.config.TopicBuilder;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,11 +47,11 @@ public class EasySourcingBuilder {
   private Config config;
 
   //  Handlers
-  private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers = new ConcurrentHashMap<>();
-  private final ConcurrentMap<Class<?>, Aggregator> aggregators = new ConcurrentHashMap<>();
-  private final ConcurrentMap<Class<?>, ResultHandler> resultHandlers = new ConcurrentHashMap<>();
-  private final ConcurrentMap<Class<?>, SnapshotHandler> snapshotHandlers = new ConcurrentHashMap<>();
-  private final ConcurrentMap<Class<?>, EventHandler> eventHandlers = new ConcurrentHashMap<>();
+  private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
+  private final Map<Class<?>, Aggregator> aggregators = new HashMap<>();
+  private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers = new ArrayListValuedHashMap<>();
+  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
+  private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
 
   public EasySourcingBuilder() {
   }

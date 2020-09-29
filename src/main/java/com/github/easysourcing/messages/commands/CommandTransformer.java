@@ -14,8 +14,8 @@ import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import javax.validation.ValidationException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 public class CommandTransformer implements ValueTransformer<Command, CommandResult> {
@@ -23,11 +23,11 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
   private ProcessorContext context;
   private KeyValueStore<String, ValueAndTimestamp<Aggregate>> store;
 
-  private final ConcurrentMap<Class<?>, CommandHandler> commandHandlers;
-  private final ConcurrentMap<Class<?>, Aggregator> aggregators;
+  private final Map<Class<?>, CommandHandler> commandHandlers;
+  private final Map<Class<?>, Aggregator> aggregators;
   private final boolean frequentCommits;
 
-  public CommandTransformer(ConcurrentMap<Class<?>, CommandHandler> commandHandlers, ConcurrentMap<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
+  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
     this.commandHandlers = commandHandlers;
     this.aggregators = aggregators;
     this.frequentCommits = frequentCommits;

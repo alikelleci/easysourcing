@@ -1,20 +1,22 @@
 package com.github.easysourcing.messages.snapshots;
 
 import com.github.easysourcing.messages.aggregates.Aggregate;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collection;
 
 
 public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
 
   private ProcessorContext context;
 
-  private final ConcurrentMap<Class<?>, SnapshotHandler> snapshotHandlers;
+  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
   private final boolean frequentCommits;
 
-  public SnapshotTransformer(ConcurrentMap<Class<?>, SnapshotHandler> snapshotHandlers, boolean frequentCommits) {
+  public SnapshotTransformer(MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers, boolean frequentCommits) {
     this.snapshotHandlers = snapshotHandlers;
     this.frequentCommits = frequentCommits;
   }
@@ -26,17 +28,18 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
 
   @Override
   public Void transform(Aggregate snapshot) {
-    SnapshotHandler snapshotHandler = snapshotHandlers.get(snapshot.getPayload().getClass());
-    if (snapshotHandler == null) {
+    Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getPayload().getClass());
+    if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }
 
-    Void v = snapshotHandler.invoke(snapshot, context);
+    handlers.forEach(handler ->
+        handler.invoke(snapshot, context));
 
     if (frequentCommits) {
       context.commit();
     }
-    return v;
+    return null;
   }
 
   @Override
