@@ -111,7 +111,7 @@ public class CustomerCommandHandler {
 
   @HandleCommand
   public CustomerEvent handle(Customer currentState, CreateCustomer command) {
-    if (currentState == null) {
+    if (currentState != null) {
       return null;  // Customer already exists!
     }
     return CustomerCreated.builder()
