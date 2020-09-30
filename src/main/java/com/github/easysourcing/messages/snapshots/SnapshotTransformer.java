@@ -1,5 +1,6 @@
 package com.github.easysourcing.messages.snapshots;
 
+import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -7,6 +8,7 @@ import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 
 public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
@@ -33,8 +35,10 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
       return null;
     }
 
-    handlers.forEach(handler ->
-        handler.invoke(snapshot, context));
+    handlers.stream()
+        .sorted((Comparator.comparingInt(Handler::getOrder)))
+        .forEach(handler ->
+            handler.invoke(snapshot, context));
 
     if (frequentCommits) {
       context.commit();

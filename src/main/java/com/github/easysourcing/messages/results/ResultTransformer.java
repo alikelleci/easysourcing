@@ -1,5 +1,6 @@
 package com.github.easysourcing.messages.results;
 
+import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.messages.results.annotations.HandleError;
 import com.github.easysourcing.messages.results.annotations.HandleResult;
@@ -11,6 +12,7 @@ import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 import static com.github.easysourcing.messages.MetadataKeys.RESULT;
 
@@ -39,18 +41,20 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
       return null;
     }
 
-    handlers.forEach(handler -> {
-      boolean handleAll = handler.getMethod().isAnnotationPresent(HandleResult.class);
-      boolean handleSuccess = handler.getMethod().isAnnotationPresent(HandleSuccess.class);
-      boolean handleFailed = handler.getMethod().isAnnotationPresent(HandleError.class);
+    handlers.stream()
+        .sorted((Comparator.comparingInt(Handler::getOrder)))
+        .forEach(handler -> {
+          boolean handleAll = handler.getMethod().isAnnotationPresent(HandleResult.class);
+          boolean handleSuccess = handler.getMethod().isAnnotationPresent(HandleSuccess.class);
+          boolean handleFailed = handler.getMethod().isAnnotationPresent(HandleError.class);
 
-      String result = command.getMetadata().get(RESULT);
-      if (handleAll ||
-          (handleSuccess && StringUtils.equals(result, "success")) ||
-          (handleFailed && StringUtils.equals(result, "failed"))) {
-        handler.invoke(command, context);
-      }
-    });
+          String result = command.getMetadata().get(RESULT);
+          if (handleAll ||
+              (handleSuccess && StringUtils.equals(result, "success")) ||
+              (handleFailed && StringUtils.equals(result, "failed"))) {
+            handler.invoke(command, context);
+          }
+        });
 
     if (frequentCommits) {
       context.commit();

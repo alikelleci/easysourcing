@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.alikelleci</groupId>
     <artifactId>easysourcing</artifactId>
-    <version>0.9.30</version>
+    <version>0.10.0</version>
     <name>easysourcing</name>
     <description>A Java library for Event Sourcing using Kafka</description>
 

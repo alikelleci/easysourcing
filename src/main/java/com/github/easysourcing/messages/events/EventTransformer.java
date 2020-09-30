@@ -1,11 +1,13 @@
 package com.github.easysourcing.messages.events;
 
+import com.github.easysourcing.messages.Handler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 
 public class EventTransformer implements ValueTransformer<Event, Void> {
@@ -32,8 +34,10 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
       return null;
     }
 
-    handlers.forEach(handler ->
-        handler.invoke(event, context));
+    handlers.stream()
+        .sorted((Comparator.comparingInt(Handler::getOrder)))
+        .forEach(handler ->
+            handler.invoke(event, context));
 
     if (frequentCommits) {
       context.commit();
