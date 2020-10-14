@@ -16,12 +16,10 @@ public class EventStream {
 
   private final Set<String> topics;
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
-  private final boolean frequentCommits;
 
-  public EventStream(Set<String> topics, MultiValuedMap<Class<?>, EventHandler> eventHandlers, boolean frequentCommits) {
+  public EventStream(Set<String> topics, MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
     this.topics = topics;
     this.eventHandlers = eventHandlers;
-    this.frequentCommits = frequentCommits;
   }
 
   public void buildStream(StreamsBuilder builder) {
@@ -36,7 +34,7 @@ public class EventStream {
 
     // Events --> Void
     eventKStream
-        .transformValues(() -> new EventTransformer(eventHandlers, frequentCommits));
+        .transformValues(() -> new EventTransformer(eventHandlers));
   }
 
 }

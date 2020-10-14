@@ -15,11 +15,9 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
   private ProcessorContext context;
 
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
-  private final boolean frequentCommits;
 
-  public EventTransformer(MultiValuedMap<Class<?>, EventHandler> eventHandlers, boolean frequentCommits) {
+  public EventTransformer(MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
     this.eventHandlers = eventHandlers;
-    this.frequentCommits = frequentCommits;
   }
 
   @Override
@@ -39,9 +37,6 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
         .forEach(handler ->
             handler.invoke(event, context));
 
-    if (frequentCommits) {
-      context.commit();
-    }
     return null;
   }
 

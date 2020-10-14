@@ -22,11 +22,9 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
   private ProcessorContext context;
 
   private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers;
-  private final boolean frequentCommits;
 
-  public ResultTransformer(MultiValuedMap<Class<?>, ResultHandler> resultHandlers, boolean frequentCommits) {
+  public ResultTransformer(MultiValuedMap<Class<?>, ResultHandler> resultHandlers) {
     this.resultHandlers = resultHandlers;
-    this.frequentCommits = frequentCommits;
   }
 
   @Override
@@ -56,9 +54,6 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
           }
         });
 
-    if (frequentCommits) {
-      context.commit();
-    }
     return null;
   }
 

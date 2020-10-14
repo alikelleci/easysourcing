@@ -312,7 +312,7 @@ The essential configurations for EasySourcing are the following:
 | partitions       	| 1             	| Sets the amount of partitions for the topics created by the applicaiton.                                                       	|
 | replicas         	| 1             	| Sets the replication factor for the topics created by the applicaiton.                                                         	|
 | securityProtocol 	| PLAINTEXT     	| Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.                         	|
-| frequentCommits  	| false         	| Sets frequent commits on or off. Setting this option to 'true' will increase reliability but will drastically reduce performance. |
+| rebuildLocalState | false         	| Setting this option to 'true' will cause the application to rebuild the local state by reconsuming events.                        |
 
 
 ## Retries

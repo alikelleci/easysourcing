@@ -25,12 +25,10 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, Aggregator> aggregators;
-  private final boolean frequentCommits;
 
-  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
+  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators) {
     this.commandHandlers = commandHandlers;
     this.aggregators = aggregators;
-    this.frequentCommits = frequentCommits;
   }
 
   @Override
@@ -74,10 +72,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
       store.put(command.getAggregateId(), ValueAndTimestamp
           .make(aggregate, context.timestamp()));
     }
-
-    if (frequentCommits) {
-      context.commit();
-    }
+    
     return Success.builder()
         .command(command)
         .snapshot(updated ? aggregate : null)

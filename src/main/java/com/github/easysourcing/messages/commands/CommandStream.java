@@ -8,7 +8,6 @@ import com.github.easysourcing.messages.events.Event;
 import com.github.easysourcing.serdes.CustomJsonSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -28,13 +27,11 @@ public class CommandStream {
   private final Set<String> topics;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, Aggregator> aggregators;
-  private final boolean frequentCommits;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators, boolean frequentCommits) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.aggregators = aggregators;
-    this.frequentCommits = frequentCommits;
   }
 
   public void buildStream(StreamsBuilder builder) {
@@ -44,7 +41,7 @@ public class CommandStream {
             Stores.persistentTimestampedKeyValueStore("snapshot-store"),
             Serdes.String(),
             new JsonSerde<>(Aggregate.class).noTypeInfo()
-        ).withLoggingEnabled(Collections.singletonMap(TopicConfig.DELETE_RETENTION_MS_CONFIG, "86400000")) // 1 day
+        ).withLoggingEnabled(Collections.emptyMap())
     );
 
     // --> Commands
@@ -58,7 +55,7 @@ public class CommandStream {
 
     // Commands --> Results
     KStream<String, CommandResult> resultsKStream = commandsKStream
-        .transformValues(() -> new CommandTransformer(commandHandlers, aggregators, frequentCommits), "snapshot-store")
+        .transformValues(() -> new CommandTransformer(commandHandlers, aggregators), "snapshot-store")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 

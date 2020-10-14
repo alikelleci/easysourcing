@@ -17,12 +17,10 @@ public class SnapshotStream {
 
   private final Set<String> topics;
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
-  private final boolean frequentCommits;
 
-  public SnapshotStream(Set<String> topics, MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers, boolean frequentCommits) {
+  public SnapshotStream(Set<String> topics, MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers) {
     this.topics = topics;
     this.snapshotHandlers = snapshotHandlers;
-    this.frequentCommits = frequentCommits;
   }
 
   public void buildStream(StreamsBuilder builder) {
@@ -37,7 +35,7 @@ public class SnapshotStream {
 
     // Snapshots --> Void
     snapshotKStream
-        .transformValues(() -> new SnapshotTransformer(snapshotHandlers, frequentCommits));
+        .transformValues(() -> new SnapshotTransformer(snapshotHandlers));
   }
 
 }

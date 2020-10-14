@@ -17,12 +17,10 @@ public class ResultStream {
 
   private final Set<String> topics;
   private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers;
-  private final boolean frequentCommits;
 
-  public ResultStream(Set<String> topics, MultiValuedMap<Class<?>, ResultHandler> resultHandlers, boolean frequentCommits) {
+  public ResultStream(Set<String> topics, MultiValuedMap<Class<?>, ResultHandler> resultHandlers) {
     this.topics = topics;
     this.resultHandlers = resultHandlers;
-    this.frequentCommits = frequentCommits;
   }
 
   public void buildStream(StreamsBuilder builder) {
@@ -37,7 +35,7 @@ public class ResultStream {
 
     // Results --> Void
     resultKStream
-        .transformValues(() -> new ResultTransformer(resultHandlers, frequentCommits));
+        .transformValues(() -> new ResultTransformer(resultHandlers));
   }
 
 }

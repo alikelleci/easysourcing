@@ -7,6 +7,7 @@ import com.github.easysourcing.messages.commands.CommandHandler;
 import com.github.easysourcing.messages.commands.CommandStream;
 import com.github.easysourcing.messages.commands.annotations.HandleCommand;
 import com.github.easysourcing.messages.events.EventHandler;
+import com.github.easysourcing.messages.events.EventSourcingStream;
 import com.github.easysourcing.messages.events.EventStream;
 import com.github.easysourcing.messages.events.annotations.HandleEvent;
 import com.github.easysourcing.messages.results.ResultHandler;
@@ -204,9 +205,17 @@ public class EasySourcingBuilder {
         .map(TopicInfo::value)
         .collect(Collectors.toSet());
 
+    Set<String> list3 = Stream.of(aggregators.keySet())
+        .flatMap(Collection::stream)
+        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
+        .filter(Objects::nonNull)
+        .map(TopicInfo::value)
+        .collect(Collectors.toSet());
+
     Set<String> topics = new HashSet<>();
     topics.addAll(list1);
     topics.addAll(list2);
+    topics.addAll(list3);
 
     return topics;
   }
@@ -276,27 +285,36 @@ public class EasySourcingBuilder {
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
+    if (config.isRebuildLocalState()) {
+      Set<String> eventsTopics = getEventsTopics();
+      if (!eventsTopics.isEmpty() && !aggregators.isEmpty()) {
+        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventsTopics, aggregators);
+        eventSourcingStream.buildStream(builder);
+      }
+      return builder.build();
+    }
+
     Set<String> commandsTopics = getCommandsTopics();
     if (!commandsTopics.isEmpty() && !commandHandlers.isEmpty()) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, config.isFrequentCommits());
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators);
       commandStream.buildStream(builder);
     }
 
     Set<String> resultTopics = getResultTopics();
     if (!resultTopics.isEmpty() && !resultHandlers.isEmpty()) {
-      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers, config.isFrequentCommits());
+      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers);
       resultStream.buildStream(builder);
     }
 
     Set<String> snapshotTopics = getSnapshotTopics();
     if (!snapshotTopics.isEmpty() && !snapshotHandlers.isEmpty()) {
-      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers, config.isFrequentCommits());
+      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
       snapshotStream.buildStream(builder);
     }
 
     Set<String> eventsTopics = getEventsTopics();
     if (!eventsTopics.isEmpty() && !eventHandlers.isEmpty()) {
-      EventStream eventStream = new EventStream(eventsTopics, eventHandlers, config.isFrequentCommits());
+      EventStream eventStream = new EventStream(eventsTopics, eventHandlers);
       eventStream.buildStream(builder);
     }
 

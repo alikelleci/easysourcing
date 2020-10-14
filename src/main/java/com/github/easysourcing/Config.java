@@ -31,9 +31,7 @@ public class Config {
   @Builder.Default
   private String securityProtocol = "PLAINTEXT";
   @Builder.Default
-  private boolean frequentCommits = false;
-  @Builder.Default
-  private boolean deleteLocalStateOnStartup = false;
+  private boolean rebuildLocalState = false;
 
   @Builder.Default
   private long commandsRetention = 604800000; // 7 days

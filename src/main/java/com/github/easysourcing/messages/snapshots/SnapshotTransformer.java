@@ -16,11 +16,9 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
   private ProcessorContext context;
 
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
-  private final boolean frequentCommits;
 
-  public SnapshotTransformer(MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers, boolean frequentCommits) {
+  public SnapshotTransformer(MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers) {
     this.snapshotHandlers = snapshotHandlers;
-    this.frequentCommits = frequentCommits;
   }
 
   @Override
@@ -40,9 +38,6 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
         .forEach(handler ->
             handler.invoke(snapshot, context));
 
-    if (frequentCommits) {
-      context.commit();
-    }
     return null;
   }
 
