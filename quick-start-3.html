@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Event handling - Easy Sourcing</title><meta name="description" content=" Event handler Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that&hellip;"><meta name="generator" content="Publii Open-Source CMS for Static Site"><link rel="canonical" href="https://alikelleci.github.io/easysourcing/quick-start-3.html"><style>:root{--body-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";--heading-font:var(--body-font);--logo-font:var(--body-font);--menu-font:var(--body-font)}</style><link rel="stylesheet" href="https://alikelleci.github.io/easysourcing/assets/css/style.css?v=54931591f671f61d6ed9cc7eeb94071d"><link rel="stylesheet" href="https://alikelleci.github.io/easysourcing/assets/css/prism-dark.css?v=4cc85e12ca94c0614c9359a37eb69a0c"><script type="application/ld+json">{"@context":"http://schema.org","@type":"Article","mainEntityOfPage":{"@type":"WebPage","@id":"https://alikelleci.github.io/easysourcing/quick-start-3.html"},"headline":"Event handling","datePublished":"2020-10-17T23:04","dateModified":"2020-10-17T23:13","description":" Event handler Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that&hellip;","author":{"@type":"Person","name":"Ali Kelleci"},"publisher":{"@type":"Organization","name":"Ali Kelleci"}}</script></head><body><header class="top"><div class="top__logo"><a class="logo" href="https://alikelleci.github.io/easysourcing/">Easy Sourcing</a></div><div class="top__links"><a href="https://github.com/alikelleci/easysourcing" class="top__links-url" aria-label="Github" title="Github" target="_blank" rel="noopener"><svg height="24" width="24"><use xlink:href="https://alikelleci.github.io/easysourcing/assets/svg/svg-map.svg#github"></use></svg></a></div><button class="navbar__toggle" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span class="navbar__toggle-box"><span class="navbar__toggle-inner">Menu</span></span></button></header><main class="main"><div class="main__left"><div class="main__left-inner"><div class="main__left-content"><article class="post"><header><h1 class="post__title">Event handling</h1></header><div class="post__entry"><h2 id="event-handler">Event handler</h2><p>Event handlers are components that act on incoming events. They are often used in external systems to get notifications about things that happened. In reaction to that, event handlers can execute their own logic. Usually, this involves updating view models or forwarding updates to other components.<br><br>See below for an example of a customer event handler:<br></p><pre class="line-numbers language-java"><code>public class CustomerEventHandler {
+  
+  private EmailClient emailClient;
+
+  @HandleEvent
+  public void handle(CustomerCreated event) {
+    emailClient.sendEmail("Welcome " + event.getFirstName())  // Send a welcome email
+  }
+}
+</code></pre><p>Methods annotated with <code>@HandleEvent</code> will get triggered when the corresponding event occurs.&nbsp;</p><p class="msg msg--info">Event handlers are often used in external systems for updating view models or sending out emails. They are also used for implementing a saga-pattern.<br></p><h2 id="dispatching-events">Dispatching events</h2><p>Sending events is as follows:<br></p><pre class="line-numbers language-java"><code>public class SomeService {
+
+  private EventGateway eventGateway;
+
+  public void sendEvent() {
+    CustomerCreated event = CustomerCreated.builder()
+        .customerId("cust-123")
+        .firstName("John")
+        .lastName("Doe")
+        .build();
+
+    eventGateway.send(event);
+  }
+}
+</code></pre><p class="msg msg--info">Spring Boot<br></p><p id="events">When using Spring Boot, you can just autowire an instance of <code>EventGateway</code>.<br></p></div></article><nav><ul class="posts-nav"><li class="posts-nav__prev"><span>Previous: </span><a href="https://alikelleci.github.io/easysourcing/quick-start-2.html" class="invert" rel="prev" title="Command handling">Command handling</a></li></ul></nav></div><aside class="main__left-aside"><div class="main__left-aside__inner"><h3>On this page</h3><nav class="aside-toc" id="aside-toc"></nav></div></aside></div></div><div class="main__right"><div class="main__right-inner"><nav class="navbar"><ul class="navbar__menu"><li><a href="https://alikelleci.github.io/easysourcing/introduction.html" target="_self">Introduction</a></li><li class="active-parent has-submenu"><a href="https://alikelleci.github.io/easysourcing/quick-start.html" target="_self" aria-haspopup="true">Quick Start</a><ul class="navbar__submenu" aria-hidden="true"><li><a href="https://alikelleci.github.io/easysourcing/quick-start.html" target="_self">Install</a></li><li><a href="https://alikelleci.github.io/easysourcing/quick-start-2.html" target="_self">Command Handling</a></li><li class="active"><a href="https://alikelleci.github.io/easysourcing/quick-start-3.html" target="_self">Event Handling</a></li></ul></li></ul></nav><div class="footer main__right-footer"><div class="footer__copy">by <a href="https://github.com/alikelleci" target="_blank" rel="nofollow noopener">Ali Kelleci</a></div></div></div></div></main><footer class="footer"><div class="footer__wrap"><div class="footer__inner"><div class="footer__copy">by <a href="https://github.com/alikelleci" target="_blank" rel="nofollow noopener">Ali Kelleci</a></div></div></div></footer><div class="post__progress" id="js-post__progress" aria-hidden="true"></div><script>window.publiiThemeMenuConfig = {    
+        mobileMenuMode: 'sidebar',        
+        submenuWidth: 300,        
+        mobileMenuExpandableSubmenus: true,
+        isHoverMenu: false,
+        ariaButtonAttribute: 'aria-expanded',
+   };</script><script src="https://alikelleci.github.io/easysourcing/assets/js/html-contents.min.js?v=169077c370ab8ca62b029845f80f7fd5" defer="defer"></script><script>document.addEventListener("DOMContentLoaded", function(event) {
+            htmlContents('#aside-toc', {
+                area: '.post__entry',
+                top: 2,
+                bottom: 3,
+                listType: 'o',
+                filter: function(arr) {
+                    return !arr.matches('.noOutline')
+                },
+                addIds: true,
+                addLinks: true
+            });
+
+            setTimeout(function() {
+                handleActiveClass('#aside-toc');
+            }, 0);
+        })</script><script defer="defer" src="https://alikelleci.github.io/easysourcing/assets/js/scripts.min.js?v=2e5cce97094c516b8f7e6af7e7cd3e09"></script><script>var images = document.querySelectorAll('img[loading]');
+
+        for (var i = 0; i < images.length; i++) {
+            if (images[i].complete) {
+                images[i].classList.add('is-loaded');
+            } else {
+                images[i].addEventListener('load', function () {
+                    this.classList.add('is-loaded');
+                }, false);
+            }
+        }</script><script defer="defer" src="https://alikelleci.github.io/easysourcing/assets/js/prism.js?v=277309e26a038bf312a7e8aa239cfbd8"></script><script defer="defer" src="https://alikelleci.github.io/easysourcing/assets/js/prism-line-numbers.min.js?v=13275d3ac10d7028cf6a6f5da276f68c"></script><script defer="defer" src="https://alikelleci.github.io/easysourcing/assets/js/prism-copy-to-clipboard.min.js?v=fabfc3fd9af83cda5208ba2e9f9ed238"></script></body></html>
