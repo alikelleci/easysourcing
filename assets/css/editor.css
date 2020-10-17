@@ -1,0 +1,87 @@
+/* 
+ * Add your own CSS code for the WYSIWYG editor 
+ */
+
+
+.ordered-list {
+    counter-reset: listCounter;
+}
+
+.ordered-list li {
+    counter-increment: listCounter;
+    list-style: none;
+    position: relative;
+}
+
+.ordered-list li::before {
+    color: #42a5f5;
+    content: counter(listCounter, decimal-leading-zero) ".";
+    font-weight: 600;
+    left: -2rem;
+    position: absolute;
+}
+
+
+.btn,
+[type=button],
+[type=submit],
+button {
+    background: #42a5f5;
+    border: none;
+    border-radius: 2px;
+    -webkit-box-shadow: 0 4px 6px rgba(50, 50, 93, 0.1), 0 1px 1px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.1), 0 1px 1px rgba(0, 0, 0, 0.08);
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-block;
+    font: 500 0.82397rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    letter-spacing: 0.03em;
+    padding: 0.66667rem 1.33333rem;
+    vertical-align: middle;
+    text-align: center;
+    -webkit-transition: all 0.24s ease;
+    -o-transition: all 0.24s ease;
+    transition: all 0.24s ease;
+    text-decoration: none;
+    overflow: hidden;
+    will-change: transform;
+}
+
+.btn:hover,
+:hover[type=button],
+:hover[type=submit],
+button:hover {
+    -webkit-box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+    color: #ffffff;
+    -webkit-transform: translateY(-2px);
+    -ms-transform: translateY(-2px);
+    transform: translateY(-2px);
+    text-decoration: none !important;
+}
+
+.btn--white {
+    background: #ffffff !important;    
+    color: #696C7B !important;
+}
+
+
+.btn--yellow {
+    background: #F6C144 !important;  
+    color: #ffffff !important;
+}
+
+.btn--green {
+    background: #69DA58 !important;    
+    color: #ffffff !important;
+}
+
+.btn--gray {
+    background: #F7FAFC!important;
+    color: #323c53!important;
+}
+
+.btn--dark {
+   background: #323c53!important;
+    color: #ffffff!important;
+}
