@@ -19,7 +19,7 @@ public class EventGateway extends MessageGateway {
     super(kafkaProducer);
   }
 
-  public void send(Object payload, Metadata metadata) {
+  public void publish(Object payload, Metadata metadata) {
     if (metadata == null) {
       metadata = Metadata.builder().build();
     }
@@ -36,8 +36,8 @@ public class EventGateway extends MessageGateway {
     send(event);
   }
 
-  public void send(Object payload) {
-    this.send(payload, null);
+  public void publish(Object payload) {
+    this.publish(payload, null);
   }
 
 }
