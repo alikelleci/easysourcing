@@ -2,7 +2,7 @@ package com.github.easysourcing.messages.snapshots;
 
 
 import com.github.easysourcing.messages.aggregates.Aggregate;
-import com.github.easysourcing.serdes.CustomJsonSerde;
+import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
@@ -26,7 +26,7 @@ public class SnapshotStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Snapshots
     KStream<String, Aggregate> snapshotKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Aggregate.class).noTypeInfo()))
+        Consumed.with(Serdes.String(), CustomSerdes.Aggregate()))
         .filter((key, aggregate) -> key != null)
         .filter((key, aggregate) -> aggregate != null)
         .filter((key, aggregate) -> aggregate.getPayload() != null)

@@ -18,6 +18,7 @@ import com.github.easysourcing.messages.snapshots.SnapshotStream;
 import com.github.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import com.github.easysourcing.utils.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -28,7 +29,6 @@ import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.kafka.config.TopicBuilder;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -229,42 +229,38 @@ public class EasySourcingBuilder {
       // Commands topic
       Set<NewTopic> commandTopicsToCreate = getCommandsTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> TopicBuilder.name(topic)
-              .partitions(config.getPartitions())
-              .replicas(config.getReplicas())
-              .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getCommandsRetention()))
-              .build())
+          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
+              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
+                  TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getCommandsRetention())
+              })))
           .collect(Collectors.toSet());
 
       // Results topic
       Set<NewTopic> resultTopicsToCreate = getResultTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> TopicBuilder.name(topic)
-              .partitions(config.getPartitions())
-              .replicas(config.getReplicas())
-              .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getResultsRetention()))
-              .build())
+          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
+              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
+                  TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getResultsRetention())
+              })))
           .collect(Collectors.toSet());
 
       // Snapshots topic
       Set<NewTopic> snapshotTopicsToCreate = getSnapshotTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> TopicBuilder.name(topic)
-              .partitions(config.getPartitions())
-              .replicas(config.getReplicas())
-              .config(TopicConfig.CLEANUP_POLICY_CONFIG, "compact")
-              .config(TopicConfig.DELETE_RETENTION_MS_CONFIG, String.valueOf(config.getSnapshotsRetention()))
-              .build())
+          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
+              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
+                  TopicConfig.CLEANUP_POLICY_CONFIG, "compact",
+                  TopicConfig.DELETE_RETENTION_MS_CONFIG, String.valueOf(config.getSnapshotsRetention())
+              })))
           .collect(Collectors.toSet());
 
       // Events topic
       Set<NewTopic> eventTopicsToCreate = getEventsTopics().stream()
           .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> TopicBuilder.name(topic)
-              .partitions(config.getPartitions())
-              .replicas(config.getReplicas())
-              .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getEventsRetention()))
-              .build())
+          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
+              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
+                  TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getEventsRetention())
+              })))
           .collect(Collectors.toSet());
 
       Set<NewTopic> topicsToCreate = new HashSet<>();

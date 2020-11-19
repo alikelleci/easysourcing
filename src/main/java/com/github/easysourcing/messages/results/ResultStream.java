@@ -2,7 +2,7 @@ package com.github.easysourcing.messages.results;
 
 
 import com.github.easysourcing.messages.commands.Command;
-import com.github.easysourcing.serdes.CustomJsonSerde;
+import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
@@ -26,7 +26,7 @@ public class ResultStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Results
     KStream<String, Command> resultKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Command.class).noTypeInfo()))
+        Consumed.with(Serdes.String(), CustomSerdes.Command()))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)

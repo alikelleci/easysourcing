@@ -1,11 +1,9 @@
 package com.github.easysourcing.messages.commands;
 
 
-import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
-import com.github.easysourcing.messages.events.Event;
-import com.github.easysourcing.serdes.CustomJsonSerde;
+import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;
@@ -15,7 +13,6 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.Stores;
-import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.util.Collections;
 import java.util.Map;
@@ -40,13 +37,13 @@ public class CommandStream {
         Stores.timestampedKeyValueStoreBuilder(
             Stores.persistentTimestampedKeyValueStore("snapshot-store"),
             Serdes.String(),
-            new JsonSerde<>(Aggregate.class).noTypeInfo()
+            CustomSerdes.Aggregate()
         ).withLoggingEnabled(Collections.emptyMap())
     );
 
     // --> Commands
     KStream<String, Command> commandsKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Command.class).noTypeInfo()))
+        Consumed.with(Serdes.String(), CustomSerdes.Command()))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)
@@ -63,7 +60,7 @@ public class CommandStream {
     resultsKStream
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".results"),
-            Produced.with(Serdes.String(), new JsonSerde<>(Command.class).noTypeInfo()));
+            Produced.with(Serdes.String(), CustomSerdes.Command()));
 
     // Results --> Success
     KStream<String, Success> successKStream = resultsKStream
@@ -75,7 +72,7 @@ public class CommandStream {
         .mapValues(Success::getSnapshot)
         .filter((key, snapshot) -> snapshot != null)
         .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
-            Produced.with(Serdes.String(), new JsonSerde<>(Aggregate.class).noTypeInfo()));
+            Produced.with(Serdes.String(), CustomSerdes.Aggregate()));
 
     // Success --> Events Push
     successKStream
@@ -84,7 +81,7 @@ public class CommandStream {
         .filter((key, event) -> event != null)
         .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
-            Produced.with(Serdes.String(), new JsonSerde<>(Event.class).noTypeInfo()));
+            Produced.with(Serdes.String(), CustomSerdes.Event()));
   }
 
 }

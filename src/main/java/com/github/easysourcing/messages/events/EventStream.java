@@ -1,7 +1,7 @@
 package com.github.easysourcing.messages.events;
 
 
-import com.github.easysourcing.serdes.CustomJsonSerde;
+import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
@@ -25,7 +25,7 @@ public class EventStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Events
     KStream<String, Event> eventKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), new CustomJsonSerde<>(Event.class).noTypeInfo()))
+        Consumed.with(Serdes.String(), CustomSerdes.Event()))
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)

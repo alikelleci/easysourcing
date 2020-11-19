@@ -72,7 +72,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
       store.put(command.getAggregateId(), ValueAndTimestamp
           .make(aggregate, context.timestamp()));
     }
-    
+
     return Success.builder()
         .command(command)
         .snapshot(updated ? aggregate : null)

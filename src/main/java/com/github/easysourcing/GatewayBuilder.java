@@ -4,10 +4,10 @@ import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.commands.CommandGateway;
 import com.github.easysourcing.messages.events.EventGateway;
+import com.github.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @Slf4j
 public class GatewayBuilder {
@@ -47,8 +47,7 @@ public class GatewayBuilder {
   private KafkaProducer<String, Message> kafkaProducer() {
     return new KafkaProducer<>(config.producerConfigs(),
         new StringSerializer(),
-        new JsonSerializer<Message>()
-            .noTypeInfo());
+        new JsonSerializer<>());
   }
 
 }
