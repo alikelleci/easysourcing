@@ -1,5 +1,6 @@
 package com.github.easysourcing;
 
+import com.github.easysourcing.messages.HandlerUtils;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.aggregates.annotations.ApplyEvent;
 import com.github.easysourcing.messages.annotations.TopicInfo;
@@ -16,7 +17,6 @@ import com.github.easysourcing.messages.results.annotations.HandleResult;
 import com.github.easysourcing.messages.snapshots.SnapshotHandler;
 import com.github.easysourcing.messages.snapshots.SnapshotStream;
 import com.github.easysourcing.messages.snapshots.annotations.HandleSnapshot;
-import com.github.easysourcing.utils.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.MultiValuedMap;

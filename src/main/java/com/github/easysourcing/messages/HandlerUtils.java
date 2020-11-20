@@ -1,4 +1,4 @@
-package com.github.easysourcing.utils;
+package com.github.easysourcing.messages;
 
 import lombok.experimental.UtilityClass;
 import org.springframework.core.annotation.AnnotationUtils;
