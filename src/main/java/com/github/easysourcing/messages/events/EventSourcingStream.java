@@ -40,11 +40,11 @@ public class EventSourcingStream {
     // --> Events
     KStream<String, Event> eventsKStream = builder.stream(topics,
         Consumed.with(Serdes.String(), CustomSerdes.Event()))
-        .filter((key, command) -> key != null)
-        .filter((key, command) -> command != null)
-        .filter((key, command) -> command.getPayload() != null)
-        .filter((key, command) -> command.getTopicInfo() != null)
-        .filter((key, command) -> command.getAggregateId() != null);
+        .filter((key, event) -> key != null)
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null);
 
     // Events --> Snapshots
     KStream<String, Aggregate> snapshotsKStream = eventsKStream
