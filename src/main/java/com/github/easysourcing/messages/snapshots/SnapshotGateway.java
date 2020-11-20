@@ -1,8 +1,9 @@
-package com.github.easysourcing.messages.events;
+package com.github.easysourcing.messages.snapshots;
 
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
+import com.github.easysourcing.messages.aggregates.Aggregate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -13,9 +14,9 @@ import static com.github.easysourcing.messages.MetadataKeys.CORRELATION_ID;
 import static com.github.easysourcing.messages.MetadataKeys.ID;
 
 @Slf4j
-public class EventGateway extends MessageGateway {
+public class SnapshotGateway extends MessageGateway {
 
-  public EventGateway(KafkaProducer<String, Message> kafkaProducer) {
+  public SnapshotGateway(KafkaProducer<String, Message> kafkaProducer) {
     super(kafkaProducer);
   }
 
@@ -24,7 +25,7 @@ public class EventGateway extends MessageGateway {
       metadata = Metadata.builder().build();
     }
 
-    Event event = Event.builder()
+    Aggregate snapshot = Aggregate.builder()
         .payload(payload)
         .metadata(metadata.filter().toBuilder()
             .entry(ID, UUID.randomUUID().toString())
@@ -32,8 +33,8 @@ public class EventGateway extends MessageGateway {
             .build())
         .build();
 
-    log.info("Publishing event: {}", StringUtils.truncate(event.toString(), 1000));
-    send(event);
+    log.info("Publishing snapshot: {}", StringUtils.truncate(snapshot.toString(), 1000));
+    send(snapshot);
   }
 
   public void publish(Object payload) {
