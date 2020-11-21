@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
@@ -90,6 +91,14 @@ public class EasySourcingBuilder {
   public EasySourcing build() {
     if (this.config == null) {
       throw new RuntimeException("No config provided!");
+    }
+
+    if (StringUtils.isBlank(config.getBootstrapServers())) {
+      throw new RuntimeException("No bootstrap servers provided!");
+    }
+
+    if (StringUtils.isBlank(config.getApplicationId())) {
+      throw new RuntimeException("No application id provided!");
     }
 
     createTopics();
