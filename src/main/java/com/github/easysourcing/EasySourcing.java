@@ -26,7 +26,7 @@ public class EasySourcing {
     }
 
     if (topology.describe().subtopologies().isEmpty()) {
-      log.warn("EasySourcing could not be started: consumer is not subscribed to any topics or assigned any partitions");
+      log.info("EasySourcing is not started: consumer is not subscribed to any topics or assigned any partitions");
       return;
     }
 

@@ -4,7 +4,6 @@ import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.util.UUID;
@@ -32,7 +31,11 @@ public class CommandGateway extends MessageGateway {
             .build())
         .build();
 
-    log.info("Sending command: {}", StringUtils.truncate(command.toString(), 1000));
+    if (log.isDebugEnabled()) {
+      log.debug("Sending command: {}", command);
+    } else if (log.isInfoEnabled()) {
+      log.info("Sending command: {} ({})", command.getType(), command.getAggregateId());
+    }
     send(command);
   }
 

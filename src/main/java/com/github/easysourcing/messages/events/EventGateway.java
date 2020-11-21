@@ -4,7 +4,6 @@ import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.util.UUID;
@@ -32,7 +31,11 @@ public class EventGateway extends MessageGateway {
             .build())
         .build();
 
-    log.info("Publishing event: {}", StringUtils.truncate(event.toString(), 1000));
+    if (log.isDebugEnabled()) {
+      log.debug("Publishing event: {}", event);
+    } else if (log.isInfoEnabled()) {
+      log.info("Publishing event: {} ({})", event.getType(), event.getAggregateId());
+    }
     send(event);
   }
 

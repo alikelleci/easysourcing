@@ -8,7 +8,6 @@ import com.github.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -35,7 +34,11 @@ public class SnapshotHandler implements Handler<Void> {
     Aggregate snapshot = (Aggregate) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    log.info("Handling snapshot: {}", StringUtils.truncate(snapshot.toString(), 1000));
+    if (log.isDebugEnabled()) {
+      log.debug("Handling snapshot: {}", snapshot);
+    } else if (log.isInfoEnabled()) {
+      log.info("Handling snapshot: {} ({})", snapshot.getType(), snapshot.getAggregateId());
+    }
 
     try {
       return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, context));

@@ -5,7 +5,6 @@ import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.util.UUID;
@@ -33,7 +32,11 @@ public class SnapshotGateway extends MessageGateway {
             .build())
         .build();
 
-    log.info("Publishing snapshot: {}", StringUtils.truncate(snapshot.toString(), 1000));
+    if (log.isDebugEnabled()) {
+      log.debug("Publishing snapshot: {}", snapshot);
+    } else if (log.isInfoEnabled()) {
+      log.info("Publishing snapshot: {} ({})", snapshot.getType(), snapshot.getAggregateId());
+    }
     send(snapshot);
   }
 
