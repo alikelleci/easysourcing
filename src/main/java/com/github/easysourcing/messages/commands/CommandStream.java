@@ -5,7 +5,6 @@ import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
 import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -76,8 +75,9 @@ public class CommandStream {
 
     // Success --> Events Push
     successKStream
-        .filter((key, success) -> CollectionUtils.isNotEmpty(success.getEvents()))
-        .flatMapValues(Success::getEvents)
+        .mapValues(Success::getEvents)
+        .filter((key, events) -> events != null)
+        .flatMapValues((key, events) -> events)
         .filter((key, event) -> event != null)
         .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
         .to((key, event, recordContext) -> event.getTopicInfo().value(),

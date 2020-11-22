@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Optional;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,10 +21,10 @@ public class Event extends Message {
   private String type;
 
   public String getType() {
-    if (getPayload() == null) {
-      return null;
-    }
-    return getPayload().getClass().getSimpleName();
+    return Optional.ofNullable(getPayload())
+        .map(Object::getClass)
+        .map(Class::getSimpleName)
+        .orElse(null);
   }
 
 }

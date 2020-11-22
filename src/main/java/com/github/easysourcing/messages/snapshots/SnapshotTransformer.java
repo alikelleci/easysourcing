@@ -1,6 +1,5 @@
 package com.github.easysourcing.messages.snapshots;
 
-import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -34,7 +33,7 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
     }
 
     handlers.stream()
-        .sorted((Comparator.comparingInt(Handler::getOrder)))
+        .sorted(Comparator.comparingInt(SnapshotHandler::getPriority).reversed())
         .forEach(handler ->
             handler.invoke(snapshot, context));
 

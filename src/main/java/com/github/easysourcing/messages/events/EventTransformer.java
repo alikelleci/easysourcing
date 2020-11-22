@@ -1,6 +1,5 @@
 package com.github.easysourcing.messages.events;
 
-import com.github.easysourcing.messages.Handler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -33,7 +32,7 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
     }
 
     handlers.stream()
-        .sorted((Comparator.comparingInt(Handler::getOrder)))
+        .sorted(Comparator.comparingInt(EventHandler::getPriority).reversed())
         .forEach(handler ->
             handler.invoke(event, context));
 

@@ -50,7 +50,7 @@ public class Aggregator implements Handler<Aggregate> {
     }
 
     try {
-      return (Aggregate) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event, context));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }

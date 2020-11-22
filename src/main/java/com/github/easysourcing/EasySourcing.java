@@ -10,7 +10,6 @@ import java.time.Duration;
 public class EasySourcing {
 
   private final Config config;
-
   private final Topology topology;
   private KafkaStreams kafkaStreams;
 

@@ -1,6 +1,5 @@
 package com.github.easysourcing.messages.results;
 
-import com.github.easysourcing.messages.Handler;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.messages.results.annotations.HandleError;
 import com.github.easysourcing.messages.results.annotations.HandleResult;
@@ -40,7 +39,7 @@ public class ResultTransformer implements ValueTransformer<Command, Void> {
     }
 
     handlers.stream()
-        .sorted((Comparator.comparingInt(Handler::getOrder)))
+        .sorted(Comparator.comparingInt(ResultHandler::getPriority).reversed())
         .forEach(handler -> {
           boolean handleAll = handler.getMethod().isAnnotationPresent(HandleResult.class);
           boolean handleSuccess = handler.getMethod().isAnnotationPresent(HandleSuccess.class);

@@ -65,7 +65,7 @@ public class CommandHandler implements Handler<List<Event>> {
 
     try {
       validate(command);
-      return (List<Event>) Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command, context));
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }

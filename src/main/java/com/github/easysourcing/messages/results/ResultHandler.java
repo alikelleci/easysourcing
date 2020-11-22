@@ -41,7 +41,7 @@ public class ResultHandler implements Handler<Void> {
     }
 
     try {
-      return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));
     } catch (Exception e) {
       throw new ResultProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }

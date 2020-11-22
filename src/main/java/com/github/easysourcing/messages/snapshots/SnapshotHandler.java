@@ -41,7 +41,7 @@ public class SnapshotHandler implements Handler<Void> {
     }
 
     try {
-      return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, context));
     } catch (Exception e) {
       throw new SnapshotProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }

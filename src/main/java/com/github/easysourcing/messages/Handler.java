@@ -1,8 +1,9 @@
 package com.github.easysourcing.messages;
 
-import com.github.easysourcing.messages.annotations.Order;
+import com.github.easysourcing.messages.annotations.Priority;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 public interface Handler<R> {
 
@@ -14,11 +15,10 @@ public interface Handler<R> {
 
   Class<?> getType();
 
-  default int getOrder() {
-    Order annotation = getMethod().getAnnotation(Order.class);
-    if (annotation != null) {
-      return annotation.value();
-    }
-    return 0;
+  default int getPriority() {
+    return Optional.ofNullable(getMethod())
+        .map(method -> method.getAnnotation(Priority.class))
+        .map(Priority::value)
+        .orElse(0);
   }
 }

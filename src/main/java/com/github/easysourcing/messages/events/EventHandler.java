@@ -40,7 +40,7 @@ public class EventHandler implements Handler<Void> {
     }
 
     try {
-      return (Void) Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));
     } catch (Exception e) {
       throw new EventProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
