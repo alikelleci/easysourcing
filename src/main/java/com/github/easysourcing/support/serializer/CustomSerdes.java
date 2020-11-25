@@ -9,6 +9,16 @@ import org.apache.kafka.common.serialization.Serdes;
 
 public class CustomSerdes {
 
+  public static final class JsonSerde<T> extends Serdes.WrapperSerde<T> {
+    public JsonSerde(Class<T> tClass) {
+      super(new JsonSerializer<>(), new JsonDeserializer<>(tClass));
+    }
+  }
+
+  public static <T> Serde<T> Json(Class<T> tClass) {
+    return new JsonSerde<>(tClass);
+  }
+
   public static final class MessageSerde extends Serdes.WrapperSerde<Message> {
     public MessageSerde() {
       super(new JsonSerializer<>(), new JsonDeserializer<>(Message.class));
@@ -48,4 +58,5 @@ public class CustomSerdes {
   public static Serde<Aggregate> Aggregate() {
     return new AggregateSerde();
   }
+
 }

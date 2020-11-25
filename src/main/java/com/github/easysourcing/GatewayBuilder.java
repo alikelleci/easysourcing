@@ -4,6 +4,7 @@ import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.commands.CommandGateway;
 import com.github.easysourcing.messages.events.EventGateway;
+import com.github.easysourcing.messages.snapshots.SnapshotGateway;
 import com.github.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -42,6 +43,13 @@ public class GatewayBuilder {
       throw new IllegalStateException("No config provided!");
     }
     return new EventGateway(kafkaProducer());
+  }
+
+  public SnapshotGateway snapshotGateway() {
+    if (this.config == null) {
+      throw new IllegalStateException("No config provided!");
+    }
+    return new SnapshotGateway(kafkaProducer());
   }
 
   private KafkaProducer<String, Message> kafkaProducer() {
