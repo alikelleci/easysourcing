@@ -13,8 +13,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 @Slf4j
@@ -58,8 +56,8 @@ public class Config {
     return properties;
   }
 
-  public Map<String, Object> producerConfigs() {
-    Map<String, Object> properties = new HashMap<>();
+  public Properties producerConfigs() {
+    Properties properties = new Properties();
     properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);

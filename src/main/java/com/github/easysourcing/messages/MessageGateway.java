@@ -4,15 +4,15 @@ import com.github.easysourcing.messages.annotations.TopicInfo;
 import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
 import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class MessageGateway {
 
-  private final KafkaProducer<String, Message> kafkaProducer;
+  private final Producer<String, Message> producer;
 
-  public MessageGateway(KafkaProducer<String, Message> kafkaProducer) {
-    this.kafkaProducer = kafkaProducer;
+  public MessageGateway(Producer<String, Message> producer) {
+    this.producer = producer;
   }
 
   public void send(Message message) {
@@ -30,7 +30,7 @@ public class MessageGateway {
       throw new AggregateIdMissingException("You are trying to dispatch a message without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
     }
 
-    kafkaProducer.send(new ProducerRecord<>(topicInfo.value(), aggregateId, message));
+    producer.send(new ProducerRecord<>(topicInfo.value(), aggregateId, message));
   }
 
 

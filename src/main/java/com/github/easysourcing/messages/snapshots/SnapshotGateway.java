@@ -5,7 +5,7 @@ import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
 
 import java.util.UUID;
 
@@ -15,7 +15,7 @@ import static com.github.easysourcing.messages.MetadataKeys.ID;
 @Slf4j
 public class SnapshotGateway extends MessageGateway {
 
-  public SnapshotGateway(KafkaProducer<String, Message> kafkaProducer) {
+  public SnapshotGateway(Producer<String, Message> kafkaProducer) {
     super(kafkaProducer);
   }
 
