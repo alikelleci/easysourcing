@@ -302,7 +302,7 @@ public class EasySourcingBuilder {
     Set<String> commandsTopics = getCommandsTopics();
     if (!commandsTopics.isEmpty() && !commandHandlers.isEmpty()) {
       CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators);
-      commandStream.buildStream(builder);
+      commandStream.buildStream(builder, config.isInMemoryStateStore());
     }
 
     Set<String> resultTopics = getResultTopics();

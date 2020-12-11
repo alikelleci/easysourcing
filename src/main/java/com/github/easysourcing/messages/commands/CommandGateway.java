@@ -5,8 +5,10 @@ import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 import static com.github.easysourcing.messages.MetadataKeys.CORRELATION_ID;
 import static com.github.easysourcing.messages.MetadataKeys.ID;
@@ -18,7 +20,7 @@ public class CommandGateway extends MessageGateway {
     super(kafkaProducer);
   }
 
-  public void send(Object payload, Metadata metadata) {
+  public Future<RecordMetadata> send(Object payload, Metadata metadata) {
     if (metadata == null) {
       metadata = Metadata.builder().build();
     }
@@ -36,11 +38,11 @@ public class CommandGateway extends MessageGateway {
     } else if (log.isInfoEnabled()) {
       log.info("Sending command: {} ({})", command.getType(), command.getAggregateId());
     }
-    send(command);
+    return send(command);
   }
 
-  public void send(Object payload) {
-    this.send(payload, null);
+  public Future<RecordMetadata> send(Object payload) {
+    return this.send(payload, null);
   }
 
 }

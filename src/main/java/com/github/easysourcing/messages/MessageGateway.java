@@ -6,6 +6,9 @@ import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+
+import java.util.concurrent.Future;
 
 public class MessageGateway {
 
@@ -15,7 +18,7 @@ public class MessageGateway {
     this.producer = producer;
   }
 
-  public void send(Message message) {
+  public Future<RecordMetadata> send(Message message) {
     if (message.getPayload() == null) {
       throw new PayloadMissingException("You are trying to dispatch a message without a payload.");
     }
@@ -30,7 +33,7 @@ public class MessageGateway {
       throw new AggregateIdMissingException("You are trying to dispatch a message without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
     }
 
-    producer.send(new ProducerRecord<>(topicInfo.value(), aggregateId, message));
+    return producer.send(new ProducerRecord<>(topicInfo.value(), aggregateId, message));
   }
 
 

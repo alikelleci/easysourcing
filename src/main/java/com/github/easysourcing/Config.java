@@ -30,6 +30,8 @@ public class Config {
   private String securityProtocol = "PLAINTEXT";
   @Builder.Default
   private boolean rebuildLocalState = false;
+  @Builder.Default
+  private boolean inMemoryStateStore = false;
 
   @Builder.Default
   private long commandsRetention = 604800000; // 7 days

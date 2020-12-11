@@ -53,6 +53,13 @@ public class EasySourcing {
     kafkaStreams = null;
   }
 
+  public boolean isRunning() {
+    if (kafkaStreams == null) {
+      return false;
+    }
+    return kafkaStreams.state().isRunningOrRebalancing();
+  }
+
   private void setUpListeners() {
     kafkaStreams.setStateListener((newState, oldState) -> {
       log.warn("State changed from {} to {}", oldState, newState);

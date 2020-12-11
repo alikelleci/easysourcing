@@ -11,6 +11,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.Stores;
 
 import java.util.Collections;
@@ -30,11 +31,16 @@ public class CommandStream {
     this.aggregators = aggregators;
   }
 
-  public void buildStream(StreamsBuilder builder) {
+  public void buildStream(StreamsBuilder builder, boolean inMemoryStateStore) {
     // Snapshot store
+    KeyValueBytesStoreSupplier supplier = Stores.persistentTimestampedKeyValueStore("snapshot-store");
+    if (inMemoryStateStore) {
+      supplier =  Stores.inMemoryKeyValueStore("snapshot-store");
+    }
+
     builder.addStateStore(
         Stores.timestampedKeyValueStoreBuilder(
-            Stores.persistentTimestampedKeyValueStore("snapshot-store"),
+            supplier,
             Serdes.String(),
             CustomSerdes.Aggregate()
         ).withLoggingEnabled(Collections.emptyMap())
