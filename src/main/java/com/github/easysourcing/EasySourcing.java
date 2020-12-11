@@ -53,13 +53,6 @@ public class EasySourcing {
     kafkaStreams = null;
   }
 
-  public boolean isRunning() {
-    if (kafkaStreams == null) {
-      return false;
-    }
-    return kafkaStreams.state().isRunningOrRebalancing();
-  }
-
   private void setUpListeners() {
     kafkaStreams.setStateListener((newState, oldState) -> {
       log.warn("State changed from {} to {}", oldState, newState);
@@ -74,6 +67,10 @@ public class EasySourcing {
       log.info("EasySourcing is shutting down...");
       kafkaStreams.close(Duration.ofMillis(1000));
     }));
+  }
+
+  public KafkaStreams getKafkaStreams() {
+    return kafkaStreams;
   }
 
 }
