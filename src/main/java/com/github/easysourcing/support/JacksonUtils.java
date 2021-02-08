@@ -1,5 +1,6 @@
 package com.github.easysourcing.support;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +22,7 @@ public class JacksonUtils {
           .registerModule(new ParameterNamesModule())
           .registerModule(new Jdk8Module())
           .registerModule(new JavaTimeModule())
+          .setSerializationInclusion(JsonInclude.Include.NON_NULL)
           .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
           .configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false)
