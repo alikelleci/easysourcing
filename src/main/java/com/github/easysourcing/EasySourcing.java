@@ -11,11 +11,21 @@ public class EasySourcing {
 
   private final Config config;
   private final Topology topology;
+  private StateListener stateListener;
+  private UncaughtExceptionHandler uncaughtExceptionHandler;
+
   private KafkaStreams kafkaStreams;
 
   protected EasySourcing(Config config, Topology topology) {
     this.config = config;
     this.topology = topology;
+  }
+
+  public EasySourcing(Config config, Topology topology, StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
+    this.config = config;
+    this.topology = topology;
+    this.stateListener = stateListener;
+    this.uncaughtExceptionHandler = uncaughtExceptionHandler;
   }
 
   public void start() {
@@ -30,7 +40,7 @@ public class EasySourcing {
     }
 
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
-    setUpListeners();
+    setUpListeners(stateListener, uncaughtExceptionHandler);
 
     if (config.isRebuildLocalState()) {
       log.warn("Rebuild local state is set to 'true'. Please restart the application with 'rebuildLocalState=false' when the rebuilding process is finished.");
@@ -53,13 +63,19 @@ public class EasySourcing {
     kafkaStreams = null;
   }
 
-  private void setUpListeners() {
+  private void setUpListeners(StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
     kafkaStreams.setStateListener((newState, oldState) -> {
       log.warn("State changed from {} to {}", oldState, newState);
+      if (stateListener != null) {
+        stateListener.onChange(newState, oldState);
+      }
     });
 
     kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> {
       log.error("EasySourcing will now exit because of the following error: ", throwable);
+      if (uncaughtExceptionHandler != null) {
+        uncaughtExceptionHandler.uncaughtException(thread, throwable);
+      }
       System.exit(1);
     });
 
@@ -73,4 +89,14 @@ public class EasySourcing {
     return kafkaStreams;
   }
 
+
+  @FunctionalInterface
+  public interface StateListener {
+    void onChange(KafkaStreams.State newState, KafkaStreams.State oldState);
+  }
+
+  @FunctionalInterface
+  public interface UncaughtExceptionHandler {
+    void uncaughtException(Thread thread, Throwable throwable);
+  }
 }

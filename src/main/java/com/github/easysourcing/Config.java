@@ -1,7 +1,5 @@
 package com.github.easysourcing;
 
-import com.github.easysourcing.support.serializer.CustomSerdes;
-import com.github.easysourcing.support.serializer.JsonSerializer;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +46,7 @@ public class Config {
     properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId);
     properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-    properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, CustomSerdes.Message().getClass());
+    properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
@@ -62,7 +60,7 @@ public class Config {
     Properties properties = new Properties();
     properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     properties.put(ProducerConfig.ACKS_CONFIG, "all");
     properties.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
     properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);

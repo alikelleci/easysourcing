@@ -47,6 +47,8 @@ import java.util.stream.Stream;
 public class EasySourcingBuilder {
 
   private Config config;
+  private EasySourcing.StateListener stateListener;
+  private EasySourcing.UncaughtExceptionHandler uncaughtExceptionHandler;
 
   //  Handlers
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
@@ -88,6 +90,16 @@ public class EasySourcingBuilder {
     return this;
   }
 
+  public EasySourcingBuilder withStateListener(EasySourcing.StateListener stateListener) {
+    this.stateListener = stateListener;
+    return this;
+  }
+
+  public EasySourcingBuilder withUncaughtExceptionHandler(EasySourcing.UncaughtExceptionHandler uncaughtExceptionHandler) {
+    this.uncaughtExceptionHandler = uncaughtExceptionHandler;
+    return this;
+  }
+
   public EasySourcing build() {
     if (this.config == null) {
       throw new RuntimeException("No config provided!");
@@ -104,7 +116,7 @@ public class EasySourcingBuilder {
     createTopics();
     Topology topology = buildTopology();
 
-    return new EasySourcing(this.config, topology);
+    return new EasySourcing(this.config, topology, stateListener, uncaughtExceptionHandler);
   }
 
   private void addCommandHandler(Object listener, Method method) {
