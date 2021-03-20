@@ -21,7 +21,7 @@ public class EasySourcing {
     this.topology = topology;
   }
 
-  public EasySourcing(Config config, Topology topology, StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
+  protected EasySourcing(Config config, Topology topology, StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
     this.config = config;
     this.topology = topology;
     this.stateListener = stateListener;
@@ -40,7 +40,7 @@ public class EasySourcing {
     }
 
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
-    setUpListeners(stateListener, uncaughtExceptionHandler);
+    setUpListeners();
 
     if (config.isRebuildLocalState()) {
       log.warn("Rebuild local state is set to 'true'. Please restart the application with 'rebuildLocalState=false' when the rebuilding process is finished.");
@@ -63,7 +63,7 @@ public class EasySourcing {
     kafkaStreams = null;
   }
 
-  private void setUpListeners(StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
+  private void setUpListeners() {
     kafkaStreams.setStateListener((newState, oldState) -> {
       log.warn("State changed from {} to {}", oldState, newState);
       if (stateListener != null) {
