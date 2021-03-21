@@ -25,7 +25,10 @@ public class Config {
   @Builder.Default
   private int partitions = 1;
   @Builder.Default
+  private String stateDir = "/tmp/kafka-streams";
+  @Builder.Default
   private String securityProtocol = "PLAINTEXT";
+
   @Builder.Default
   private boolean rebuildLocalState = false;
   @Builder.Default
@@ -51,6 +54,7 @@ public class Config {
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
     properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
+    properties.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
     properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;
