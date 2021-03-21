@@ -25,7 +25,7 @@ public class EventStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Events
     KStream<String, Event> eventKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Event()))
+        Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)

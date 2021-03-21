@@ -1,8 +1,10 @@
 package com.github.easysourcing.messages.commands;
 
 
+import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
+import com.github.easysourcing.messages.events.Event;
 import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
@@ -35,20 +37,20 @@ public class CommandStream {
     // Snapshot store
     KeyValueBytesStoreSupplier supplier = Stores.persistentTimestampedKeyValueStore("snapshot-store");
     if (inMemoryStateStore) {
-      supplier =  Stores.inMemoryKeyValueStore("snapshot-store");
+      supplier = Stores.inMemoryKeyValueStore("snapshot-store");
     }
 
     builder.addStateStore(
         Stores.timestampedKeyValueStoreBuilder(
             supplier,
             Serdes.String(),
-            CustomSerdes.Aggregate()
+            CustomSerdes.Json(Aggregate.class)
         ).withLoggingEnabled(Collections.emptyMap())
     );
 
     // --> Commands
     KStream<String, Command> commandsKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Command()))
+        Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)
@@ -65,7 +67,7 @@ public class CommandStream {
     resultsKStream
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".results"),
-            Produced.with(Serdes.String(), CustomSerdes.Command()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Command.class)));
 
     // Results --> Success
     KStream<String, Success> successKStream = resultsKStream
@@ -77,7 +79,7 @@ public class CommandStream {
         .mapValues(Success::getSnapshot)
         .filter((key, snapshot) -> snapshot != null)
         .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
-            Produced.with(Serdes.String(), CustomSerdes.Aggregate()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)));
 
     // Success --> Events Push
     successKStream
@@ -87,7 +89,7 @@ public class CommandStream {
         .filter((key, event) -> event != null)
         .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
-            Produced.with(Serdes.String(), CustomSerdes.Event()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Event.class)));
   }
 
 }

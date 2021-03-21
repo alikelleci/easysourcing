@@ -19,12 +19,13 @@ public class JsonSerializer<T> implements Serializer<T> {
   }
 
   @Override
-  public byte[] serialize(String topic, T data) {
-    if (data == null)
+  public byte[] serialize(String topic, T object) {
+    if (object == null) {
       return null;
+    }
 
     try {
-      return objectMapper.writeValueAsBytes(data);
+      return objectMapper.writeValueAsBytes(object);
     } catch (Exception e) {
       throw new SerializationException("Error serializing JSON", e);
     }

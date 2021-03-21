@@ -33,13 +33,13 @@ public class EventSourcingStream {
         Stores.timestampedKeyValueStoreBuilder(
             Stores.persistentTimestampedKeyValueStore("snapshot-store"),
             Serdes.String(),
-            CustomSerdes.Aggregate()
+            CustomSerdes.Json(Aggregate.class)
         ).withLoggingEnabled(Collections.emptyMap())
     );
 
     // --> Events
     KStream<String, Event> eventsKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Event()))
+        Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
@@ -54,7 +54,7 @@ public class EventSourcingStream {
     // Snapshots Push
     snapshotsKStream
         .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
-            Produced.with(Serdes.String(), CustomSerdes.Aggregate()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)));
 
   }
 

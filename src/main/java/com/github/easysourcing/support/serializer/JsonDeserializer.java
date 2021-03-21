@@ -25,17 +25,15 @@ public class JsonDeserializer<T> implements Deserializer<T> {
 
   @Override
   public T deserialize(String topic, byte[] bytes) {
-    if (bytes == null)
+    if (bytes == null) {
       return null;
-
-    T data;
+    }
+    
     try {
-      data = objectMapper.readValue(bytes, type);
+      return objectMapper.readValue(bytes, type);
     } catch (Exception e) {
       throw new SerializationException("Error deserializing JSON", e);
     }
-
-    return data;
   }
 
   @Override

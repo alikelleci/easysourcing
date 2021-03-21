@@ -26,7 +26,7 @@ public class SnapshotStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Snapshots
     KStream<String, Aggregate> snapshotKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Aggregate()))
+        Consumed.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)))
         .filter((key, aggregate) -> key != null)
         .filter((key, aggregate) -> aggregate != null)
         .filter((key, aggregate) -> aggregate.getPayload() != null)
