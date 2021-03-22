@@ -27,6 +27,8 @@ public class Config {
   @Builder.Default
   private String stateDir = "/tmp/kafka-streams";
   @Builder.Default
+  private String producerCompressionType = "none";
+  @Builder.Default
   private String securityProtocol = "PLAINTEXT";
 
   @Builder.Default
@@ -55,6 +57,7 @@ public class Config {
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
     properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
     properties.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
+    properties.put(StreamsConfig.producerPrefix(ProducerConfig.COMPRESSION_TYPE_CONFIG), producerCompressionType);
     properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;
@@ -68,6 +71,7 @@ public class Config {
     properties.put(ProducerConfig.ACKS_CONFIG, "all");
     properties.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
     properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+    properties.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, producerCompressionType);
     properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
     return properties;
