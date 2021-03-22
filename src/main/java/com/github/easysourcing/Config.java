@@ -21,9 +21,11 @@ public class Config {
   private String bootstrapServers;
   private String applicationId;
   @Builder.Default
+  private int partitions = 1;
+  @Builder.Default
   private int replicas = 1;
   @Builder.Default
-  private int partitions = 1;
+  private int standByReplicas = 0;
   @Builder.Default
   private String stateDir = "/tmp/kafka-streams";
   @Builder.Default
@@ -55,8 +57,9 @@ public class Config {
     properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
     properties.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, replicas);
-    properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
+    properties.put(StreamsConfig.NUM_STANDBY_REPLICAS_CONFIG, standByReplicas);
     properties.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
+    properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
     properties.put(StreamsConfig.producerPrefix(ProducerConfig.COMPRESSION_TYPE_CONFIG), producerCompressionType);
     properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
 
