@@ -5,8 +5,6 @@ public final class MetadataKeys {
   public static final String CORRELATION_ID = "$correlationId";
   public static final String RESULT = "$result";
   public static final String FAILURE = "$failure";
-  public static final String SNAPSHOT = "$snapshot";
-  public static final String EVENTS = "$events";
 
   public static final String TIMESTAMP = "$timestamp";
   public static final String TOPIC = "$topic";

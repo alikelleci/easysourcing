@@ -8,7 +8,6 @@ import com.github.easysourcing.messages.commands.CommandHandler;
 import com.github.easysourcing.messages.commands.CommandStream;
 import com.github.easysourcing.messages.commands.annotations.HandleCommand;
 import com.github.easysourcing.messages.events.EventHandler;
-import com.github.easysourcing.messages.events.EventSourcingStream;
 import com.github.easysourcing.messages.events.EventStream;
 import com.github.easysourcing.messages.events.annotations.HandleEvent;
 import com.github.easysourcing.messages.results.ResultHandler;
@@ -301,15 +300,6 @@ public class EasySourcingBuilder {
 
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
-
-    if (config.isRebuildLocalState()) {
-      Set<String> eventsTopics = getEventsTopics();
-      if (!eventsTopics.isEmpty() && !aggregators.isEmpty()) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventsTopics, aggregators);
-        eventSourcingStream.buildStream(builder);
-      }
-      return builder.build();
-    }
 
     Set<String> commandsTopics = getCommandsTopics();
     if (!commandsTopics.isEmpty() && !commandHandlers.isEmpty()) {

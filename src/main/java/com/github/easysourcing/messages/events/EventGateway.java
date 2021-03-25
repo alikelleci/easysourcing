@@ -33,11 +33,7 @@ public class EventGateway extends MessageGateway {
             .build())
         .build();
 
-    if (log.isDebugEnabled()) {
-      log.debug("Publishing event: {}", event);
-    } else if (log.isInfoEnabled()) {
-      log.info("Publishing event: {} ({})", event.getType(), event.getAggregateId());
-    }
+    log.debug("Publishing event: {} ({})", event.getType(), event.getAggregateId());
     return send(event);
   }
 

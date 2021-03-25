@@ -32,9 +32,6 @@ public class Config {
   private String producerCompressionType = "none";
   @Builder.Default
   private String securityProtocol = "PLAINTEXT";
-
-  @Builder.Default
-  private boolean rebuildLocalState = false;
   @Builder.Default
   private boolean inMemoryStateStore = false;
 

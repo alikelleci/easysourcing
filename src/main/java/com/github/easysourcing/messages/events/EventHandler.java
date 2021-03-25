@@ -33,12 +33,8 @@ public class EventHandler implements Handler<Void> {
     Event event = (Event) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    if (log.isDebugEnabled()) {
-      log.debug("Handling event: {}", event);
-    } else if (log.isInfoEnabled()) {
-      log.info("Handling event: {} ({})", event.getType(), event.getAggregateId());
-    }
-
+    log.debug("Handling event: {} ({})", event.getType(), event.getAggregateId());
+    
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));
     } catch (Exception e) {

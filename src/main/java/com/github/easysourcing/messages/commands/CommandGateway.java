@@ -33,11 +33,7 @@ public class CommandGateway extends MessageGateway {
             .build())
         .build();
 
-    if (log.isDebugEnabled()) {
-      log.debug("Sending command: {}", command);
-    } else if (log.isInfoEnabled()) {
-      log.info("Sending command: {} ({})", command.getType(), command.getAggregateId());
-    }
+    log.debug("Sending command: {} ({})", command.getType(), command.getAggregateId());
     return send(command);
   }
 

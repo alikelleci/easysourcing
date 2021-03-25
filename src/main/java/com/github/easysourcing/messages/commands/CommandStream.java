@@ -2,13 +2,13 @@ package com.github.easysourcing.messages.commands;
 
 
 import com.github.easysourcing.messages.aggregates.Aggregate;
+import com.github.easysourcing.messages.aggregates.AggregateTransformer;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.CommandResult.Success;
 import com.github.easysourcing.messages.events.Event;
 import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
@@ -49,7 +49,7 @@ public class CommandStream {
     );
 
     // --> Commands
-    KStream<String, Command> commandsKStream = builder.stream(topics,
+    KStream<String, Command> commandKStream = builder.stream(topics,
         Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
@@ -58,38 +58,39 @@ public class CommandStream {
         .filter((key, command) -> command.getAggregateId() != null);
 
     // Commands --> Results
-    KStream<String, CommandResult> resultsKStream = commandsKStream
-        .transformValues(() -> new CommandTransformer(commandHandlers, aggregators), "snapshot-store")
+    KStream<String, CommandResult> resultKStream = commandKStream
+        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
+    // Results --> Events
+    KStream<String, Event> eventKStream = resultKStream
+        .filter((key, result) -> result instanceof Success)
+        .mapValues((key, result) -> (Success) result)
+        .flatMapValues(Success::getEvents)
+        .filter((key, event) -> event != null);
+
+    // Events --> Snapshots
+    KStream<String, Aggregate> aggregateKStream = eventKStream
+        .transformValues(() -> new AggregateTransformer(aggregators), "snapshot-store")
+        .filter((key, aggregate) -> aggregate != null);
+
     // Results --> Push
-    resultsKStream
+    resultKStream
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Command.class)));
 
-    // Results --> Success
-    KStream<String, Success> successKStream = resultsKStream
-        .filter((key, result) -> result instanceof Success)
-        .mapValues((key, result) -> (Success) result);
-
-    // Success --> Snapshots Push
-    successKStream
-        .mapValues(Success::getSnapshot)
-        .filter((key, snapshot) -> snapshot != null)
-        .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)));
-
-    // Success --> Events Push
-    successKStream
-        .mapValues(Success::getEvents)
-        .filter((key, events) -> events != null)
-        .flatMapValues((key, events) -> events)
-        .filter((key, event) -> event != null)
-        .map((key, event) -> KeyValue.pair(event.getAggregateId(), event))
+    // Events --> Push
+    eventKStream
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Event.class)));
+
+    // Snapshots --> Push
+    aggregateKStream
+        .to((key, aggregate, recordContext) -> aggregate.getTopicInfo().value(),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)));
+
   }
 
 }

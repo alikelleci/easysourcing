@@ -42,12 +42,6 @@ public class EasySourcing {
     this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
     setUpListeners();
 
-    if (config.isRebuildLocalState()) {
-      log.warn("Rebuild local state is set to 'true'. Please restart the application with 'rebuildLocalState=false' when the rebuilding process is finished.");
-      log.warn("Deleting local state...");
-      kafkaStreams.cleanUp();
-    }
-
     log.info("EasySourcing is starting...");
     kafkaStreams.start();
   }

@@ -34,11 +34,7 @@ public class ResultHandler implements Handler<Void> {
     Command command = (Command) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    if (log.isDebugEnabled()) {
-      log.debug("Handling command result: {}", command);
-    } else if (log.isInfoEnabled()) {
-      log.info("Handling command result: {} ({})", command.getType(), command.getAggregateId());
-    }
+    log.debug("Handling command result: {} ({})", command.getType(), command.getAggregateId());
 
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));

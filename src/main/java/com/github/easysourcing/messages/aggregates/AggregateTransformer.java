@@ -1,7 +1,6 @@
-package com.github.easysourcing.messages.events;
+package com.github.easysourcing.messages.aggregates;
 
-import com.github.easysourcing.messages.aggregates.Aggregate;
-import com.github.easysourcing.messages.aggregates.Aggregator;
+import com.github.easysourcing.messages.events.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -12,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class EventSourcingTransformer implements ValueTransformer<Event, Aggregate> {
+public class AggregateTransformer implements ValueTransformer<Event, Aggregate> {
 
   private ProcessorContext context;
   private KeyValueStore<String, ValueAndTimestamp<Aggregate>> store;
@@ -20,7 +19,7 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Aggrega
   private final Map<Class<?>, Aggregator> aggregators;
 
 
-  public EventSourcingTransformer(Map<Class<?>, Aggregator> aggregators) {
+  public AggregateTransformer(Map<Class<?>, Aggregator> aggregators) {
     this.aggregators = aggregators;
   }
 
@@ -40,9 +39,11 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Aggrega
     Aggregate aggregate = loadAggregate(event.getAggregateId());
     aggregate = aggregator.invoke(aggregate, event, context);
 
-    store.put(event.getAggregateId(), ValueAndTimestamp
-        .make(aggregate, context.timestamp()));
-
+    if (aggregate != null) {
+      store.put(event.getAggregateId(), ValueAndTimestamp
+          .make(aggregate, context.timestamp()));
+    }
+    
     return aggregate;
   }
 
@@ -52,8 +53,7 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Aggrega
   }
 
   private Aggregate loadAggregate(String id) {
-    ValueAndTimestamp<Aggregate> record = store.get(id);
-    return Optional.ofNullable(record)
+    return Optional.ofNullable(store.get(id))
         .map(ValueAndTimestamp::value)
         .orElse(null);
   }

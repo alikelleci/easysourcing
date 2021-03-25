@@ -34,11 +34,7 @@ public class SnapshotGateway extends MessageGateway {
             .build())
         .build();
 
-    if (log.isDebugEnabled()) {
-      log.debug("Publishing snapshot: {}", snapshot);
-    } else if (log.isInfoEnabled()) {
-      log.info("Publishing snapshot: {} ({})", snapshot.getType(), snapshot.getAggregateId());
-    }
+    log.debug("Publishing snapshot: {} ({})", snapshot.getType(), snapshot.getAggregateId());
     return send(snapshot);
   }
 

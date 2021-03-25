@@ -34,11 +34,7 @@ public class SnapshotHandler implements Handler<Void> {
     Aggregate snapshot = (Aggregate) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    if (log.isDebugEnabled()) {
-      log.debug("Handling snapshot: {}", snapshot);
-    } else if (log.isInfoEnabled()) {
-      log.info("Handling snapshot: {} ({})", snapshot.getType(), snapshot.getAggregateId());
-    }
+    log.debug("Handling snapshot: {} ({})", snapshot.getType(), snapshot.getAggregateId());
 
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, context));
