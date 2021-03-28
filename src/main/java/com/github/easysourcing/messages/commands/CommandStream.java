@@ -26,22 +26,23 @@ public class CommandStream {
   private final Set<String> topics;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, Aggregator> aggregators;
+  private final boolean inMemoryStateStore;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, Aggregator> aggregators, boolean inMemoryStateStore) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.aggregators = aggregators;
+    this.inMemoryStateStore = inMemoryStateStore;
   }
 
-  public void buildStream(StreamsBuilder builder, boolean inMemoryStateStore) {
+  public void buildStream(StreamsBuilder builder) {
     // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentTimestampedKeyValueStore("snapshot-store");
+    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
     if (inMemoryStateStore) {
       supplier = Stores.inMemoryKeyValueStore("snapshot-store");
     }
-
     builder.addStateStore(
-        Stores.timestampedKeyValueStoreBuilder(
+        Stores.keyValueStoreBuilder(
             supplier,
             Serdes.String(),
             CustomSerdes.Json(Aggregate.class)

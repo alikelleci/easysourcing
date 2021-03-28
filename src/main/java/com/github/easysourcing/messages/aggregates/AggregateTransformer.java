@@ -5,16 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public class AggregateTransformer implements ValueTransformer<Event, Aggregate> {
 
   private ProcessorContext context;
-  private KeyValueStore<String, ValueAndTimestamp<Aggregate>> store;
+  private KeyValueStore<String, Aggregate> store;
 
   private final Map<Class<?>, Aggregator> aggregators;
 
@@ -26,7 +24,7 @@ public class AggregateTransformer implements ValueTransformer<Event, Aggregate> 
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = (KeyValueStore<String, ValueAndTimestamp<Aggregate>>) context.getStateStore("snapshot-store");
+    this.store = (KeyValueStore<String, Aggregate>) context.getStateStore("snapshot-store");
   }
 
   @Override
@@ -36,26 +34,19 @@ public class AggregateTransformer implements ValueTransformer<Event, Aggregate> 
       return null;
     }
 
-    Aggregate aggregate = loadAggregate(event.getAggregateId());
+    Aggregate aggregate = store.get(event.getAggregateId());
     aggregate = aggregator.invoke(aggregate, event, context);
 
     if (aggregate != null) {
-      store.put(event.getAggregateId(), ValueAndTimestamp
-          .make(aggregate, context.timestamp()));
+      store.put(event.getAggregateId(), aggregate);
     }
-    
+
     return aggregate;
   }
 
   @Override
   public void close() {
 
-  }
-
-  private Aggregate loadAggregate(String id) {
-    return Optional.ofNullable(store.get(id))
-        .map(ValueAndTimestamp::value)
-        .orElse(null);
   }
 
 }

@@ -9,18 +9,16 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import javax.validation.ValidationException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public class CommandTransformer implements ValueTransformer<Command, CommandResult> {
 
   private ProcessorContext context;
-  private KeyValueStore<String, ValueAndTimestamp<Aggregate>> store;
+  private KeyValueStore<String, Aggregate> store;
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
 
@@ -31,7 +29,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = (KeyValueStore<String, ValueAndTimestamp<Aggregate>>) context.getStateStore("snapshot-store");
+    this.store = (KeyValueStore<String, Aggregate>) context.getStateStore("snapshot-store");
   }
 
   @Override
@@ -41,7 +39,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
       return null;
     }
 
-    Aggregate aggregate = loadAggregate(command.getAggregateId());
+    Aggregate aggregate = store.get(command.getAggregateId());
     List<Event> events;
     try {
       events = commandHandler.invoke(aggregate, command, context);
@@ -65,12 +63,6 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
   @Override
   public void close() {
 
-  }
-
-  private Aggregate loadAggregate(String id) {
-    return Optional.ofNullable(store.get(id))
-        .map(ValueAndTimestamp::value)
-        .orElse(null);
   }
 
 }

@@ -9,52 +9,43 @@ import com.github.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+
+import java.util.Properties;
 
 @Slf4j
 public class GatewayBuilder {
 
-  private Config config;
+  private final Properties producerConfig;
 
-  public GatewayBuilder() {
-  }
-
-  public GatewayBuilder withConfig(Config config) {
-    this.config = config;
-    return this;
+  public GatewayBuilder(Properties producerConfig) {
+    this.producerConfig = producerConfig;
+    this.producerConfig.putIfAbsent(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    this.producerConfig.putIfAbsent(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    this.producerConfig.putIfAbsent(ProducerConfig.ACKS_CONFIG, "all");
+    this.producerConfig.putIfAbsent(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
+    this.producerConfig.putIfAbsent(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
   }
 
   public MessageGateway messageGateway() {
-    if (this.config == null) {
-      throw new IllegalStateException("No config provided!");
-    } else {
-      return new MessageGateway(producer());
-    }
+    return new MessageGateway(producer());
   }
 
   public CommandGateway commandGateway() {
-    if (this.config == null) {
-      throw new IllegalStateException("No config provided!");
-    }
     return new CommandGateway(producer());
   }
 
   public EventGateway eventGateway() {
-    if (this.config == null) {
-      throw new IllegalStateException("No config provided!");
-    }
     return new EventGateway(producer());
   }
 
   public SnapshotGateway snapshotGateway() {
-    if (this.config == null) {
-      throw new IllegalStateException("No config provided!");
-    }
     return new SnapshotGateway(producer());
   }
 
   private Producer<String, Message> producer() {
-    return new KafkaProducer<>(config.producerConfigs(),
+    return new KafkaProducer<>(this.producerConfig,
         new StringSerializer(),
         new JsonSerializer<>());
   }

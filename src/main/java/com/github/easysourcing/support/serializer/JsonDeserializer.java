@@ -28,7 +28,7 @@ public class JsonDeserializer<T> implements Deserializer<T> {
     if (bytes == null) {
       return null;
     }
-    
+
     try {
       return objectMapper.readValue(bytes, type);
     } catch (Exception e) {

@@ -1,5 +1,7 @@
 package com.github.easysourcing;
 
+import com.github.easysourcing.EasySourcing.StateListener;
+import com.github.easysourcing.EasySourcing.UncaughtExceptionHandler;
 import com.github.easysourcing.messages.HandlerUtils;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.aggregates.annotations.ApplyEvent;
@@ -17,26 +19,29 @@ import com.github.easysourcing.messages.snapshots.SnapshotHandler;
 import com.github.easysourcing.messages.snapshots.SnapshotStream;
 import com.github.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.common.config.TopicConfig;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -45,22 +50,41 @@ import java.util.stream.Stream;
 @Slf4j
 public class EasySourcingBuilder {
 
-  private Config config;
-  private EasySourcing.StateListener stateListener;
-  private EasySourcing.UncaughtExceptionHandler uncaughtExceptionHandler;
+  private final Properties streamsConfig;
+
+  private StateListener stateListener;
+  private UncaughtExceptionHandler uncaughtExceptionHandler;
+  private boolean inMemoryStateStore;
 
   //  Handlers
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
   private final Map<Class<?>, Aggregator> aggregators = new HashMap<>();
   private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers = new ArrayListValuedHashMap<>();
-  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
+  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
 
-  public EasySourcingBuilder() {
+
+  public EasySourcingBuilder(Properties streamsConfig) {
+    this.streamsConfig = streamsConfig;
+    this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+    this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+    this.streamsConfig.putIfAbsent(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
+    this.streamsConfig.putIfAbsent(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
+    this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
   }
 
-  public EasySourcingBuilder withConfig(Config config) {
-    this.config = config;
+  public EasySourcingBuilder setStateListener(StateListener stateListener) {
+    this.stateListener = stateListener;
+    return this;
+  }
+
+  public EasySourcingBuilder setUncaughtExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
+    this.uncaughtExceptionHandler = exceptionHandler;
+    return this;
+  }
+
+  public EasySourcingBuilder setInMemoryStateStore(boolean inMemoryStateStore) {
+    this.inMemoryStateStore = inMemoryStateStore;
     return this;
   }
 
@@ -68,8 +92,8 @@ public class EasySourcingBuilder {
     List<Method> commandHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleCommand.class);
     List<Method> aggregatorMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
     List<Method> resultHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleResult.class);
-    List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
     List<Method> eventHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
+    List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
 
     commandHandlerMethods
         .forEach(method -> addCommandHandler(handler, method));
@@ -80,42 +104,49 @@ public class EasySourcingBuilder {
     resultHandlerMethods
         .forEach(method -> addResultHandler(handler, method));
 
-    snapshotHandlerMethods
-        .forEach(method -> addSnapshotHandler(handler, method));
-
     eventHandlerMethods
         .forEach(method -> addEventHandler(handler, method));
 
-    return this;
-  }
+    snapshotHandlerMethods
+        .forEach(method -> addSnapshotHandler(handler, method));
 
-  public EasySourcingBuilder withStateListener(EasySourcing.StateListener stateListener) {
-    this.stateListener = stateListener;
-    return this;
-  }
-
-  public EasySourcingBuilder withUncaughtExceptionHandler(EasySourcing.UncaughtExceptionHandler uncaughtExceptionHandler) {
-    this.uncaughtExceptionHandler = uncaughtExceptionHandler;
     return this;
   }
 
   public EasySourcing build() {
-    if (this.config == null) {
-      throw new RuntimeException("No config provided!");
-    }
-
-    if (StringUtils.isBlank(config.getBootstrapServers())) {
-      throw new RuntimeException("No bootstrap servers provided!");
-    }
-
-    if (StringUtils.isBlank(config.getApplicationId())) {
-      throw new RuntimeException("No application id provided!");
-    }
-
     createTopics();
     Topology topology = buildTopology();
+    return new EasySourcing(topology, this.streamsConfig, stateListener, uncaughtExceptionHandler);
+  }
 
-    return new EasySourcing(this.config, topology, stateListener, uncaughtExceptionHandler);
+  private Topology buildTopology() {
+    StreamsBuilder builder = new StreamsBuilder();
+
+    Set<String> commandsTopics = getCommandsTopics();
+    if (CollectionUtils.isNotEmpty(commandsTopics)) {
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, inMemoryStateStore);
+      commandStream.buildStream(builder);
+    }
+
+    Set<String> resultTopics = getResultTopics();
+    if (CollectionUtils.isNotEmpty(resultTopics)) {
+      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers);
+      resultStream.buildStream(builder);
+    }
+
+    Set<String> eventsTopics = getEventsTopics();
+    if (CollectionUtils.isNotEmpty(eventsTopics)) {
+      EventStream eventStream = new EventStream(eventsTopics, eventHandlers);
+      eventStream.buildStream(builder);
+    }
+
+    Set<String> snapshotTopics = getSnapshotTopics();
+    if (CollectionUtils.isNotEmpty(snapshotTopics)) {
+      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
+      snapshotStream.buildStream(builder);
+    }
+
+    return builder.build();
   }
 
   private void addCommandHandler(Object listener, Method method) {
@@ -139,17 +170,17 @@ public class EasySourcingBuilder {
     }
   }
 
-  private void addSnapshotHandler(Object listener, Method method) {
-    if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
-      Class<?> type = method.getParameters()[0].getType();
-      snapshotHandlers.put(type, new SnapshotHandler(listener, method));
-    }
-  }
-
   private void addEventHandler(Object listener, Method method) {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
       eventHandlers.put(type, new EventHandler(listener, method));
+    }
+  }
+
+  private void addSnapshotHandler(Object listener, Method method) {
+    if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
+      Class<?> type = method.getParameters()[0].getType();
+      snapshotHandlers.put(type, new SnapshotHandler(listener, method));
     }
   }
 
@@ -163,131 +194,61 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getResultTopics() {
-    Set<String> list1 = Stream.of(resultHandlers.keySet())
+    return Stream.of(resultHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
         .map(s -> s.concat(".results"))
         .collect(Collectors.toSet());
-
-    Set<String> list2 = Stream.of(commandHandlers.keySet())
-        .flatMap(Collection::stream)
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .map(s -> s.concat(".results"))
-        .collect(Collectors.toSet());
-
-    Set<String> topics = new HashSet<>();
-    topics.addAll(list1);
-    topics.addAll(list2);
-
-    return topics;
-  }
-
-  private Set<String> getSnapshotTopics() {
-    Set<String> list1 = Stream.of(snapshotHandlers.keySet())
-        .flatMap(Collection::stream)
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-
-    Set<String> list2 = Stream.of(aggregators.values())
-        .flatMap(Collection::stream)
-        .map(aggregator -> aggregator.getMethod().getReturnType())
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-
-    Set<String> topics = new HashSet<>();
-    topics.addAll(list1);
-    topics.addAll(list2);
-
-    return topics;
   }
 
   private Set<String> getEventsTopics() {
-    Set<String> list1 = Stream.of(eventHandlers.keySet())
+    return Stream.of(eventHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
         .collect(Collectors.toSet());
+  }
 
-    Set<String> list2 = Stream.of(commandHandlers.values())
-        .flatMap(Collection::stream)
-        .map(commandHandler -> commandHandler.getMethod().getReturnType())
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-
-    Set<String> list3 = Stream.of(aggregators.keySet())
+  private Set<String> getSnapshotTopics() {
+    return Stream.of(snapshotHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
         .collect(Collectors.toSet());
-
-    Set<String> topics = new HashSet<>();
-    topics.addAll(list1);
-    topics.addAll(list2);
-    topics.addAll(list3);
-
-    return topics;
   }
 
   private void createTopics() {
-    try (AdminClient adminClient = AdminClient.create(config.adminConfigs())) {
+    Properties properties = new Properties();
+
+    String boostrapServers = streamsConfig.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG);
+    if (StringUtils.isNotBlank(boostrapServers)) {
+      properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
+    }
+
+    String securityProtocol = streamsConfig.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
+    if (StringUtils.isNotBlank(securityProtocol)) {
+      properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+    }
+
+    try (AdminClient adminClient = AdminClient.create(properties)) {
       ListTopicsOptions listTopicsOptions = new ListTopicsOptions();
       listTopicsOptions.timeoutMs(15000);
       Set<String> brokerTopics = adminClient.listTopics(listTopicsOptions).names().get();
 
-      // Commands topic
-      Set<NewTopic> commandTopicsToCreate = getCommandsTopics().stream()
+      Set<NewTopic> topicsToCreate = Stream.of(
+          getCommandsTopics(),
+          getResultTopics(),
+          getEventsTopics(),
+          getSnapshotTopics()
+      )
+          .flatMap(Collection::stream)
           .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
-              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
-                  TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getCommandsRetention())
-              })))
+          .map(topic -> new NewTopic(topic, 1, (short) 1))
           .collect(Collectors.toSet());
-
-      // Results topic
-      Set<NewTopic> resultTopicsToCreate = getResultTopics().stream()
-          .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
-              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
-                  TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getResultsRetention())
-              })))
-          .collect(Collectors.toSet());
-
-      // Snapshots topic
-      Set<NewTopic> snapshotTopicsToCreate = getSnapshotTopics().stream()
-          .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
-              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
-                  TopicConfig.CLEANUP_POLICY_CONFIG, "compact",
-                  TopicConfig.DELETE_RETENTION_MS_CONFIG, String.valueOf(config.getSnapshotsRetention())
-              })))
-          .collect(Collectors.toSet());
-
-      // Events topic
-      Set<NewTopic> eventTopicsToCreate = getEventsTopics().stream()
-          .filter(topic -> !brokerTopics.contains(topic))
-          .map(topic -> new NewTopic(topic, config.getPartitions(), (short) config.getReplicas())
-              .configs(MapUtils.putAll(new HashMap<>(), new String[]{
-                  TopicConfig.RETENTION_MS_CONFIG, String.valueOf(config.getEventsRetention())
-              })))
-          .collect(Collectors.toSet());
-
-      Set<NewTopic> topicsToCreate = new HashSet<>();
-      topicsToCreate.addAll(commandTopicsToCreate);
-      topicsToCreate.addAll(resultTopicsToCreate);
-      topicsToCreate.addAll(snapshotTopicsToCreate);
-      topicsToCreate.addAll(eventTopicsToCreate);
 
       CreateTopicsOptions options = new CreateTopicsOptions();
       options.timeoutMs(15000);
@@ -297,35 +258,4 @@ public class EasySourcingBuilder {
       e.printStackTrace();
     }
   }
-
-  private Topology buildTopology() {
-    StreamsBuilder builder = new StreamsBuilder();
-
-    Set<String> commandsTopics = getCommandsTopics();
-    if (!commandsTopics.isEmpty() && !commandHandlers.isEmpty()) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators);
-      commandStream.buildStream(builder, config.isInMemoryStateStore());
-    }
-
-    Set<String> resultTopics = getResultTopics();
-    if (!resultTopics.isEmpty() && !resultHandlers.isEmpty()) {
-      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers);
-      resultStream.buildStream(builder);
-    }
-
-    Set<String> snapshotTopics = getSnapshotTopics();
-    if (!snapshotTopics.isEmpty() && !snapshotHandlers.isEmpty()) {
-      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
-      snapshotStream.buildStream(builder);
-    }
-
-    Set<String> eventsTopics = getEventsTopics();
-    if (!eventsTopics.isEmpty() && !eventHandlers.isEmpty()) {
-      EventStream eventStream = new EventStream(eventsTopics, eventHandlers);
-      eventStream.buildStream(builder);
-    }
-
-    return builder.build();
-  }
-
 }

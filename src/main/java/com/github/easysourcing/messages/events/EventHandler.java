@@ -34,7 +34,7 @@ public class EventHandler implements Handler<Void> {
     ProcessorContext context = (ProcessorContext) args[1];
 
     log.debug("Handling event: {} ({})", event.getType(), event.getAggregateId());
-    
+
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));
     } catch (Exception e) {

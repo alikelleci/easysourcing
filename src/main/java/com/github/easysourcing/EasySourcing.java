@@ -5,25 +5,26 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.Topology;
 
 import java.time.Duration;
+import java.util.Properties;
 
 @Slf4j
 public class EasySourcing {
 
-  private final Config config;
   private final Topology topology;
+  private final Properties streamsConfig;
   private StateListener stateListener;
   private UncaughtExceptionHandler uncaughtExceptionHandler;
 
   private KafkaStreams kafkaStreams;
 
-  protected EasySourcing(Config config, Topology topology) {
-    this.config = config;
+  protected EasySourcing(Topology topology, Properties streamsConfig) {
     this.topology = topology;
+    this.streamsConfig = streamsConfig;
   }
 
-  protected EasySourcing(Config config, Topology topology, StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
-    this.config = config;
+  protected EasySourcing(Topology topology, Properties streamsConfig, StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
     this.topology = topology;
+    this.streamsConfig = streamsConfig;
     this.stateListener = stateListener;
     this.uncaughtExceptionHandler = uncaughtExceptionHandler;
   }
@@ -39,7 +40,7 @@ public class EasySourcing {
       return;
     }
 
-    this.kafkaStreams = new KafkaStreams(topology, config.streamsConfig());
+    this.kafkaStreams = new KafkaStreams(topology, this.streamsConfig);
     setUpListeners();
 
     log.info("EasySourcing is starting...");
