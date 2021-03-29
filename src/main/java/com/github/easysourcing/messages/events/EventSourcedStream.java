@@ -33,12 +33,12 @@ public class EventSourcedStream {
 
   public void buildStream(StreamsBuilder builder) {
     // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentTimestampedKeyValueStore("snapshot-store");
+    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
     if (inMemoryStateStore) {
       supplier = Stores.inMemoryKeyValueStore("snapshot-store");
     }
     builder.addStateStore(
-        Stores.timestampedKeyValueStoreBuilder(
+        Stores.keyValueStoreBuilder(
             supplier,
             Serdes.String(),
             CustomSerdes.Json(Aggregate.class)
