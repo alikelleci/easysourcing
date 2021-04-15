@@ -12,8 +12,8 @@ public class EasySourcing {
 
   private final Topology topology;
   private final Properties streamsConfig;
-  private StateListener stateListener;
-  private UncaughtExceptionHandler uncaughtExceptionHandler;
+  private KafkaStreams.StateListener stateListener;
+  private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 
   private KafkaStreams kafkaStreams;
 
@@ -22,7 +22,7 @@ public class EasySourcing {
     this.streamsConfig = streamsConfig;
   }
 
-  protected EasySourcing(Topology topology, Properties streamsConfig, StateListener stateListener, UncaughtExceptionHandler uncaughtExceptionHandler) {
+  protected EasySourcing(Topology topology, Properties streamsConfig, KafkaStreams.StateListener stateListener, Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
     this.topology = topology;
     this.streamsConfig = streamsConfig;
     this.stateListener = stateListener;
@@ -59,20 +59,22 @@ public class EasySourcing {
   }
 
   private void setUpListeners() {
-    kafkaStreams.setStateListener((newState, oldState) -> {
-      log.warn("State changed from {} to {}", oldState, newState);
-      if (stateListener != null) {
-        stateListener.onChange(newState, oldState);
-      }
-    });
+    if (stateListener != null) {
+      kafkaStreams.setStateListener(stateListener);
+    } else {
+      kafkaStreams.setStateListener((newState, oldState) -> {
+        log.warn("State changed from {} to {}", oldState, newState);
+      });
+    }
 
-    kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> {
-      log.error("EasySourcing will now exit because of the following error: ", throwable);
-      if (uncaughtExceptionHandler != null) {
-        uncaughtExceptionHandler.uncaughtException(thread, throwable);
-      }
-      System.exit(1);
-    });
+    if (uncaughtExceptionHandler != null) {
+      kafkaStreams.setUncaughtExceptionHandler(uncaughtExceptionHandler);
+    } else {
+      kafkaStreams.setUncaughtExceptionHandler((thread, throwable) -> {
+        log.error("EasySourcing will now exit because of the following error: ", throwable);
+        System.exit(1);
+      });
+    }
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       log.info("EasySourcing is shutting down...");
@@ -84,14 +86,4 @@ public class EasySourcing {
     return kafkaStreams;
   }
 
-
-  @FunctionalInterface
-  public interface StateListener {
-    void onChange(KafkaStreams.State newState, KafkaStreams.State oldState);
-  }
-
-  @FunctionalInterface
-  public interface UncaughtExceptionHandler {
-    void uncaughtException(Thread thread, Throwable throwable);
-  }
 }

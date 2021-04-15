@@ -1,7 +1,5 @@
 package com.github.easysourcing;
 
-import com.github.easysourcing.EasySourcing.StateListener;
-import com.github.easysourcing.EasySourcing.UncaughtExceptionHandler;
 import com.github.easysourcing.messages.HandlerUtils;
 import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.aggregates.annotations.ApplyEvent;
@@ -29,6 +27,7 @@ import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
@@ -52,8 +51,8 @@ public class EasySourcingBuilder {
 
   private final Properties streamsConfig;
 
-  private StateListener stateListener;
-  private UncaughtExceptionHandler uncaughtExceptionHandler;
+  private KafkaStreams.StateListener stateListener;
+  private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
   private boolean inMemoryStateStore;
 
   //  Handlers
@@ -73,12 +72,12 @@ public class EasySourcingBuilder {
     this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
   }
 
-  public EasySourcingBuilder setStateListener(StateListener stateListener) {
+  public EasySourcingBuilder setStateListener(KafkaStreams.StateListener stateListener) {
     this.stateListener = stateListener;
     return this;
   }
 
-  public EasySourcingBuilder setUncaughtExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
+  public EasySourcingBuilder setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
     this.uncaughtExceptionHandler = exceptionHandler;
     return this;
   }
