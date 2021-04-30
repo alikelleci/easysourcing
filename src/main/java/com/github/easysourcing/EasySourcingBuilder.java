@@ -183,7 +183,7 @@ public class EasySourcingBuilder {
     }
   }
 
-  private Set<String> getCommandsTopics() {
+  public Set<String> getCommandsTopics() {
     return Stream.of(commandHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
@@ -192,7 +192,7 @@ public class EasySourcingBuilder {
         .collect(Collectors.toSet());
   }
 
-  private Set<String> getResultTopics() {
+  public Set<String> getResultTopics() {
     return Stream.of(resultHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
@@ -202,7 +202,7 @@ public class EasySourcingBuilder {
         .collect(Collectors.toSet());
   }
 
-  private Set<String> getEventsTopics() {
+  public Set<String> getEventsTopics() {
     return Stream.of(eventHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
@@ -211,7 +211,7 @@ public class EasySourcingBuilder {
         .collect(Collectors.toSet());
   }
 
-  private Set<String> getSnapshotTopics() {
+  public Set<String> getSnapshotTopics() {
     return Stream.of(snapshotHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
