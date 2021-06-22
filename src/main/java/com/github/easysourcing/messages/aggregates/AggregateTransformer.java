@@ -24,7 +24,7 @@ public class AggregateTransformer implements ValueTransformer<Event, Aggregate> 
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = (KeyValueStore<String, Aggregate>) context.getStateStore("snapshot-store");
+    this.store = context.getStateStore("snapshot-store");
   }
 
   @Override

@@ -29,7 +29,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = (KeyValueStore<String, Aggregate>) context.getStateStore("snapshot-store");
+    this.store = context.getStateStore("snapshot-store");
   }
 
   @Override
