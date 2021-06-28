@@ -6,7 +6,7 @@
     <parent>
         <artifactId>easysourcing-parent</artifactId>
         <groupId>io.github.alikelleci</groupId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -30,6 +30,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <version>${spring-boot.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
             <version>${spring-boot.version}</version>
             <scope>provided</scope>
         </dependency>
