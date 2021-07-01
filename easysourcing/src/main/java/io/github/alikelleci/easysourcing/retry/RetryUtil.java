@@ -1,9 +1,9 @@
 package io.github.alikelleci.easysourcing.retry;
 
-import io.github.alikelleci.easysourcing.messages.exceptions.AggregateIdMismatchException;
-import io.github.alikelleci.easysourcing.messages.exceptions.AggregateIdMissingException;
-import io.github.alikelleci.easysourcing.messages.exceptions.PayloadMissingException;
-import io.github.alikelleci.easysourcing.messages.exceptions.TopicInfoMissingException;
+import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
+import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
+import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
+import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.RetryPolicy;

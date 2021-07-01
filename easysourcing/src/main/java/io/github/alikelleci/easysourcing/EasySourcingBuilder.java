@@ -1,21 +1,22 @@
 package io.github.alikelleci.easysourcing;
 
-import io.github.alikelleci.easysourcing.messages.HandlerUtils;
-import io.github.alikelleci.easysourcing.messages.aggregates.Aggregator;
-import io.github.alikelleci.easysourcing.messages.aggregates.annotations.ApplyEvent;
-import io.github.alikelleci.easysourcing.messages.annotations.TopicInfo;
-import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
-import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
-import io.github.alikelleci.easysourcing.messages.commands.annotations.HandleCommand;
-import io.github.alikelleci.easysourcing.messages.events.EventHandler;
-import io.github.alikelleci.easysourcing.messages.events.EventStream;
-import io.github.alikelleci.easysourcing.messages.events.annotations.HandleEvent;
-import io.github.alikelleci.easysourcing.messages.results.ResultHandler;
-import io.github.alikelleci.easysourcing.messages.results.ResultStream;
-import io.github.alikelleci.easysourcing.messages.results.annotations.HandleResult;
-import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
-import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
-import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
+import io.github.alikelleci.easysourcing.core.events.EventSourcedStream;
+import io.github.alikelleci.easysourcing.core.exceptions.annotations.HandleException;
+import io.github.alikelleci.easysourcing.util.HandlerUtils;
+import io.github.alikelleci.easysourcing.core.aggregates.Aggregator;
+import io.github.alikelleci.easysourcing.core.aggregates.annotations.ApplyEvent;
+import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
+import io.github.alikelleci.easysourcing.core.commands.CommandHandler;
+import io.github.alikelleci.easysourcing.core.commands.CommandStream;
+import io.github.alikelleci.easysourcing.core.commands.annotations.HandleCommand;
+import io.github.alikelleci.easysourcing.core.events.EventHandler;
+import io.github.alikelleci.easysourcing.core.events.EventStream;
+import io.github.alikelleci.easysourcing.core.events.annotations.HandleEvent;
+import io.github.alikelleci.easysourcing.core.exceptions.ExceptionHandler;
+import io.github.alikelleci.easysourcing.core.exceptions.ExceptionStream;
+import io.github.alikelleci.easysourcing.core.snapshots.SnapshotHandler;
+import io.github.alikelleci.easysourcing.core.snapshots.SnapshotStream;
+import io.github.alikelleci.easysourcing.core.snapshots.annotations.HandleSnapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -54,11 +55,12 @@ public class EasySourcingBuilder {
   private KafkaStreams.StateListener stateListener;
   private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
   private boolean inMemoryStateStore;
+  private OperationMode operationMode = OperationMode.NORMAL;
 
   //  Handlers
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
   private final Map<Class<?>, Aggregator> aggregators = new HashMap<>();
-  private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers = new ArrayListValuedHashMap<>();
+  private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
 
@@ -87,10 +89,15 @@ public class EasySourcingBuilder {
     return this;
   }
 
+  public EasySourcingBuilder setOperationMode(OperationMode operationMode) {
+    this.operationMode = operationMode;
+    return this;
+  }
+
   public EasySourcingBuilder registerHandler(Object handler) {
     List<Method> commandHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleCommand.class);
     List<Method> aggregatorMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
-    List<Method> resultHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleResult.class);
+    List<Method> exceptionHandlerMethods  = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleException.class);
     List<Method> eventHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
     List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
 
@@ -100,8 +107,8 @@ public class EasySourcingBuilder {
     aggregatorMethods
         .forEach(method -> addAggregator(handler, method));
 
-    resultHandlerMethods
-        .forEach(method -> addResultHandler(handler, method));
+    exceptionHandlerMethods
+        .forEach(method -> addExceptionHandler(handler, method));
 
     eventHandlerMethods
         .forEach(method -> addEventHandler(handler, method));
@@ -121,16 +128,26 @@ public class EasySourcingBuilder {
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
+    if (operationMode != OperationMode.NORMAL) {
+      log.warn("Operation mode is set to {}", operationMode);
+      Set<String> eventSourcedTopics = getEventSourcedTopics();
+      if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
+        EventSourcedStream eventSourcedStream = new EventSourcedStream(eventSourcedTopics, aggregators, inMemoryStateStore, operationMode);
+        eventSourcedStream.buildStream(builder);
+      }
+      return builder.build();
+    }
+
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
       CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, inMemoryStateStore);
       commandStream.buildStream(builder);
     }
 
-    Set<String> resultTopics = getResultTopics();
-    if (CollectionUtils.isNotEmpty(resultTopics)) {
-      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers);
-      resultStream.buildStream(builder);
+    Set<String> exceptionsTopics  = getExceptionsTopics();
+    if (CollectionUtils.isNotEmpty(exceptionsTopics )) {
+      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics , exceptionHandlers);
+      exceptionStream.buildStream(builder);
     }
 
     Set<String> eventsTopics = getEventsTopics();
@@ -162,10 +179,10 @@ public class EasySourcingBuilder {
     }
   }
 
-  private void addResultHandler(Object listener, Method method) {
+  private void addExceptionHandler(Object listener, Method method) {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
-      resultHandlers.put(type, new ResultHandler(listener, method));
+      exceptionHandlers.put(type, new ExceptionHandler(listener, method));
     }
   }
 
@@ -192,13 +209,13 @@ public class EasySourcingBuilder {
         .collect(Collectors.toSet());
   }
 
-  private Set<String> getResultTopics() {
-    return Stream.of(resultHandlers.keySet())
+  private Set<String> getExceptionsTopics() {
+    return Stream.of(exceptionHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
-        .map(s -> s.concat(".results"))
+        .map(s -> s.concat(".exceptions"))
         .collect(Collectors.toSet());
   }
 
@@ -213,6 +230,15 @@ public class EasySourcingBuilder {
 
   private Set<String> getSnapshotTopics() {
     return Stream.of(snapshotHandlers.keySet())
+        .flatMap(Collection::stream)
+        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
+        .filter(Objects::nonNull)
+        .map(TopicInfo::value)
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> getEventSourcedTopics() {
+    return Stream.of(aggregators.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)
@@ -240,9 +266,10 @@ public class EasySourcingBuilder {
 
       Set<NewTopic> topicsToCreate = Stream.of(
           getCommandsTopics(),
-          getResultTopics(),
+          getExceptionsTopics(),
           getEventsTopics(),
-          getSnapshotTopics()
+          getSnapshotTopics(),
+          getEventSourcedTopics()
       )
           .flatMap(Collection::stream)
           .filter(topic -> !brokerTopics.contains(topic))
