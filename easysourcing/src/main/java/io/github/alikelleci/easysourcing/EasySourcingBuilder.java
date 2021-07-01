@@ -1,22 +1,22 @@
 package io.github.alikelleci.easysourcing;
 
-import io.github.alikelleci.easysourcing.core.events.EventSourcedStream;
-import io.github.alikelleci.easysourcing.core.exceptions.annotations.HandleException;
-import io.github.alikelleci.easysourcing.util.HandlerUtils;
-import io.github.alikelleci.easysourcing.core.aggregates.Aggregator;
-import io.github.alikelleci.easysourcing.core.aggregates.annotations.ApplyEvent;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
-import io.github.alikelleci.easysourcing.core.commands.CommandHandler;
-import io.github.alikelleci.easysourcing.core.commands.CommandStream;
-import io.github.alikelleci.easysourcing.core.commands.annotations.HandleCommand;
-import io.github.alikelleci.easysourcing.core.events.EventHandler;
-import io.github.alikelleci.easysourcing.core.events.EventStream;
-import io.github.alikelleci.easysourcing.core.events.annotations.HandleEvent;
-import io.github.alikelleci.easysourcing.core.exceptions.ExceptionHandler;
-import io.github.alikelleci.easysourcing.core.exceptions.ExceptionStream;
-import io.github.alikelleci.easysourcing.core.snapshots.SnapshotHandler;
-import io.github.alikelleci.easysourcing.core.snapshots.SnapshotStream;
-import io.github.alikelleci.easysourcing.core.snapshots.annotations.HandleSnapshot;
+import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
+import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
+import io.github.alikelleci.easysourcing.messages.commands.annotations.HandleCommand;
+import io.github.alikelleci.easysourcing.messages.events.EventHandler;
+import io.github.alikelleci.easysourcing.messages.events.EventStream;
+import io.github.alikelleci.easysourcing.messages.events.annotations.HandleEvent;
+import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
+import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingStream;
+import io.github.alikelleci.easysourcing.messages.eventsourcing.annotations.ApplyEvent;
+import io.github.alikelleci.easysourcing.messages.exceptions.ExceptionHandler;
+import io.github.alikelleci.easysourcing.messages.exceptions.ExceptionStream;
+import io.github.alikelleci.easysourcing.messages.exceptions.annotations.HandleException;
+import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
+import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
+import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
+import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -59,7 +59,7 @@ public class EasySourcingBuilder {
 
   //  Handlers
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
-  private final Map<Class<?>, Aggregator> aggregators = new HashMap<>();
+  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandler = new HashMap<>();
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
@@ -96,16 +96,16 @@ public class EasySourcingBuilder {
 
   public EasySourcingBuilder registerHandler(Object handler) {
     List<Method> commandHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleCommand.class);
-    List<Method> aggregatorMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
-    List<Method> exceptionHandlerMethods  = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleException.class);
+    List<Method> eventSourcingMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
+    List<Method> exceptionHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleException.class);
     List<Method> eventHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
     List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
 
     commandHandlerMethods
         .forEach(method -> addCommandHandler(handler, method));
 
-    aggregatorMethods
-        .forEach(method -> addAggregator(handler, method));
+    eventSourcingMethods
+        .forEach(method -> addEventSourcingHandler(handler, method));
 
     exceptionHandlerMethods
         .forEach(method -> addExceptionHandler(handler, method));
@@ -132,21 +132,21 @@ public class EasySourcingBuilder {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcedStream eventSourcedStream = new EventSourcedStream(eventSourcedTopics, aggregators, inMemoryStateStore, operationMode);
-        eventSourcedStream.buildStream(builder);
+        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, eventSourcingHandler, inMemoryStateStore, operationMode);
+        eventSourcingStream.buildStream(builder);
       }
       return builder.build();
     }
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, inMemoryStateStore);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandler, inMemoryStateStore);
       commandStream.buildStream(builder);
     }
 
-    Set<String> exceptionsTopics  = getExceptionsTopics();
-    if (CollectionUtils.isNotEmpty(exceptionsTopics )) {
-      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics , exceptionHandlers);
+    Set<String> exceptionsTopics = getExceptionsTopics();
+    if (CollectionUtils.isNotEmpty(exceptionsTopics)) {
+      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics, exceptionHandlers);
       exceptionStream.buildStream(builder);
     }
 
@@ -172,10 +172,10 @@ public class EasySourcingBuilder {
     }
   }
 
-  private void addAggregator(Object listener, Method method) {
+  private void addEventSourcingHandler(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();
-      aggregators.put(type, new Aggregator(listener, method));
+      eventSourcingHandler.put(type, new EventSourcingHandler(listener, method));
     }
   }
 
@@ -238,7 +238,7 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getEventSourcedTopics() {
-    return Stream.of(aggregators.keySet())
+    return Stream.of(eventSourcingHandler.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)

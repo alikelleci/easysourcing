@@ -1,10 +1,10 @@
 package io.github.alikelleci.easysourcing;
 
-import io.github.alikelleci.easysourcing.common.Message;
-import io.github.alikelleci.easysourcing.common.MessageGateway;
-import io.github.alikelleci.easysourcing.core.commands.CommandGateway;
-import io.github.alikelleci.easysourcing.core.events.EventGateway;
-import io.github.alikelleci.easysourcing.core.snapshots.SnapshotGateway;
+import io.github.alikelleci.easysourcing.messages.Message;
+import io.github.alikelleci.easysourcing.messages.MessageGateway;
+import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
+import io.github.alikelleci.easysourcing.messages.events.EventGateway;
+import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
