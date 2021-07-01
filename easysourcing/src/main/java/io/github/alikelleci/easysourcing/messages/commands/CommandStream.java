@@ -13,6 +13,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
 import java.util.Collections;
@@ -38,15 +39,12 @@ public class CommandStream {
     // Snapshot store
     KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
     if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore("snapshot-store");
+      supplier = Stores.inMemoryKeyValueStore(supplier.name());
     }
-    builder.addStateStore(
-        Stores.keyValueStoreBuilder(
-            supplier,
-            Serdes.String(),
-            CustomSerdes.Json(Aggregate.class)
-        ).withLoggingEnabled(Collections.emptyMap())
-    );
+    StoreBuilder storeBuilder = Stores
+        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Aggregate.class))
+        .withLoggingEnabled(Collections.emptyMap());
+    builder.addStateStore(storeBuilder);
 
     // --> Commands
     KStream<String, Command> commandKStream = builder.stream(topics,
@@ -59,7 +57,7 @@ public class CommandStream {
 
     // Commands --> Results
     KStream<String, CommandResult> resultKStream = commandKStream
-        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store")
+        .transformValues(() -> new CommandTransformer(commandHandlers), supplier.name())
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
@@ -72,7 +70,7 @@ public class CommandStream {
 
     // Events --> Snapshots
     KStream<String, Aggregate> aggregateKStream = eventKStream
-        .transformValues(() -> new AggregateTransformer(aggregators), "snapshot-store")
+        .transformValues(() -> new AggregateTransformer(aggregators), supplier.name())
         .filter((key, aggregate) -> aggregate != null);
 
     // Results --> Push

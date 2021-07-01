@@ -12,6 +12,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
 import java.util.Collections;
@@ -35,15 +36,12 @@ public class EventSourcedStream {
     // Snapshot store
     KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
     if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore("snapshot-store");
+      supplier = Stores.inMemoryKeyValueStore(supplier.name());
     }
-    builder.addStateStore(
-        Stores.keyValueStoreBuilder(
-            supplier,
-            Serdes.String(),
-            CustomSerdes.Json(Aggregate.class)
-        ).withLoggingEnabled(Collections.emptyMap())
-    );
+    StoreBuilder storeBuilder = Stores
+        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Aggregate.class))
+        .withLoggingEnabled(Collections.emptyMap());
+    builder.addStateStore(storeBuilder);
 
     // --> Events
     KStream<String, Event> eventKStream = builder.stream(topics,
@@ -56,7 +54,7 @@ public class EventSourcedStream {
 
     // Events --> Snapshots
     KStream<String, Aggregate> aggregateKStream = eventKStream
-        .transformValues(() -> new AggregateTransformer(aggregators), "snapshot-store")
+        .transformValues(() -> new AggregateTransformer(aggregators), supplier.name())
         .filter((key, aggregate) -> aggregate != null);
 
     // Snapshots Push
