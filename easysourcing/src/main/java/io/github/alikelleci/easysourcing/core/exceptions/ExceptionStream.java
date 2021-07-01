@@ -16,11 +16,11 @@ import java.util.Set;
 public class ExceptionStream {
 
   private final Set<String> topics;
-  private final MultiValuedMap<Class<?>, ExceptionHandler> resultHandlers;
+  private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers;
 
   public ExceptionStream(Set<String> topics, MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
     this.topics = topics;
-    this.resultHandlers = exceptionHandlers;
+    this.exceptionHandlers = exceptionHandlers;
   }
 
   public void buildStream(StreamsBuilder builder) {
@@ -35,7 +35,7 @@ public class ExceptionStream {
 
     // Failed commands --> Void
     failedCommands
-        .transformValues(() -> new ExceptionTransformer(resultHandlers));
+        .transformValues(() -> new ExceptionTransformer(exceptionHandlers));
   }
 
 }
