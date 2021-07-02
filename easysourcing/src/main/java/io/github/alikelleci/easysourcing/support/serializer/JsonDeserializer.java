@@ -63,9 +63,13 @@ public class JsonDeserializer<T> implements Deserializer<T> {
 
         // Metadata correction
         ObjectNode metadata = (ObjectNode) root.get("metadata");
-        ObjectNode entries = (ObjectNode) metadata.get("entries");
+        metadata.set("values", metadata.get("entries"));
         metadata.remove("entries");
-        metadata.set("values", entries);
+
+        // $failure --> $exception
+        ObjectNode values = (ObjectNode) metadata.get("values");
+        values.set("$exception", values.get("$failure"));
+        values.remove("$failure");
 
         // Write to bytes
         bytes = objectMapper.writeValueAsBytes(root);
