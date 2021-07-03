@@ -59,7 +59,7 @@ public class EasySourcingBuilder {
 
   //  Handlers
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
-  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandler = new HashMap<>();
+  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers = new HashMap<>();
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
@@ -132,7 +132,7 @@ public class EasySourcingBuilder {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, eventSourcingHandler, inMemoryStateStore, operationMode);
+        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, eventSourcingHandlers, inMemoryStateStore, operationMode);
         eventSourcingStream.buildStream(builder);
       }
       return builder.build();
@@ -140,7 +140,7 @@ public class EasySourcingBuilder {
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandler, inMemoryStateStore);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers, inMemoryStateStore);
       commandStream.buildStream(builder);
     }
 
@@ -175,7 +175,7 @@ public class EasySourcingBuilder {
   private void addEventSourcingHandler(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();
-      eventSourcingHandler.put(type, new EventSourcingHandler(listener, method));
+      eventSourcingHandlers.put(type, new EventSourcingHandler(listener, method));
     }
   }
 
@@ -238,7 +238,7 @@ public class EasySourcingBuilder {
   }
 
   private Set<String> getEventSourcedTopics() {
-    return Stream.of(eventSourcingHandler.keySet())
+    return Stream.of(eventSourcingHandlers.keySet())
         .flatMap(Collection::stream)
         .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
         .filter(Objects::nonNull)

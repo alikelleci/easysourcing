@@ -15,11 +15,11 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Snapsho
   private ProcessorContext context;
   private KeyValueStore<String, Snapshot> store;
 
-  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandler;
+  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
 
 
-  public EventSourcingTransformer(Map<Class<?>, EventSourcingHandler> eventSourcingHandler) {
-    this.eventSourcingHandler = eventSourcingHandler;
+  public EventSourcingTransformer(Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
+    this.eventSourcingHandlers = eventSourcingHandlers;
   }
 
   @Override
@@ -30,7 +30,7 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Snapsho
 
   @Override
   public Snapshot transform(Event event) {
-    EventSourcingHandler eventSourcingHandler = this.eventSourcingHandler.get(event.getPayload().getClass());
+    EventSourcingHandler eventSourcingHandler = this.eventSourcingHandlers.get(event.getPayload().getClass());
     if (eventSourcingHandler == null) {
       return null;
     }

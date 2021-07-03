@@ -27,13 +27,13 @@ public class CommandStream {
 
   private final Set<String> topics;
   private final Map<Class<?>, CommandHandler> commandHandlers;
-  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandler;
+  private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
   private final boolean inMemoryStateStore;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandler, boolean inMemoryStateStore) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
-    this.eventSourcingHandler = eventSourcingHandler;
+    this.eventSourcingHandlers = eventSourcingHandlers;
     this.inMemoryStateStore = inMemoryStateStore;
   }
 
@@ -80,7 +80,7 @@ public class CommandStream {
 
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandler), supplier.name())
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), supplier.name())
         .filter((key, snapshot) -> snapshot != null);
 
     // Events --> Push
@@ -92,7 +92,6 @@ public class CommandStream {
     snapshots
         .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Snapshot.class)));
-
 
     // Failed commands --> Push
     failedCommands

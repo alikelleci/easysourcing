@@ -24,7 +24,7 @@ public class SnapshotStream {
 
   public void buildStream(StreamsBuilder builder) {
     // --> Snapshots
-    KStream<String, Snapshot> snapshotKStream = builder.stream(topics,
+    KStream<String, Snapshot> snapshots = builder.stream(topics,
         Consumed.with(Serdes.String(), CustomSerdes.Json(Snapshot.class)))
         .filter((key, snapshot) -> key != null)
         .filter((key, snapshot) -> snapshot != null)
@@ -33,7 +33,7 @@ public class SnapshotStream {
         .filter((key, snapshot) -> snapshot.getAggregateId() != null);
 
     // Snapshots --> Void
-    snapshotKStream
+    snapshots
         .transformValues(() -> new SnapshotTransformer(snapshotHandlers));
   }
 
