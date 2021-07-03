@@ -34,7 +34,7 @@ public class ExceptionHandler implements Handler<Void> {
     Command command = (Command) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    log.debug("Handling exceptiont: {} ({})", command.getPayloadType(), command.getAggregateId());
+    log.debug("Handling exception: {} ({})", command.getPayloadType(), command.getAggregateId());
 
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));
