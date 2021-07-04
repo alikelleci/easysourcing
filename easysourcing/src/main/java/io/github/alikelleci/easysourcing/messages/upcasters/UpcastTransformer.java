@@ -10,6 +10,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 
 
 public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
@@ -37,7 +38,12 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
     handlers.stream()
         .sorted(Comparator.comparingInt(handler -> handler.getMethod().getAnnotation(Upcast.class).revision()))
         .forEach(handler -> {
-          int sourceRevision = jsonNode.get("metadata").get("entries").get("$revision").intValue();
+          int sourceRevision = Optional.ofNullable( jsonNode.get("metadata"))
+              .map(metadata -> metadata.get("entries"))
+              .map(entries -> entries.get("$revision"))
+              .map(JsonNode::intValue)
+              .orElse(0);
+
           int targetRevision = handler.getMethod().getAnnotation(Upcast.class).revision();
 
           if (sourceRevision == targetRevision) {
