@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
+import io.github.alikelleci.easysourcing.common.annotations.Revision;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
@@ -18,6 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.springframework.core.annotation.AnnotationUtils;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -27,9 +29,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static io.github.alikelleci.easysourcing.messages.MetadataKeys.ID;
+import static io.github.alikelleci.easysourcing.messages.MetadataKeys.REVISION;
 
 @Slf4j
 public class CommandHandler implements Handler<List<Event>> {
@@ -107,7 +113,10 @@ public class CommandHandler implements Handler<List<Event>> {
         .map(payload -> Event.builder()
             .payload(payload)
             .metadata(command.getMetadata()
-                .add(MetadataKeys.ID, UUID.randomUUID().toString()))
+                .add(ID, UUID.randomUUID().toString())
+                .add(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(payload.getClass(), Revision.class))
+                    .map(Revision::value)
+                    .orElse(0)))
             .build())
         .collect(Collectors.toList());
 

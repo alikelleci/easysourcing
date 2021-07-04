@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
+import io.github.alikelleci.easysourcing.common.annotations.Revision;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
@@ -16,12 +17,15 @@ import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.github.alikelleci.easysourcing.messages.MetadataKeys.ID;
+import static io.github.alikelleci.easysourcing.messages.MetadataKeys.REVISION;
 
 @Slf4j
 public class EventSourcingHandler implements Handler<Snapshot> {
@@ -82,7 +86,10 @@ public class EventSourcingHandler implements Handler<Snapshot> {
     Snapshot snapshot = Snapshot.builder()
         .payload(result)
         .metadata(event.getMetadata()
-            .add(ID, UUID.randomUUID().toString()))
+            .add(ID, UUID.randomUUID().toString())
+            .add(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(result.getClass(), Revision.class))
+                .map(Revision::value)
+                .orElse(0)))
         .build();
 
     if (snapshot.getPayload() == null) {
