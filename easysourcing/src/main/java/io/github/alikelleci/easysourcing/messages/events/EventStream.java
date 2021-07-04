@@ -32,8 +32,7 @@ public class EventStream {
 
   public void buildStream(StreamsBuilder builder) {
     // --> Events
-    KStream<String, Event> events = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, value) -> key != null && value != null)
         .transformValues(() -> new UpcastTransformer(upcasters))
         .mapValues(value -> JacksonUtils.enhancedObjectMapper().convertValue(value, Event.class))

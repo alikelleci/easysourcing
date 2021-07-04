@@ -46,8 +46,7 @@ public class EventSourcingStream {
     builder.addStateStore(storeBuilder);
 
     // --> Events
-    KStream<String, Event> events = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
+    KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)

@@ -49,8 +49,7 @@ public class CommandStream {
     builder.addStateStore(storeBuilder);
 
     // --> Commands
-    KStream<String, Command> commands = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
+    KStream<String, Command> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)
