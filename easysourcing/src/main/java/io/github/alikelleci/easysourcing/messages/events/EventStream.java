@@ -2,10 +2,9 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.EasySourcingBuilder;
+import io.github.alikelleci.easysourcing.messages.upcasters.UpcastTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
-import io.github.alikelleci.easysourcing.messages.upcasters.UpcastTransformer;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
