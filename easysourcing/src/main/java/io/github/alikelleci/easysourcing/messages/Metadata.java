@@ -10,7 +10,7 @@ import java.util.Map;
 
 @ToString
 public class Metadata {
-  private Map<String, Object> values = new HashMap<>();
+  private Map<String, Object> entries = new HashMap<>();
   private long timestamp;
   private String topic;
   private int partition;
@@ -30,28 +30,28 @@ public class Metadata {
 
   @Transient
   public Metadata filter() {
-    values.keySet().removeIf(key ->
+    entries.keySet().removeIf(key ->
         StringUtils.startsWithIgnoreCase(key, "$"));
 
     return this;
   }
 
   public Metadata add(String key, Object value) {
-    values.put(key, value);
+    entries.put(key, value);
     return this;
   }
 
   public Metadata remove(String key) {
-    values.remove(key);
+    entries.remove(key);
     return this;
   }
 
   public Object get(String key) {
-    return values.get(key);
+    return entries.get(key);
   }
 
-  public Map<String, Object> getValues() {
-    return values;
+  public Map<String, Object> getEntries() {
+    return entries;
   }
 
   @Transient
