@@ -16,8 +16,8 @@ import io.github.alikelleci.easysourcing.messages.exceptions.annotations.HandleE
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
 import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
-import io.github.alikelleci.easysourcing.support.upcaster.UpcastHandler;
-import io.github.alikelleci.easysourcing.support.upcaster.annotations.Upcast;
+import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
+import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,13 +60,12 @@ public class EasySourcingBuilder {
   private OperationMode operationMode = OperationMode.NORMAL;
 
   //  Handlers
+  public  final MultiValuedMap<String, Upcaster> upcasters = new ArrayListValuedHashMap<>();
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers = new HashMap<>();
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
-
-  public static final MultiValuedMap<String, UpcastHandler> upcastHandlers = new ArrayListValuedHashMap<>();
 
 
   public EasySourcingBuilder(Properties streamsConfig) {
@@ -99,12 +98,15 @@ public class EasySourcingBuilder {
   }
 
   public EasySourcingBuilder registerHandler(Object handler) {
+    List<Method> upcasterMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), Upcast.class);
     List<Method> commandHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleCommand.class);
     List<Method> eventSourcingMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
     List<Method> exceptionHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleException.class);
     List<Method> eventHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
     List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
-    List<Method> upcastHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), Upcast.class);
+
+    upcasterMethods
+        .forEach(method -> addUpcaster(handler, method));
 
     commandHandlerMethods
         .forEach(method -> addCommandHandler(handler, method));
@@ -120,9 +122,6 @@ public class EasySourcingBuilder {
 
     snapshotHandlerMethods
         .forEach(method -> addSnapshotHandler(handler, method));
-
-    upcastHandlerMethods
-        .forEach(method -> addUpcasthandlerHandler(handler, method));
 
     return this;
   }
@@ -160,7 +159,7 @@ public class EasySourcingBuilder {
 
     Set<String> eventsTopics = getEventsTopics();
     if (CollectionUtils.isNotEmpty(eventsTopics)) {
-      EventStream eventStream = new EventStream(eventsTopics, eventHandlers);
+      EventStream eventStream = new EventStream(eventsTopics, upcasters, eventHandlers);
       eventStream.buildStream(builder);
     }
 
@@ -171,6 +170,13 @@ public class EasySourcingBuilder {
     }
 
     return builder.build();
+  }
+
+  private void addUpcaster(Object listener, Method method) {
+    if (method.getParameterCount() == 1) {
+      String type = method.getAnnotation(Upcast.class).type();
+      upcasters.put(type, new Upcaster(listener, method));
+    }
   }
 
   private void addCommandHandler(Object listener, Method method) {
@@ -205,13 +211,6 @@ public class EasySourcingBuilder {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
       snapshotHandlers.put(type, new SnapshotHandler(listener, method));
-    }
-  }
-
-  private void addUpcasthandlerHandler(Object listener, Method method) {
-    if (method.getParameterCount() == 1) {
-      Class<?> type = method.getAnnotation(Upcast.class).type();
-      upcastHandlers.put(type.getName(), new UpcastHandler(listener, method));
     }
   }
 

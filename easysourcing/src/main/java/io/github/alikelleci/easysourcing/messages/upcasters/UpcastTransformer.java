@@ -1,8 +1,8 @@
-package io.github.alikelleci.easysourcing.support.upcaster;
+package io.github.alikelleci.easysourcing.messages.upcasters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.github.alikelleci.easysourcing.support.upcaster.annotations.Upcast;
+import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -16,9 +16,9 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
 
   private ProcessorContext context;
 
-  private final MultiValuedMap<String, UpcastHandler> upcasters;
+  private final MultiValuedMap<String, Upcaster> upcasters;
 
-  public UpcastTransformer(MultiValuedMap<String, UpcastHandler> upcasters) {
+  public UpcastTransformer(MultiValuedMap<String, Upcaster> upcasters) {
     this.upcasters = upcasters;
   }
 
@@ -29,7 +29,7 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
 
   @Override
   public JsonNode transform(JsonNode jsonNode) {
-    Collection<UpcastHandler> handlers = upcasters.get(jsonNode.get("payload").get("@class").textValue());
+    Collection<Upcaster> handlers = upcasters.get(jsonNode.get("payload").get("@class").textValue());
     if (CollectionUtils.isEmpty(handlers)) {
       return jsonNode;
     }

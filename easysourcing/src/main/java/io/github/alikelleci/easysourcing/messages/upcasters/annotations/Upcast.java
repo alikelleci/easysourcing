@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.support.upcaster.annotations;
+package io.github.alikelleci.easysourcing.messages.upcasters.annotations;
 
 import io.github.alikelleci.easysourcing.common.annotations.HandleMessage;
 
@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Upcast {
-  Class<?> type();
+  String type();
 
   int revision();
 }

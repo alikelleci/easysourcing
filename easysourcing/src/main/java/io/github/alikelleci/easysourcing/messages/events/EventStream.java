@@ -3,8 +3,9 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.EasySourcingBuilder;
+import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
-import io.github.alikelleci.easysourcing.support.upcaster.UpcastTransformer;
+import io.github.alikelleci.easysourcing.messages.upcasters.UpcastTransformer;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -19,10 +20,13 @@ import java.util.Set;
 public class EventStream {
 
   private final Set<String> topics;
+  private final MultiValuedMap<String, Upcaster> upcasters;
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
 
-  public EventStream(Set<String> topics, MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
+
+  public EventStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
     this.topics = topics;
+    this.upcasters = upcasters;
     this.eventHandlers = eventHandlers;
   }
 
@@ -30,10 +34,9 @@ public class EventStream {
     // --> Events
     KStream<String, Event> events = builder.stream(topics,
         Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        .filter((key, event) -> key != null)
-        .transformValues(() -> new UpcastTransformer(EasySourcingBuilder.upcastHandlers))
+        .filter((key, value) -> key != null && value != null)
+        .transformValues(() -> new UpcastTransformer(upcasters))
         .mapValues(value -> JacksonUtils.enhancedObjectMapper().convertValue(value, Event.class))
-        .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
         .filter((key, event) -> event.getTopicInfo() != null)
         .filter((key, event) -> event.getAggregateId() != null);

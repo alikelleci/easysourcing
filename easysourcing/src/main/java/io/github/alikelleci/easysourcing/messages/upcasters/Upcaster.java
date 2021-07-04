@@ -1,8 +1,8 @@
-package io.github.alikelleci.easysourcing.support.upcaster;
+package io.github.alikelleci.easysourcing.messages.upcasters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Handler;
-import io.github.alikelleci.easysourcing.support.upcaster.exceptions.UpcastException;
+import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -10,12 +10,12 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import java.lang.reflect.Method;
 
 @Slf4j
-public class UpcastHandler implements Handler<JsonNode> {
+public class Upcaster implements Handler<JsonNode> {
 
   private final Object target;
   private final Method method;
 
-  public UpcastHandler(Object target, Method method) {
+  public Upcaster(Object target, Method method) {
     this.target = target;
     this.method = method;
   }

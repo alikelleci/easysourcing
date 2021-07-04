@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.support.upcaster.exceptions;
+package io.github.alikelleci.easysourcing.messages.upcasters.exceptions;
 
 public class UpcastException extends RuntimeException {
 
