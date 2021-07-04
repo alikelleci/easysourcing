@@ -39,47 +39,47 @@ public class JsonDeserializer<T> implements Deserializer<T> {
     }
   }
 
-//  @Override
-//  public T deserialize(String topic, Headers headers, byte[] bytes) {
-//    if (bytes == null) {
-//      return null;
-//    }
-//
-//    try {
-//      ObjectNode root = objectMapper.readValue(bytes, ObjectNode.class);
-//      String className = root.get("@class").textValue();
-//
-//      // Added for backwards compatibility
-//      if (className.startsWith("com.github.easysourcing.")) {
-//        // Root class name correction
-//        className = className.replace("com.github.easysourcing.", "io.github.alikelleci.easysourcing.");
-//        root.put("@class", className);
-//
-//        // Aggregate --> Snapshot
-//        if (className.endsWith(".aggregates.Aggregate")) {
-//          className = className.replace(".aggregates.Aggregate", ".snapshots.Snapshot");
-//          root.put("@class", className);
-//        }
-//
-//        // Metadata correction
-//        ObjectNode metadata = (ObjectNode) root.get("metadata");
-//        metadata.set("values", metadata.get("entries"));
-//        metadata.remove("entries");
-//
-//        // $failure --> $exception
-//        ObjectNode values = (ObjectNode) metadata.get("values");
-//        values.set("$exception", values.get("$failure"));
-//        values.remove("$failure");
-//
-//        // Write to bytes
-//        bytes = objectMapper.writeValueAsBytes(root);
-//      }
-//    } catch (Exception e) {
-//      throw new SerializationException("Error deserializing JSON", ExceptionUtils.getRootCause(e));
-//    }
-//
-//    return deserialize(topic, bytes);
-//  }
+  @Override
+  public T deserialize(String topic, Headers headers, byte[] bytes) {
+    if (bytes == null) {
+      return null;
+    }
+
+    try {
+      ObjectNode root = objectMapper.readValue(bytes, ObjectNode.class);
+      String className = root.get("@class").textValue();
+
+      // Added for backwards compatibility
+      if (className.startsWith("com.github.easysourcing.")) {
+        // Root class name correction
+        className = className.replace("com.github.easysourcing.", "io.github.alikelleci.easysourcing.");
+        root.put("@class", className);
+
+        // Aggregate --> Snapshot
+        if (className.endsWith(".aggregates.Aggregate")) {
+          className = className.replace(".aggregates.Aggregate", ".snapshots.Snapshot");
+          root.put("@class", className);
+        }
+
+        // Metadata correction
+        ObjectNode metadata = (ObjectNode) root.get("metadata");
+        metadata.set("values", metadata.get("entries"));
+        metadata.remove("entries");
+
+        // $failure --> $exception
+        ObjectNode values = (ObjectNode) metadata.get("values");
+        values.set("$exception", values.get("$failure"));
+        values.remove("$failure");
+
+        // Write to bytes
+        bytes = objectMapper.writeValueAsBytes(root);
+      }
+    } catch (Exception e) {
+      throw new SerializationException("Error deserializing JSON", ExceptionUtils.getRootCause(e));
+    }
+
+    return deserialize(topic, bytes);
+  }
 
   @Override
   public void close() {
