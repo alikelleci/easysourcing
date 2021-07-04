@@ -11,6 +11,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
+import static io.github.alikelleci.easysourcing.messages.MetadataKeys.CORRELATION_ID;
+import static io.github.alikelleci.easysourcing.messages.MetadataKeys.ID;
+
 @Slf4j
 public class EventGateway extends MessageGateway {
 
@@ -25,8 +28,8 @@ public class EventGateway extends MessageGateway {
     Event event = Event.builder()
         .payload(payload)
         .metadata(metadata.filter()
-            .add(MetadataKeys.ID, UUID.randomUUID().toString())
-            .add(MetadataKeys.CORRELATION_ID, UUID.randomUUID().toString()))
+            .add(ID, UUID.randomUUID().toString())
+            .add(CORRELATION_ID, UUID.randomUUID().toString()))
         .build();
 
     return send(event);

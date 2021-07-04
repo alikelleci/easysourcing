@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static io.github.alikelleci.easysourcing.messages.MetadataKeys.ID;
+
 @Slf4j
 public class CommandHandler implements Handler<List<Event>> {
 
@@ -107,7 +109,7 @@ public class CommandHandler implements Handler<List<Event>> {
         .map(payload -> Event.builder()
             .payload(payload)
             .metadata(command.getMetadata()
-                .add(MetadataKeys.ID, UUID.randomUUID().toString()))
+                .add(ID, UUID.randomUUID().toString()))
             .build())
         .collect(Collectors.toList());
 
