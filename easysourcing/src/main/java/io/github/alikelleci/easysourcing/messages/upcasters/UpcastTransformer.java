@@ -38,7 +38,7 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
     handlers.stream()
         .sorted(Comparator.comparingInt(handler -> handler.getMethod().getAnnotation(Upcast.class).revision()))
         .forEach(handler -> {
-          int sourceRevision = Optional.ofNullable( jsonNode.get("metadata"))
+          int sourceRevision = Optional.ofNullable(jsonNode.get("metadata"))
               .map(metadata -> metadata.get("entries"))
               .map(entries -> entries.get("$revision"))
               .map(JsonNode::intValue)
@@ -48,7 +48,7 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
 
           if (sourceRevision == targetRevision) {
             ObjectNode upcastedPayload = (ObjectNode) handler.invoke(jsonNode, context);
-            ((ObjectNode) jsonNode.get("payload")).setAll(upcastedPayload);
+            ((ObjectNode) jsonNode).set("payload", upcastedPayload);
             ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", sourceRevision + 1);
           }
         });
