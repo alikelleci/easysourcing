@@ -16,6 +16,8 @@ import io.github.alikelleci.easysourcing.messages.exceptions.annotations.HandleE
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
 import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
+import io.github.alikelleci.easysourcing.support.upcaster.UpcastHandler;
+import io.github.alikelleci.easysourcing.support.upcaster.annotations.Upcast;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -64,6 +66,8 @@ public class EasySourcingBuilder {
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
 
+  public static final MultiValuedMap<String, UpcastHandler> upcastHandlers = new ArrayListValuedHashMap<>();
+
 
   public EasySourcingBuilder(Properties streamsConfig) {
     this.streamsConfig = streamsConfig;
@@ -100,6 +104,7 @@ public class EasySourcingBuilder {
     List<Method> exceptionHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleException.class);
     List<Method> eventHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
     List<Method> snapshotHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
+    List<Method> upcastHandlerMethods = HandlerUtils.findMethodsWithAnnotation(handler.getClass(), Upcast.class);
 
     commandHandlerMethods
         .forEach(method -> addCommandHandler(handler, method));
@@ -115,6 +120,9 @@ public class EasySourcingBuilder {
 
     snapshotHandlerMethods
         .forEach(method -> addSnapshotHandler(handler, method));
+
+    upcastHandlerMethods
+        .forEach(method -> addUpcasthandlerHandler(handler, method));
 
     return this;
   }
@@ -197,6 +205,13 @@ public class EasySourcingBuilder {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
       snapshotHandlers.put(type, new SnapshotHandler(listener, method));
+    }
+  }
+
+  private void addUpcasthandlerHandler(Object listener, Method method) {
+    if (method.getParameterCount() == 1) {
+      Class<?> type = method.getAnnotation(Upcast.class).type();
+      upcastHandlers.put(type.getName(), new UpcastHandler(listener, method));
     }
   }
 
