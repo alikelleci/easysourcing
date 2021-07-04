@@ -6,7 +6,6 @@ import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingExc
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
 import io.github.alikelleci.easysourcing.messages.Handler;
-import io.github.alikelleci.easysourcing.messages.MetadataKeys;
 import io.github.alikelleci.easysourcing.messages.commands.exceptions.CommandExecutionException;
 import io.github.alikelleci.easysourcing.messages.events.Event;
 import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
