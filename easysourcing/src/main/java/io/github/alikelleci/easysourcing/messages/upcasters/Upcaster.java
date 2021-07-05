@@ -29,8 +29,6 @@ public class Upcaster implements Handler<JsonNode> {
     JsonNode jsonNode = (JsonNode) args[0];
     ProcessorContext context = (ProcessorContext) args[1];
 
-    log.debug("Upcasting: {} ({})");
-
     try {
       return doInvoke(jsonNode, context);
     } catch (Exception e) {
@@ -51,8 +49,15 @@ public class Upcaster implements Handler<JsonNode> {
       return jsonNode;
     }
 
+    log.debug("Upcasting revision: {}", sourceRevision);
+
     Object result = method.invoke(target, jsonNode.get("payload"));
-    ((ObjectNode) jsonNode).set("payload", (JsonNode) result);
+    if (result == null) {
+      ((ObjectNode) jsonNode).remove("payload");
+    } else {
+      ((ObjectNode) jsonNode).set("payload", (JsonNode) result);
+    }
+
     ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", sourceRevision + 1);
 
     return jsonNode;
