@@ -13,13 +13,13 @@ import java.util.Comparator;
 import java.util.Optional;
 
 
-public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
+public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> {
 
   private ProcessorContext context;
 
   private final MultiValuedMap<String, Upcaster> upcasters;
 
-  public UpcastTransformer(MultiValuedMap<String, Upcaster> upcasters) {
+  public PayloadTransformer(MultiValuedMap<String, Upcaster> upcasters) {
     this.upcasters = upcasters;
   }
 
