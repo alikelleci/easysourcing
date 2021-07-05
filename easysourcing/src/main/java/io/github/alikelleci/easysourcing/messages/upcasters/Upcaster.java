@@ -47,7 +47,7 @@ public class Upcaster implements Handler<JsonNode> {
       return jsonNode;
     }
 
-    log.debug("Upcasting {} revision: {}", annotation.type(), revision);
+    log.debug("Upcasting type: {} (revision: {})", annotation.type(), revision);
 
     Object result = method.invoke(target, jsonNode.get("payload"));
     if (result == null) {
