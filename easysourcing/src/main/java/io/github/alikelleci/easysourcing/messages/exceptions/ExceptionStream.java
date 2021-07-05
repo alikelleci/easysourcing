@@ -1,7 +1,11 @@
 package io.github.alikelleci.easysourcing.messages.exceptions;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.commands.Command;
+import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
+import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -16,16 +20,23 @@ import java.util.Set;
 public class ExceptionStream {
 
   private final Set<String> topics;
+  private final MultiValuedMap<String, Upcaster> upcasters;
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers;
 
-  public ExceptionStream(Set<String> topics, MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
+  public ExceptionStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
     this.topics = topics;
+    this.upcasters = upcasters;
     this.exceptionHandlers = exceptionHandlers;
   }
 
   public void buildStream(StreamsBuilder builder) {
     // --> Failed commands
-    KStream<String, Command> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
+    KStream<String, Command> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+        .filter((key, value) -> key != null)
+        .filter((key, value) -> value != null)
+        .transformValues(() -> new PayloadTransformer(upcasters))
+        .transformValues(() -> new MessageTransformer<>(Command.class))
+
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)

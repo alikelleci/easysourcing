@@ -1,11 +1,16 @@
 package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
+import io.github.alikelleci.easysourcing.messages.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.events.Event;
 import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
+import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
+import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -23,30 +28,27 @@ import java.util.Set;
 public class EventSourcingStream {
 
   private final Set<String> topics;
+  private final MultiValuedMap<String, Upcaster> upcasters;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
   private final boolean inMemoryStateStore;
   private final OperationMode operationMode;
 
-  public EventSourcingStream(Set<String> topics, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore, OperationMode operationMode) {
+  public EventSourcingStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore, OperationMode operationMode) {
     this.topics = topics;
+    this.upcasters = upcasters;
     this.eventSourcingHandlers = eventSourcingHandlers;
     this.inMemoryStateStore = inMemoryStateStore;
     this.operationMode = operationMode;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
-    if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore(supplier.name());
-    }
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Snapshot.class))
-        .withLoggingEnabled(Collections.emptyMap());
-    builder.addStateStore(storeBuilder);
-
     // --> Events
-    KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
+    KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+        .filter((key, value) -> key != null)
+        .filter((key, value) -> value != null)
+        .transformValues(() -> new PayloadTransformer(upcasters))
+        .transformValues(() -> new MessageTransformer<>(Event.class))
+
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
@@ -55,7 +57,7 @@ public class EventSourcingStream {
 
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), supplier.name())
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
         .filter((key, snapshot) -> snapshot != null);
 
     // Snapshots Push

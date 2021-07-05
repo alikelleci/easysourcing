@@ -13,11 +13,13 @@ import io.github.alikelleci.easysourcing.messages.eventsourcing.annotations.Appl
 import io.github.alikelleci.easysourcing.messages.exceptions.ExceptionHandler;
 import io.github.alikelleci.easysourcing.messages.exceptions.ExceptionStream;
 import io.github.alikelleci.easysourcing.messages.exceptions.annotations.HandleException;
+import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
 import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
+import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,10 +37,14 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +66,7 @@ public class EasySourcingBuilder {
   private OperationMode operationMode = OperationMode.NORMAL;
 
   //  Handlers
-  public  final MultiValuedMap<String, Upcaster> upcasters = new ArrayListValuedHashMap<>();
+  public final MultiValuedMap<String, Upcaster> upcasters = new ArrayListValuedHashMap<>();
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers = new HashMap<>();
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers = new ArrayListValuedHashMap<>();
@@ -133,13 +139,27 @@ public class EasySourcingBuilder {
   }
 
   private Topology buildTopology() {
+    // Snapshot store
+    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
+    if (inMemoryStateStore) {
+      supplier = Stores.inMemoryKeyValueStore(supplier.name());
+    }
+    StoreBuilder storeBuilder = Stores
+        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Snapshot.class))
+        .withLoggingEnabled(Collections.emptyMap());
+
+
     StreamsBuilder builder = new StreamsBuilder();
+
+    if (CollectionUtils.isNotEmpty(getCommandsTopics()) || CollectionUtils.isNotEmpty(getEventSourcedTopics())) {
+      builder.addStateStore(storeBuilder);
+    }
 
     if (operationMode != OperationMode.NORMAL) {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, eventSourcingHandlers, inMemoryStateStore, operationMode);
+        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers, inMemoryStateStore, operationMode);
         eventSourcingStream.buildStream(builder);
       }
       return builder.build();
@@ -147,13 +167,13 @@ public class EasySourcingBuilder {
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers, inMemoryStateStore);
+      CommandStream commandStream = new CommandStream(commandsTopics, upcasters, commandHandlers, eventSourcingHandlers, inMemoryStateStore);
       commandStream.buildStream(builder);
     }
 
     Set<String> exceptionsTopics = getExceptionsTopics();
     if (CollectionUtils.isNotEmpty(exceptionsTopics)) {
-      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics, exceptionHandlers);
+      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics, upcasters, exceptionHandlers);
       exceptionStream.buildStream(builder);
     }
 
@@ -165,7 +185,7 @@ public class EasySourcingBuilder {
 
     Set<String> snapshotTopics = getSnapshotTopics();
     if (CollectionUtils.isNotEmpty(snapshotTopics)) {
-      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
+      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, upcasters, snapshotHandlers);
       snapshotStream.buildStream(builder);
     }
 
