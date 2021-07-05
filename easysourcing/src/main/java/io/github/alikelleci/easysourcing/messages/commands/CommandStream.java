@@ -71,7 +71,6 @@ public class CommandStream {
         .filter((key, event) -> event.getTopicInfo() != null)
         .filter((key, event) -> event.getAggregateId() != null);
 
-
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
         // Invoke handlers
@@ -81,7 +80,6 @@ public class CommandStream {
         .filter((key, snapshot) -> snapshot.getPayload() != null)
         .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
         .filter((key, snapshot) -> snapshot.getAggregateId() != null);
-
 
     // Events --> Push
     events
