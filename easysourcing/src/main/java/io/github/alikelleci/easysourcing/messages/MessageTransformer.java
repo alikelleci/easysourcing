@@ -8,13 +8,13 @@ import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 @Slf4j
-public class MessageTransformer implements ValueTransformer<JsonNode, Message<?>> {
+public class MessageTransformer<T> implements ValueTransformer<JsonNode, T> {
 
   private ProcessorContext context;
 
-  private final Class<? extends Message<?>> type;
+  private final Class<T> type;
 
-  public MessageTransformer(Class<? extends Message<?>> type) {
+  public MessageTransformer(Class<T> type) {
     this.type = type;
   }
 
@@ -24,11 +24,11 @@ public class MessageTransformer implements ValueTransformer<JsonNode, Message<?>
   }
 
   @Override
-  public Message<?> transform(JsonNode jsonNode) {
+  public T transform(JsonNode jsonNode) {
     try {
-      Message<?> message = JacksonUtils.enhancedObjectMapper().convertValue(jsonNode, type);
-      if (message != null) {
-        message.getMetadata().injectContext(context);
+      T message = JacksonUtils.enhancedObjectMapper().convertValue(jsonNode, type);
+      if (message instanceof Message) {
+        ((Message<?>) message).getMetadata().injectContext(context);
       }
       return message;
     } catch (Exception e) {
