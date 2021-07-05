@@ -30,7 +30,8 @@ public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> 
 
   @Override
   public JsonNode transform(JsonNode jsonNode) {
-    String messageType = Optional.ofNullable(jsonNode.get("@class"))
+    String messageType = Optional.ofNullable(jsonNode)
+        .map(message -> message.get("@class"))
         .map(JsonNode::textValue)
         .orElse(null);
 
@@ -38,7 +39,8 @@ public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> 
       return null;
     }
 
-    String payloadType = Optional.ofNullable(jsonNode.get("payload"))
+    String payloadType = Optional.ofNullable(jsonNode)
+        .map(message -> message.get("payload"))
         .map(payload -> payload.get("@class"))
         .map(JsonNode::textValue)
         .orElse(null);
