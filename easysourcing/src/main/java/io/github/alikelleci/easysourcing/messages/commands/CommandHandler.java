@@ -114,7 +114,7 @@ public class CommandHandler implements Handler<List<Event>> {
                 .add(ID, UUID.randomUUID().toString())
                 .add(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(payload.getClass(), Revision.class))
                     .map(Revision::value)
-                    .orElse(0)))
+                    .orElse(1)))
             .build())
         .collect(Collectors.toList());
 

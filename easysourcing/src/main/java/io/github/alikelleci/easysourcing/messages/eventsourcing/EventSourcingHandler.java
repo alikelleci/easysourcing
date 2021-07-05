@@ -88,7 +88,7 @@ public class EventSourcingHandler implements Handler<Snapshot> {
             .add(ID, UUID.randomUUID().toString())
             .add(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(result.getClass(), Revision.class))
                 .map(Revision::value)
-                .orElse(0)))
+                .orElse(1)))
         .build();
 
     if (snapshot.getPayload() == null) {

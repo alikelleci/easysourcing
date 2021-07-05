@@ -39,7 +39,7 @@ public class Upcaster implements Handler<JsonNode> {
         .map(metadata -> metadata.get("entries"))
         .map(entries -> entries.get("$revision"))
         .map(JsonNode::intValue)
-        .orElse(0);
+        .orElse(1);
 
     Upcast annotation = method.getAnnotation(Upcast.class);
 

@@ -34,7 +34,7 @@ public class CommandGateway extends MessageGateway {
             .add(ID, UUID.randomUUID().toString())
             .add(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(payload.getClass(), Revision.class))
                 .map(Revision::value)
-                .orElse(0))
+                .orElse(1))
             .add(CORRELATION_ID, UUID.randomUUID().toString()))
         .build();
 
