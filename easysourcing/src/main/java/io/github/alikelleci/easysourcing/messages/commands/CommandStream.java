@@ -49,10 +49,10 @@ public class CommandStream {
         .transformValues(() -> new MessageTransformer<>(Command.class))
 
         // Filter
-        .filter((key, event) -> event != null)
-        .filter((key, event) -> event.getPayload() != null)
-        .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null)
+        .filter((key, command) -> command != null)
+        .filter((key, command) -> command.getPayload() != null)
+        .filter((key, command) -> command.getTopicInfo() != null)
+        .filter((key, command) -> command.getAggregateId() != null)
 
         // Invoke handlers
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store");

@@ -40,10 +40,10 @@ public class SnapshotStream {
         .transformValues(() -> new MessageTransformer<>(Snapshot.class))
 
         // Filter
-        .filter((key, event) -> event != null)
-        .filter((key, event) -> event.getPayload() != null)
-        .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null)
+        .filter((key, snapshot) -> snapshot != null)
+        .filter((key, snapshot) -> snapshot.getPayload() != null)
+        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
+        .filter((key, snapshot) -> snapshot.getAggregateId() != null)
 
         // Invoke handlers
         .transformValues(() -> new SnapshotTransformer(snapshotHandlers));
