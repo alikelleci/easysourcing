@@ -7,7 +7,6 @@ import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,16 +26,15 @@ public class Upcaster implements Handler<JsonNode> {
   @Override
   public JsonNode invoke(Object... args) {
     JsonNode jsonNode = (JsonNode) args[0];
-    ProcessorContext context = (ProcessorContext) args[1];
 
     try {
-      return doInvoke(jsonNode, context);
+      return doInvoke(jsonNode);
     } catch (Exception e) {
       throw new UpcastException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private JsonNode doInvoke(JsonNode jsonNode, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+  private JsonNode doInvoke(JsonNode jsonNode) throws InvocationTargetException, IllegalAccessException {
     int sourceRevision = Optional.ofNullable(jsonNode.get("metadata"))
         .map(metadata -> metadata.get("entries"))
         .map(entries -> entries.get("$revision"))

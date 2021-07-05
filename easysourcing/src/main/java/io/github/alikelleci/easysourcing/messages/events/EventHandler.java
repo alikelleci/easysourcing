@@ -31,23 +31,22 @@ public class EventHandler implements Handler<Void> {
   @Override
   public Void invoke(Object... args) {
     Event event = (Event) args[0];
-    ProcessorContext context = (ProcessorContext) args[1];
 
     log.debug("Handling event: {} ({})", event.getPayloadType(), event.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(event));
     } catch (Exception e) {
       throw new EventProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Event event, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Event event) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, event.getPayload());
     } else {
-      result = method.invoke(target, event.getPayload(), event.getMetadata().injectContext(context));
+      result = method.invoke(target, event.getPayload(), event.getMetadata());
     }
     return null;
   }
