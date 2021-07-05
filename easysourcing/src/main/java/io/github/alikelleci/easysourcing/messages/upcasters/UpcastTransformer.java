@@ -47,8 +47,8 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
           int targetRevision = handler.getMethod().getAnnotation(Upcast.class).revision();
 
           if (sourceRevision == targetRevision) {
-            ObjectNode upcastedPayload = (ObjectNode) handler.invoke(jsonNode, context);
-            ((ObjectNode) jsonNode).set("payload", upcastedPayload);
+            ObjectNode payload = (ObjectNode) handler.invoke(jsonNode, context);
+            ((ObjectNode) jsonNode).set("payload", payload);
             ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", sourceRevision + 1);
           }
         });
