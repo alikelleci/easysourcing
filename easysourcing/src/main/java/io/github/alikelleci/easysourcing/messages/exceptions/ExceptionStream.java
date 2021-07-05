@@ -30,21 +30,22 @@ public class ExceptionStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Failed commands
-    KStream<String, Command> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Failed commands --> Void
+    builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
+
+        // Upcast & convert
         .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new MessageTransformer<>(Command.class))
 
-        .filter((key, command) -> key != null)
-        .filter((key, command) -> command != null)
-        .filter((key, command) -> command.getPayload() != null)
-        .filter((key, command) -> command.getTopicInfo() != null)
-        .filter((key, command) -> command.getAggregateId() != null);
+        // Filter
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null)
 
-    // Failed commands --> Void
-    failedCommands
+        // Invoke handlers
         .transformValues(() -> new ExceptionTransformer(exceptionHandlers));
   }
 

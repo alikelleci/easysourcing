@@ -159,7 +159,7 @@ public class EasySourcingBuilder {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers, inMemoryStateStore, operationMode);
+        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers, operationMode);
         eventSourcingStream.buildStream(builder);
       }
       return builder.build();
@@ -167,7 +167,7 @@ public class EasySourcingBuilder {
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, upcasters, commandHandlers, eventSourcingHandlers, inMemoryStateStore);
+      CommandStream commandStream = new CommandStream(commandsTopics, upcasters, commandHandlers, eventSourcingHandlers);
       commandStream.buildStream(builder);
     }
 

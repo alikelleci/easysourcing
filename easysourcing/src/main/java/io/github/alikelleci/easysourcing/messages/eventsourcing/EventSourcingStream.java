@@ -16,11 +16,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,35 +26,33 @@ public class EventSourcingStream {
   private final Set<String> topics;
   private final MultiValuedMap<String, Upcaster> upcasters;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
-  private final boolean inMemoryStateStore;
   private final OperationMode operationMode;
 
-  public EventSourcingStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore, OperationMode operationMode) {
+  public EventSourcingStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, OperationMode operationMode) {
     this.topics = topics;
     this.upcasters = upcasters;
     this.eventSourcingHandlers = eventSourcingHandlers;
-    this.inMemoryStateStore = inMemoryStateStore;
     this.operationMode = operationMode;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Events
-    KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Events --> Snapshots
+    KStream<String, Snapshot> snapshots = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
+
+        // Upcast & convert
         .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new MessageTransformer<>(Event.class))
 
-        .filter((key, event) -> key != null)
+        // Filter
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
         .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null);
+        .filter((key, event) -> event.getAggregateId() != null)
 
-    // Events --> Snapshots
-    KStream<String, Snapshot> snapshots = events
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
-        .filter((key, snapshot) -> snapshot != null);
+        // Invoke handlers
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store");
 
     // Snapshots Push
     if (operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {

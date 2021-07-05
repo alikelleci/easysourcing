@@ -19,11 +19,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,35 +30,33 @@ public class CommandStream {
   private final MultiValuedMap<String, Upcaster> upcasters;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
-  private final boolean inMemoryStateStore;
 
-  public CommandStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore) {
+  public CommandStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.topics = topics;
     this.upcasters = upcasters;
     this.commandHandlers = commandHandlers;
     this.eventSourcingHandlers = eventSourcingHandlers;
-    this.inMemoryStateStore = inMemoryStateStore;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Commands
-    KStream<String, Command> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Commands --> Command results
+    KStream<String, CommandResult> commandResults = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
+
+        // Upcast & convert
         .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new MessageTransformer<>(Command.class))
 
-        .filter((key, command) -> key != null)
-        .filter((key, command) -> command != null)
-        .filter((key, command) -> command.getPayload() != null)
-        .filter((key, command) -> command.getTopicInfo() != null)
-        .filter((key, command) -> command.getAggregateId() != null);
+        // Filter
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null)
 
-    // Commands --> Command results
-    KStream<String, CommandResult> commandResults = commands
-        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store")
-        .filter((key, result) -> result != null)
-        .filter((key, result) -> result.getCommand() != null);
+        // Invoke handlers
+        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store");
+
 
     // Command results --> Successful commands
     KStream<String, Success> successfulCommands = commandResults
@@ -79,10 +73,23 @@ public class CommandStream {
         .flatMapValues(Success::getEvents)
         .filter((key, event) -> event != null);
 
+
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
-        .filter((key, snapshot) -> snapshot != null);
+        // Upcast & convert
+        .transformValues(() -> new MessageTransformer<>(JsonNode.class))
+        .transformValues(() -> new PayloadTransformer(upcasters))
+        .transformValues(() -> new MessageTransformer<>(Event.class))
+
+        // Filter
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null)
+
+        // Invoke handlers
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store");
+
 
     // Events --> Push
     events

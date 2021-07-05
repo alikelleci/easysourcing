@@ -11,7 +11,6 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
 
 import java.util.Set;
 
@@ -30,20 +29,22 @@ public class EventStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Events
-    KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Events --> Void
+    builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
+
+        // Upcast & convert
         .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new MessageTransformer<>(Event.class))
 
+        // Filter
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
         .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null);
+        .filter((key, event) -> event.getAggregateId() != null)
 
-    // Events --> Void
-    events
+        // Invoke handlers
         .transformValues(() -> new EventTransformer(eventHandlers));
   }
 

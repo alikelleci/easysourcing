@@ -30,21 +30,22 @@ public class SnapshotStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Snapshots
-    KStream<String, Snapshot> snapshots = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Snapshots --> Void
+    builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
+
+        // Upcast & convert
         .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new MessageTransformer<>(Snapshot.class))
 
-        .filter((key, snapshot) -> key != null)
-        .filter((key, snapshot) -> snapshot != null)
-        .filter((key, snapshot) -> snapshot.getPayload() != null)
-        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
-        .filter((key, snapshot) -> snapshot.getAggregateId() != null);
+        // Filter
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null)
 
-    // Snapshots --> Void
-    snapshots
+        // Invoke handlers
         .transformValues(() -> new SnapshotTransformer(snapshotHandlers));
   }
 

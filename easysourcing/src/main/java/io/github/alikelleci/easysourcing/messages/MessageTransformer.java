@@ -1,6 +1,6 @@
 package io.github.alikelleci.easysourcing.messages;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -8,10 +8,11 @@ import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 @Slf4j
-public class MessageTransformer<T> implements ValueTransformer<JsonNode, T> {
+public class MessageTransformer<S, T> implements ValueTransformer<S, T> {
 
   private ProcessorContext context;
 
+  private final ObjectMapper objectMapper = JacksonUtils.enhancedObjectMapper();
   private final Class<T> type;
 
   public MessageTransformer(Class<T> type) {
@@ -24,15 +25,15 @@ public class MessageTransformer<T> implements ValueTransformer<JsonNode, T> {
   }
 
   @Override
-  public T transform(JsonNode jsonNode) {
+  public T transform(S s) {
     try {
-      T message = JacksonUtils.enhancedObjectMapper().convertValue(jsonNode, type);
-      if (message instanceof Message) {
-        ((Message<?>) message).getMetadata().injectContext(context);
+      T result = objectMapper.convertValue(s, type);
+      if (result instanceof Message) {
+        ((Message<?>) result).getMetadata().injectContext(context);
       }
-      return message;
+      return result;
     } catch (Exception e) {
-      log.error("Error deserializing JSON", ExceptionUtils.getRootCause(e));
+      log.error("Error transforming message", ExceptionUtils.getRootCause(e));
       return null;
     }
   }
