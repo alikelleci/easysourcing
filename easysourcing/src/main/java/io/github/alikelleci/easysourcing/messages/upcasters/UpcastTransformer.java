@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.upcasters;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -10,7 +9,6 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Optional;
 
 
 public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
@@ -37,21 +35,8 @@ public class UpcastTransformer implements ValueTransformer<JsonNode, JsonNode> {
 
     handlers.stream()
         .sorted(Comparator.comparingInt(handler -> handler.getMethod().getAnnotation(Upcast.class).revision()))
-        .forEach(handler -> {
-          int sourceRevision = Optional.ofNullable(jsonNode.get("metadata"))
-              .map(metadata -> metadata.get("entries"))
-              .map(entries -> entries.get("$revision"))
-              .map(JsonNode::intValue)
-              .orElse(0);
-
-          int targetRevision = handler.getMethod().getAnnotation(Upcast.class).revision();
-
-          if (sourceRevision == targetRevision) {
-            JsonNode payload = handler.invoke(jsonNode, context);
-            ((ObjectNode) jsonNode).set("payload", payload);
-            ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", sourceRevision + 1);
-          }
-        });
+        .forEach(handler ->
+            handler.invoke(jsonNode, context));
 
     return jsonNode;
   }

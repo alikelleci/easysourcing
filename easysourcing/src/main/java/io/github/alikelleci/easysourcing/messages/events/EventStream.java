@@ -35,6 +35,8 @@ public class EventStream {
         .filter((key, value) -> key != null && value != null)
         .transformValues(() -> new UpcastTransformer(upcasters))
         .mapValues(value -> JacksonUtils.enhancedObjectMapper().convertValue(value, Event.class))
+
+
         .filter((key, event) -> event.getPayload() != null)
         .filter((key, event) -> event.getTopicInfo() != null)
         .filter((key, event) -> event.getAggregateId() != null);

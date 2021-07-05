@@ -1,13 +1,17 @@
 package io.github.alikelleci.easysourcing.messages.upcasters;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.alikelleci.easysourcing.messages.Handler;
+import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 @Slf4j
 public class Upcaster implements Handler<JsonNode> {
@@ -28,10 +32,30 @@ public class Upcaster implements Handler<JsonNode> {
     log.debug("Upcasting: {} ({})");
 
     try {
-      return (JsonNode) method.invoke(target, jsonNode.get("payload"));
+      return doInvoke(jsonNode, context);
     } catch (Exception e) {
       throw new UpcastException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
+  }
+
+  private JsonNode doInvoke(JsonNode jsonNode, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+    int sourceRevision = Optional.ofNullable(jsonNode.get("metadata"))
+        .map(metadata -> metadata.get("entries"))
+        .map(entries -> entries.get("$revision"))
+        .map(JsonNode::intValue)
+        .orElse(0);
+
+    int targetRevision = method.getAnnotation(Upcast.class).revision();
+
+    if (sourceRevision != targetRevision) {
+      return jsonNode;
+    }
+
+    Object result = method.invoke(target, jsonNode.get("payload"));
+    ((ObjectNode) jsonNode).set("payload", (JsonNode) result);
+    ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", sourceRevision + 1);
+
+    return jsonNode;
   }
 
   @Override
