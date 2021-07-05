@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.UpcastTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
@@ -35,7 +36,7 @@ public class EventStream {
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
         .transformValues(() -> new UpcastTransformer(upcasters))
-        .mapValues(value -> JacksonUtils.enhancedObjectMapper().convertValue(value, Event.class))
+        .transformValues(() -> new MessageTransformer<>(Event.class))
 
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
