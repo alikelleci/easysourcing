@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.messages;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.Message;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -28,7 +27,9 @@ public class MessageTransformer implements ValueTransformer<JsonNode, Message<?>
   public Message<?> transform(JsonNode jsonNode) {
     try {
       Message<?> message = JacksonUtils.enhancedObjectMapper().convertValue(jsonNode, type);
-      message.getMetadata().injectContext(context);
+      if (message != null) {
+        message.getMetadata().injectContext(context);
+      }
       return message;
     } catch (Exception e) {
       log.error("Error deserializing JSON", ExceptionUtils.getRootCause(e));
