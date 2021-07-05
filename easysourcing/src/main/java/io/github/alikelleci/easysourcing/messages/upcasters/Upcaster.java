@@ -35,19 +35,19 @@ public class Upcaster implements Handler<JsonNode> {
   }
 
   private JsonNode doInvoke(JsonNode jsonNode) throws InvocationTargetException, IllegalAccessException {
-    int sourceRevision = Optional.ofNullable(jsonNode.get("metadata"))
+    int revision = Optional.ofNullable(jsonNode.get("metadata"))
         .map(metadata -> metadata.get("entries"))
         .map(entries -> entries.get("$revision"))
         .map(JsonNode::intValue)
         .orElse(0);
 
-    int targetRevision = method.getAnnotation(Upcast.class).revision();
+    Upcast annotation = method.getAnnotation(Upcast.class);
 
-    if (sourceRevision != targetRevision) {
+    if (revision != annotation.revision()) {
       return jsonNode;
     }
 
-    log.debug("Upcasting revision: {}", sourceRevision);
+    log.debug("Upcasting {} revision: {}", annotation.type(), revision);
 
     Object result = method.invoke(target, jsonNode.get("payload"));
     if (result == null) {
@@ -56,7 +56,7 @@ public class Upcaster implements Handler<JsonNode> {
       ((ObjectNode) jsonNode).set("payload", (JsonNode) result);
     }
 
-    ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", sourceRevision + 1);
+    ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", revision + 1);
 
     return jsonNode;
   }
