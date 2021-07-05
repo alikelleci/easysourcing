@@ -28,26 +28,14 @@ public class CommandStream {
   private final Set<String> topics;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
-  private final boolean inMemoryStateStore;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.eventSourcingHandlers = eventSourcingHandlers;
-    this.inMemoryStateStore = inMemoryStateStore;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
-    if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore(supplier.name());
-    }
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Snapshot.class))
-        .withLoggingEnabled(Collections.emptyMap());
-    builder.addStateStore(storeBuilder);
-
     // --> Commands
     KStream<String, Command> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         .filter((key, command) -> key != null)
@@ -58,7 +46,7 @@ public class CommandStream {
 
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
-        .transformValues(() -> new CommandTransformer(commandHandlers), supplier.name())
+        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
@@ -79,7 +67,7 @@ public class CommandStream {
 
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), supplier.name())
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
         .filter((key, snapshot) -> snapshot != null);
 
     // Events --> Push

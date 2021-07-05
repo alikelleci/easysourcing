@@ -11,11 +11,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,27 +20,15 @@ public class EventSourcingStream {
 
   private final Set<String> topics;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
-  private final boolean inMemoryStateStore;
   private final OperationMode operationMode;
 
-  public EventSourcingStream(Set<String> topics, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, boolean inMemoryStateStore, OperationMode operationMode) {
+  public EventSourcingStream(Set<String> topics, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, OperationMode operationMode) {
     this.topics = topics;
     this.eventSourcingHandlers = eventSourcingHandlers;
-    this.inMemoryStateStore = inMemoryStateStore;
     this.operationMode = operationMode;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
-    if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore(supplier.name());
-    }
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Snapshot.class))
-        .withLoggingEnabled(Collections.emptyMap());
-    builder.addStateStore(storeBuilder);
-
     // --> Events
     KStream<String, Event> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
         .filter((key, event) -> key != null)
@@ -55,7 +39,7 @@ public class EventSourcingStream {
 
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), supplier.name())
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
         .filter((key, snapshot) -> snapshot != null);
 
     // Snapshots Push
