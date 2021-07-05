@@ -31,23 +31,22 @@ public class SnapshotHandler implements Handler<Void> {
   @Override
   public Void invoke(Object... args) {
     Snapshot snapshot = (Snapshot) args[0];
-    ProcessorContext context = (ProcessorContext) args[1];
 
     log.debug("Handling snapshot: {} ({})", snapshot.getPayloadType(), snapshot.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot));
     } catch (Exception e) {
       throw new SnapshotProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Snapshot snapshot, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Snapshot snapshot) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, snapshot.getPayload());
     } else {
-      result = method.invoke(target, snapshot.getPayload(), snapshot.getMetadata().injectContext(context));
+      result = method.invoke(target, snapshot.getPayload(), snapshot.getMetadata());
     }
     return null;
   }

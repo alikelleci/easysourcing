@@ -59,24 +59,23 @@ public class CommandHandler implements Handler<List<Event>> {
   public List<Event> invoke(Object... args) {
     Snapshot snapshot = (Snapshot) args[0];
     Command command = (Command) args[1];
-    ProcessorContext context = (ProcessorContext) args[2];
 
     log.debug("Handling command: {} ({})", command.getPayloadType(), command.getAggregateId());
 
     try {
       validate(command);
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, command, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, command));
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Event> doInvoke(Snapshot snapshot, Command command, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+  private List<Event> doInvoke(Snapshot snapshot, Command command) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, command.getPayload());
     } else {
-      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, command.getPayload(), command.getMetadata().injectContext(context));
+      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, command.getPayload(), command.getMetadata());
     }
     return createEvents(command, result);
   }

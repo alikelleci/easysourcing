@@ -46,23 +46,22 @@ public class EventSourcingHandler implements Handler<Snapshot> {
   public Snapshot invoke(Object... args) {
     Snapshot snapshot = (Snapshot) args[0];
     Event event = (Event) args[1];
-    ProcessorContext context = (ProcessorContext) args[2];
 
     log.debug("Applying event: {} ({})", event.getPayloadType(), event.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, event, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, event));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Snapshot doInvoke(Snapshot snapshot, Event event, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+  private Snapshot doInvoke(Snapshot snapshot, Event event) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, event.getPayload());
     } else {
-      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, event.getPayload(), event.getMetadata().injectContext(context));
+      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, event.getPayload(), event.getMetadata());
     }
     return createSnapshot(event, result);
   }

@@ -32,23 +32,22 @@ public class ExceptionHandler implements Handler<Void> {
   @Override
   public Void invoke(Object... args) {
     Command command = (Command) args[0];
-    ProcessorContext context = (ProcessorContext) args[1];
 
     log.debug("Handling exception: {} ({})", command.getPayloadType(), command.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(command, context));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(command));
     } catch (Exception e) {
       throw new ExceptionProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Command command, ProcessorContext context) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Command command) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, command.getPayload());
     } else {
-      result = method.invoke(target, command.getPayload(), command.getMetadata().injectContext(context));
+      result = method.invoke(target, command.getPayload(), command.getMetadata());
     }
     return null;
   }
