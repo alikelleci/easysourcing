@@ -38,6 +38,7 @@ public class EventSourcingStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Events --> Snapshots
     KStream<String, Snapshot> snapshots = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+        // Filter
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
 
@@ -52,7 +53,13 @@ public class EventSourcingStream {
         .filter((key, event) -> event.getAggregateId() != null)
 
         // Invoke handlers
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store");
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
+
+        // Filter
+        .filter((key, snapshot) -> snapshot != null)
+        .filter((key, snapshot) -> snapshot.getPayload() != null)
+        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
+        .filter((key, snapshot) -> snapshot.getAggregateId() != null);
 
     // Snapshots Push
     if (operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {

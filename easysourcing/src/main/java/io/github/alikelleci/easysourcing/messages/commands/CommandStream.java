@@ -1,15 +1,12 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messages.events.Event;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
-import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
@@ -40,23 +37,20 @@ public class CommandStream {
 
   public void buildStream(StreamsBuilder builder) {
     // --> Commands --> Command results
-    KStream<String, CommandResult> commandResults = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        .filter((key, value) -> key != null)
-        .filter((key, value) -> value != null)
-
-        // Upcast & convert
-        .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new MessageTransformer<>(Command.class))
-
+    KStream<String, CommandResult> commandResults = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         // Filter
+        .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)
         .filter((key, command) -> command.getTopicInfo() != null)
         .filter((key, command) -> command.getAggregateId() != null)
 
         // Invoke handlers
-        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store");
+        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshot-store")
 
+        // Filter
+        .filter((key, result) -> result != null)
+        .filter((key, result) -> result.getCommand() != null);
 
     // Command results --> Successful commands
     KStream<String, Success> successfulCommands = commandResults
@@ -71,24 +65,22 @@ public class CommandStream {
     // Successful commands --> Events
     KStream<String, Event> events = successfulCommands
         .flatMapValues(Success::getEvents)
-        .filter((key, event) -> event != null);
-
-
-    // Events --> Snapshots
-    KStream<String, Snapshot> snapshots = events
-        // Upcast & convert
-        .transformValues(() -> new MessageTransformer<>(JsonNode.class))
-        .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new MessageTransformer<>(Event.class))
-
         // Filter
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
         .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null)
+        .filter((key, event) -> event.getAggregateId() != null);
 
+
+    // Events --> Snapshots
+    KStream<String, Snapshot> snapshots = events
         // Invoke handlers
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store");
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
+        // Filter
+        .filter((key, snapshot) -> snapshot != null)
+        .filter((key, snapshot) -> snapshot.getPayload() != null)
+        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
+        .filter((key, snapshot) -> snapshot.getAggregateId() != null);
 
 
     // Events --> Push

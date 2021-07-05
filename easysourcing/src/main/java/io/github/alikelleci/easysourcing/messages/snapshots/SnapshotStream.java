@@ -32,6 +32,7 @@ public class SnapshotStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Snapshots --> Void
     builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+        // Filter
         .filter((key, value) -> key != null)
         .filter((key, value) -> value != null)
 
