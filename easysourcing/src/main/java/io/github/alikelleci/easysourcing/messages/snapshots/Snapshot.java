@@ -20,7 +20,7 @@ public class Snapshot<T> implements Message<T> {
   @Override
   public Metadata getMetadata() {
     if (metadata == null) {
-      return new Metadata();
+      return Metadata.builder().build();
     }
     return metadata;
   }
