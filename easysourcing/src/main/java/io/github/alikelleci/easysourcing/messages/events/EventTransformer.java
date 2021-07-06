@@ -10,7 +10,6 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Optional;
 
 
 public class EventTransformer implements ValueTransformer<JsonNode, Void> {
