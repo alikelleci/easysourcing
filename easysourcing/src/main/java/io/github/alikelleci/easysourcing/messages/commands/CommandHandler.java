@@ -109,11 +109,12 @@ public class CommandHandler implements Handler<List<Event>> {
     List<Event> events = list.stream()
         .map(payload -> Event.builder()
             .payload(payload)
-            .metadata(command.getMetadata()
-                .add(ID, UUID.randomUUID().toString())
-                .add(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(payload.getClass(), Revision.class))
+            .metadata(command.getMetadata().toBuilder()
+                .entry(ID, UUID.randomUUID().toString())
+                .entry(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(payload.getClass(), Revision.class))
                     .map(Revision::value)
-                    .orElse(1)))
+                    .orElse(1))
+                .build())
             .build())
         .collect(Collectors.toList());
 
