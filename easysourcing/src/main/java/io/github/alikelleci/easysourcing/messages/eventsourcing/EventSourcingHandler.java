@@ -1,33 +1,23 @@
 package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
-import io.github.alikelleci.easysourcing.common.annotations.Revision;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
-import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
-import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
-import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
 import io.github.alikelleci.easysourcing.messages.Handler;
-import io.github.alikelleci.easysourcing.messages.events.Event;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.exceptions.AggregateInvocationException;
-import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Optional;
-import java.util.UUID;
-
-import static io.github.alikelleci.easysourcing.messages.MetadataKeys.ID;
-import static io.github.alikelleci.easysourcing.messages.MetadataKeys.REVISION;
 
 @Slf4j
-public class EventSourcingHandler implements Handler<Snapshot> {
+public class EventSourcingHandler implements Handler<Object> {
 
   private final Object target;
   private final Method method;
@@ -42,25 +32,26 @@ public class EventSourcingHandler implements Handler<Snapshot> {
   }
 
   @Override
-  public Snapshot invoke(Object... args) {
-    Snapshot snapshot = (Snapshot) args[0];
-    Event event = (Event) args[1];
+  public Object invoke(Object... args) {
+    Object event = args[0];
+    Object snapshot = args[1];
+    Metadata metadata = (Metadata) args[2];
 
-    log.debug("Applying event: {} ({})", event.getPayloadType(), event.getAggregateId());
+    log.debug("Applying event: {} ({})", event.getClass().getSimpleName(), CommonUtils.getAggregateId(event));
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, event));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, snapshot, metadata));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Snapshot doInvoke(Snapshot snapshot, Event event) throws InvocationTargetException, IllegalAccessException {
+  private Object doInvoke(Object event, Object snapshot, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
-      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, event.getPayload());
+      result = method.invoke(target, event, snapshot);
     } else {
-      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, event.getPayload(), event.getMetadata());
+      result = method.invoke(target, event, snapshot, metadata);
     }
     return createSnapshot(event, result);
   }
@@ -77,34 +68,16 @@ public class EventSourcingHandler implements Handler<Snapshot> {
 
   @Override
   public Class<?> getType() {
-    return method.getParameters()[1].getType();
+    return method.getParameters()[0].getType();
   }
 
-  private Snapshot createSnapshot(Event event, Object result) {
-    Snapshot snapshot = Snapshot.builder()
-        .payload(result)
-        .metadata(event.getMetadata().toBuilder()
-            .entry(ID, UUID.randomUUID().toString())
-            .entry(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(result.getClass(), Revision.class))
-                .map(Revision::value)
-                .orElse(1))
-            .build())
-        .build();
-
-    if (snapshot.getPayload() == null) {
-      throw new PayloadMissingException("You are trying to dispatch snapshot without a payload.");
-    }
-    if (snapshot.getTopicInfo() == null) {
-      throw new TopicInfoMissingException("You are trying to dispatch a snapshot without any topic information. Please annotate your aggregate with @TopicInfo.");
-    }
-    if (snapshot.getAggregateId() == null) {
-      throw new AggregateIdMissingException("You are trying to dispatch a snapshot without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
-    }
-    if (!StringUtils.equals(snapshot.getAggregateId(), event.getAggregateId())) {
-      throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + event.getAggregateId() + ", but was " + snapshot.getAggregateId());
+  private Object createSnapshot(Object event, Object result) {
+    CommonUtils.validatePayload(result);
+    if (!StringUtils.equals(CommonUtils.getAggregateId(result), CommonUtils.getAggregateId(event))) {
+      throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + CommonUtils.getAggregateId(event) + ", but was " + CommonUtils.getAggregateId(result));
     }
 
-    return snapshot;
+    return result;
   }
 
 }

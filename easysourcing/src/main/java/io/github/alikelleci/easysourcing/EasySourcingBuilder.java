@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
 import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
@@ -13,12 +14,12 @@ import io.github.alikelleci.easysourcing.messages.eventsourcing.annotations.Appl
 import io.github.alikelleci.easysourcing.messages.exceptions.ExceptionHandler;
 import io.github.alikelleci.easysourcing.messages.exceptions.ExceptionStream;
 import io.github.alikelleci.easysourcing.messages.exceptions.annotations.HandleException;
-import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
 import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
+import io.github.alikelleci.easysourcing.support.interceptors.BasicProducerInterceptor;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -43,6 +45,7 @@ import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,6 +84,11 @@ public class EasySourcingBuilder {
     this.streamsConfig.putIfAbsent(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
     this.streamsConfig.putIfAbsent(StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG, StreamsConfig.OPTIMIZE);
     this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
+
+    ArrayList<String> interceptors = new ArrayList<>();
+    interceptors.add(BasicProducerInterceptor.class.getName());
+
+    this.streamsConfig.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), interceptors);
   }
 
   public EasySourcingBuilder setStateListener(KafkaStreams.StateListener stateListener) {
@@ -145,7 +153,7 @@ public class EasySourcingBuilder {
       supplier = Stores.inMemoryKeyValueStore(supplier.name());
     }
     StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(Snapshot.class))
+        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(JsonNode.class))
         .withLoggingEnabled(Collections.emptyMap());
 
 
@@ -201,14 +209,14 @@ public class EasySourcingBuilder {
 
   private void addCommandHandler(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
-      Class<?> type = method.getParameters()[1].getType();
+      Class<?> type = method.getParameters()[0].getType();
       commandHandlers.put(type, new CommandHandler(listener, method));
     }
   }
 
   private void addEventSourcingHandler(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
-      Class<?> type = method.getParameters()[1].getType();
+      Class<?> type = method.getParameters()[0].getType();
       eventSourcingHandlers.put(type, new EventSourcingHandler(listener, method));
     }
   }

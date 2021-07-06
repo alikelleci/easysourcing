@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.messages.exceptions;
 
-import io.github.alikelleci.easysourcing.messages.commands.Command;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;

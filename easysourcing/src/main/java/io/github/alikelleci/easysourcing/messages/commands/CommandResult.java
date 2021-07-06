@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
-import io.github.alikelleci.easysourcing.messages.events.Event;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -10,22 +9,21 @@ import java.util.List;
 
 public interface CommandResult {
 
-  Command getCommand();
+  Object getCommand();
 
   @Value
   @Builder
   class Success implements CommandResult {
-    private Command command;
+    private Object command;
     @Singular
-    private List<Event> events;
+    private List<Object> events;
   }
 
 
   @Value
   @Builder
   class Failure implements CommandResult {
-    private Command command;
+    private Object command;
     private String message;
   }
-
 }

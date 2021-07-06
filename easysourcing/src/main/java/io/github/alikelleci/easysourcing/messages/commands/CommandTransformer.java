@@ -1,9 +1,11 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
-import io.github.alikelleci.easysourcing.messages.events.Event;
-import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
+import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -11,16 +13,16 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import javax.validation.ValidationException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-
-import static io.github.alikelleci.easysourcing.messages.MetadataKeys.EXCEPTION;
+import java.util.Optional;
 
 @Slf4j
-public class CommandTransformer implements ValueTransformer<Command, CommandResult> {
+public class CommandTransformer implements ValueTransformer<JsonNode, CommandResult> {
 
   private ProcessorContext context;
-  private KeyValueStore<String, Snapshot> store;
+  private KeyValueStore<String, JsonNode> store;
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
 
@@ -35,27 +37,39 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
   }
 
   @Override
-  public CommandResult transform(Command command) {
-    CommandHandler commandHandler = commandHandlers.get(command.getPayload().getClass());
+  public CommandResult transform(JsonNode jsonCommand) {
+    Object command = JsonUtils.toJavaType(jsonCommand);
+    if (command == null) {
+      return null;
+    }
+
+    CommandHandler commandHandler = commandHandlers.get(command.getClass());
     if (commandHandler == null) {
       return null;
     }
 
-    Snapshot snapshot = store.get(command.getAggregateId());
-    List<Event> events;
+    String key = CommonUtils.getAggregateId(command);
+
+    Object snapshot = Optional.ofNullable(store.get(key))
+        .map(JsonUtils::toJavaType)
+        .orElse(null);
+
+    Metadata metadata = Metadata.builder().build().injectContext(context);
+
+    List<Object> events;
     try {
-      events = commandHandler.invoke(snapshot, command, context);
+      events = commandHandler.invoke(command, snapshot, metadata);
     } catch (Exception e) {
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         String message = ExceptionUtils.getRootCauseMessage(e);
 
         log.debug("Command rejected: {}", message);
+        context.headers()
+            .remove("$exception")
+            .add("$exception", message.getBytes(StandardCharsets.UTF_8));
+
         return Failure.builder()
-            .command(command.toBuilder()
-                .metadata(command.getMetadata().toBuilder()
-                    .entry(EXCEPTION, message)
-                    .build())
-                .build())
+            .command(command)
             .message(message)
             .build();
       }

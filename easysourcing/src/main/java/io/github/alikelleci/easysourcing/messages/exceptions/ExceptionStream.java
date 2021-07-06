@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing.messages.exceptions;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.commands.Command;
 import io.github.alikelleci.easysourcing.messages.upcasters.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;

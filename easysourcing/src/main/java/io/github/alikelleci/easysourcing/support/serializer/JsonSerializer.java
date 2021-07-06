@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing.support.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.common.errors.SerializationException;
@@ -26,7 +27,13 @@ public class JsonSerializer<T> implements Serializer<T> {
     }
 
     try {
-      return objectMapper.writeValueAsBytes(object);
+      ObjectNode root = objectMapper.createObjectNode();
+      root.put("@class", object.getClass().getName());
+
+      ObjectNode node = objectMapper.convertValue(object, ObjectNode.class);
+      root.setAll(node);
+
+      return objectMapper.writeValueAsBytes(root);
     } catch (Exception e) {
       throw new SerializationException("Error serializing JSON", ExceptionUtils.getRootCause(e));
     }

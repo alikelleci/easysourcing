@@ -1,13 +1,13 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
-import io.github.alikelleci.easysourcing.messages.events.Event;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
-import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -33,12 +33,9 @@ public class CommandStream {
 
   public void buildStream(StreamsBuilder builder) {
     // --> Commands
-    KStream<String, Command> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
+    KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
-        .filter((key, command) -> command != null)
-        .filter((key, command) -> command.getPayload() != null)
-        .filter((key, command) -> command.getTopicInfo() != null)
-        .filter((key, command) -> command.getAggregateId() != null);
+        .filter((key, command) -> command != null);
 
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
@@ -46,47 +43,45 @@ public class CommandStream {
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
-    // Command results --> Successful commands
-    KStream<String, Success> successfulCommands = commandResults
+    // Successful results --> Events
+    KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Success)
-        .mapValues((key, result) -> (Success) result);
-
-    // Command results --> Failed commands
-    KStream<String, Failure> failedCommands = commandResults
-        .filter((key, result) -> result instanceof Failure)
-        .mapValues((key, result) -> (Failure) result);
-
-    // Successful commands --> Events
-    KStream<String, Event> events = successfulCommands
+        .mapValues((key, result) -> (Success) result)
         .flatMapValues(Success::getEvents)
         .filter((key, event) -> event != null)
-        .filter((key, event) -> event.getPayload() != null)
-        .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null);
+        .filter((key, event) -> CommonUtils.getTopicInfo(event) != null)
+        .filter((key, event) -> CommonUtils.getAggregateId(event) != null);
+
+    // Failed results --> Commands
+    KStream<String, Object> failedCommands = commandResults
+        .filter((key, result) -> result instanceof Failure)
+        .mapValues((key, result) -> (Failure) result)
+        .mapValues(CommandResult::getCommand)
+        .filter((key, command) -> command != null)
+        .filter((key, command) -> CommonUtils.getTopicInfo(command) != null)
+        .filter((key, command) -> CommonUtils.getAggregateId(command) != null);
 
     // Events --> Snapshots
-    KStream<String, Snapshot> snapshots = events
+    KStream<String, Object> snapshots = events
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
         .filter((key, snapshot) -> snapshot != null)
-        .filter((key, snapshot) -> snapshot.getPayload() != null)
-        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
-        .filter((key, snapshot) -> snapshot.getAggregateId() != null);
+        .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
+        .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);
 
     // Events --> Push
     events
-        .to((key, event, recordContext) -> event.getTopicInfo().value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Event.class)));
+        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
+            Produced.with(Serdes.String(), CustomSerdes.Json()));
 
     // Snapshots --> Push
     snapshots
-        .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Snapshot.class)));
+        .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
+            Produced.with(Serdes.String(), CustomSerdes.Json()));
 
-    // Failed commands --> Push
+    // Commands --> Push
     failedCommands
-        .mapValues(CommandResult::getCommand)
-        .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".exceptions"),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Command.class)));
+        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".exceptions"),
+            Produced.with(Serdes.String(), CustomSerdes.Json()));
 
   }
 

@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +36,12 @@ public class Metadata {
 
   @Transient
   public Metadata injectContext(ProcessorContext context) {
+    Map<String, Object> map = new HashMap<>();
+    context.headers().forEach(header ->
+        map.put(header.key(), new String(header.value(), StandardCharsets.UTF_8)));
+
     return this.toBuilder()
+        .entries(map)
         .timestamp(context.timestamp())
         .topic(context.topic())
         .partition(context.partition())

@@ -1,19 +1,22 @@
 package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
-import io.github.alikelleci.easysourcing.messages.events.Event;
-import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.Metadata;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
+import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
-public class EventSourcingTransformer implements ValueTransformer<Event, Snapshot> {
+public class EventSourcingTransformer implements ValueTransformer<Object, Object> {
 
   private ProcessorContext context;
-  private KeyValueStore<String, Snapshot> store;
+  private KeyValueStore<String, JsonNode> store;
 
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
 
@@ -29,17 +32,24 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Snapsho
   }
 
   @Override
-  public Snapshot transform(Event event) {
-    EventSourcingHandler eventSourcingHandler = this.eventSourcingHandlers.get(event.getPayload().getClass());
+  public Object transform(Object event) {
+    EventSourcingHandler eventSourcingHandler = eventSourcingHandlers.get(event.getClass());
     if (eventSourcingHandler == null) {
       return null;
     }
 
-    Snapshot snapshot = store.get(event.getAggregateId());
-    snapshot = eventSourcingHandler.invoke(snapshot, event, context);
+    String key = CommonUtils.getAggregateId(event);
+
+    Object snapshot = Optional.ofNullable(store.get(key))
+        .map(JsonUtils::toJavaType)
+        .orElse(null);
+
+    Metadata metadata = Metadata.builder().build().injectContext(context);
+
+    snapshot = eventSourcingHandler.invoke(event, snapshot, metadata);
 
     if (snapshot != null) {
-      store.put(event.getAggregateId(), snapshot);
+      store.put(key, snapshot);
     }
 
     return snapshot;

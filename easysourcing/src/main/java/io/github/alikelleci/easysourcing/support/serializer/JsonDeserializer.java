@@ -1,11 +1,9 @@
 package io.github.alikelleci.easysourcing.support.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.common.errors.SerializationException;
-import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
@@ -37,45 +35,6 @@ public class JsonDeserializer<T> implements Deserializer<T> {
     } catch (Exception e) {
       throw new SerializationException("Error deserializing JSON", ExceptionUtils.getRootCause(e));
     }
-  }
-
-  @Override
-  public T deserialize(String topic, Headers headers, byte[] bytes) {
-    if (bytes == null) {
-      return null;
-    }
-
-    try {
-      ObjectNode root = objectMapper.readValue(bytes, ObjectNode.class);
-      String className = root.get("@class").textValue();
-
-      // Added for backwards compatibility
-      if (className.startsWith("com.github.easysourcing.")) {
-        // Root class name correction
-        className = className.replace("com.github.easysourcing.", "io.github.alikelleci.easysourcing.");
-        root.put("@class", className);
-
-        // Aggregate --> Snapshot
-        if (className.endsWith(".aggregates.Aggregate")) {
-          className = className.replace(".aggregates.Aggregate", ".snapshots.Snapshot");
-          root.put("@class", className);
-        }
-
-        // Metadata correction
-        ObjectNode metadata = (ObjectNode) root.get("metadata");
-        // $failure --> $exception
-        ObjectNode entries = (ObjectNode) metadata.get("entries");
-        entries.set("$exception", entries.get("$failure"));
-        entries.remove("$failure");
-
-        // Write to bytes
-        bytes = objectMapper.writeValueAsBytes(root);
-      }
-    } catch (Exception e) {
-      throw new SerializationException("Error deserializing JSON", ExceptionUtils.getRootCause(e));
-    }
-
-    return deserialize(topic, bytes);
   }
 
   @Override

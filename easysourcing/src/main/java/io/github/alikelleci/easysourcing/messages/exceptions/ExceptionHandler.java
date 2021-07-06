@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.exceptions;
 
 import io.github.alikelleci.easysourcing.messages.Handler;
-import io.github.alikelleci.easysourcing.messages.commands.Command;
 import io.github.alikelleci.easysourcing.messages.exceptions.exceptions.ExceptionProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;

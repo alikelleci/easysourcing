@@ -1,23 +1,18 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
-import io.github.alikelleci.easysourcing.common.annotations.Revision;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
-import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
-import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
-import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
 import io.github.alikelleci.easysourcing.messages.Handler;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.exceptions.CommandExecutionException;
-import io.github.alikelleci.easysourcing.messages.events.Event;
-import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.core.annotation.AnnotationUtils;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -27,16 +22,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static io.github.alikelleci.easysourcing.messages.MetadataKeys.ID;
-import static io.github.alikelleci.easysourcing.messages.MetadataKeys.REVISION;
 
 @Slf4j
-public class CommandHandler implements Handler<List<Event>> {
+public class CommandHandler implements Handler<List<Object>> {
 
   private final Object target;
   private final Method method;
@@ -55,26 +44,27 @@ public class CommandHandler implements Handler<List<Event>> {
   }
 
   @Override
-  public List<Event> invoke(Object... args) {
-    Snapshot snapshot = (Snapshot) args[0];
-    Command command = (Command) args[1];
+  public List<Object> invoke(Object... args) {
+    Object command = args[0];
+    Object snapshot = args[1];
+    Metadata metadata = (Metadata) args[2];
 
-    log.debug("Handling command: {} ({})", command.getPayloadType(), command.getAggregateId());
+    log.debug("Handling command: {} ({})", command.getClass().getSimpleName(), CommonUtils.getAggregateId(command));
 
     try {
       validate(command);
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, command));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(command, snapshot, metadata));
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Event> doInvoke(Snapshot snapshot, Command command) throws InvocationTargetException, IllegalAccessException {
+  private List<Object> doInvoke(Object command, Object snapshot, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
-      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, command.getPayload());
+      result = method.invoke(target, command, snapshot);
     } else {
-      result = method.invoke(target, snapshot != null ? snapshot.getPayload() : null, command.getPayload(), command.getMetadata());
+      result = method.invoke(target, command, snapshot, metadata);
     }
     return createEvents(command, result);
   }
@@ -91,53 +81,33 @@ public class CommandHandler implements Handler<List<Event>> {
 
   @Override
   public Class<?> getType() {
-    return method.getParameters()[1].getType();
+    return method.getParameters()[0].getType();
   }
 
-  private List<Event> createEvents(Command command, Object result) {
+  private List<Object> createEvents(Object command, Object result) {
     if (result == null) {
       return new ArrayList<>();
     }
 
-    List<Object> list = new ArrayList<>();
+    List<Object> events = new ArrayList<>();
     if (List.class.isAssignableFrom(result.getClass())) {
-      list.addAll((List<?>) result);
+      events.addAll((List<?>) result);
     } else {
-      list.add(result);
+      events.add(result);
     }
 
-    List<Event> events = list.stream()
-        .map(payload -> Event.builder()
-            .payload(payload)
-            .metadata(command.getMetadata().toBuilder()
-                .entry(ID, UUID.randomUUID().toString())
-                .entry(REVISION, Optional.ofNullable(AnnotationUtils.findAnnotation(payload.getClass(), Revision.class))
-                    .map(Revision::value)
-                    .orElse(1))
-                .build())
-            .build())
-        .collect(Collectors.toList());
-
     events.forEach(event -> {
-      if (event.getPayload() == null) {
-        throw new PayloadMissingException("You are trying to dispatch an event without a payload.");
-      }
-      if (event.getTopicInfo() == null) {
-        throw new TopicInfoMissingException("You are trying to dispatch an event without any topic information. Please annotate your event with @TopicInfo.");
-      }
-      if (event.getAggregateId() == null) {
-        throw new AggregateIdMissingException("You are trying to dispatch an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
-      }
-      if (!StringUtils.equals(event.getAggregateId(), command.getAggregateId())) {
-        throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + command.getAggregateId() + ", but was " + event.getAggregateId());
+      CommonUtils.validatePayload(event);
+      if (!StringUtils.equals(CommonUtils.getAggregateId(event), CommonUtils.getAggregateId(command))) {
+        throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + CommonUtils.getAggregateId(command) + ", but was " + CommonUtils.getAggregateId(event));
       }
     });
 
     return events;
   }
 
-  private void validate(Command command) {
-    Set<ConstraintViolation<Object>> violations = validator.validate(command.getPayload());
+  private void validate(Object command) {
+    Set<ConstraintViolation<Object>> violations = validator.validate(command);
     if (!CollectionUtils.isEmpty(violations)) {
       throw new ConstraintViolationException(violations);
     }
