@@ -3,7 +3,6 @@ package io.github.alikelleci.easysourcing.messages.snapshots;
 import io.github.alikelleci.easysourcing.messages.Message;
 import io.github.alikelleci.easysourcing.messages.MessageGateway;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.MetadataKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.RecordMetadata;
