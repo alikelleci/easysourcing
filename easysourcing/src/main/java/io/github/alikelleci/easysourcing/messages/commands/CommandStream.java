@@ -63,12 +63,18 @@ public class CommandStream {
     // Successful commands --> Events
     KStream<String, Event> events = successfulCommands
         .flatMapValues(Success::getEvents)
-        .filter((key, event) -> event != null);
+        .filter((key, event) -> event != null)
+        .filter((key, event) -> event.getPayload() != null)
+        .filter((key, event) -> event.getTopicInfo() != null)
+        .filter((key, event) -> event.getAggregateId() != null);
 
     // Events --> Snapshots
     KStream<String, Snapshot> snapshots = events
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
-        .filter((key, snapshot) -> snapshot != null);
+        .filter((key, snapshot) -> snapshot != null)
+        .filter((key, snapshot) -> snapshot.getPayload() != null)
+        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
+        .filter((key, snapshot) -> snapshot.getAggregateId() != null);
 
     // Events --> Push
     events
