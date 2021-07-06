@@ -1,9 +1,11 @@
 package io.github.alikelleci.easysourcing.messages.events;
 
 import io.github.alikelleci.easysourcing.messages.Handler;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.events.exceptions.EventProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -29,23 +31,24 @@ public class EventHandler implements Handler<Void> {
 
   @Override
   public Void invoke(Object... args) {
-    Event event = (Event) args[0];
+    Object event = args[0];
+    Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling event: {} ({})", event.getPayloadType(), event.getAggregateId());
+    log.debug("Handling event: {} ({})", event.getClass().getSimpleName(), CommonUtils.getAggregateId(event));
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(event));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, metadata));
     } catch (Exception e) {
       throw new EventProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Event event) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Object event, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
-      result = method.invoke(target, event.getPayload());
+      result = method.invoke(target, event);
     } else {
-      result = method.invoke(target, event.getPayload(), event.getMetadata());
+      result = method.invoke(target, event, metadata);
     }
     return null;
   }

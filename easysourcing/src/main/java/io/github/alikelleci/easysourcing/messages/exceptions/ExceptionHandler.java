@@ -1,9 +1,11 @@
 package io.github.alikelleci.easysourcing.messages.exceptions;
 
 import io.github.alikelleci.easysourcing.messages.Handler;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.exceptions.exceptions.ExceptionProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -29,23 +31,24 @@ public class ExceptionHandler implements Handler<Void> {
 
   @Override
   public Void invoke(Object... args) {
-    Command command = (Command) args[0];
+    Object command = args[0];
+    Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling exception: {} ({})", command.getPayloadType(), command.getAggregateId());
+    log.debug("Handling exception: {} ({})", command.getClass().getSimpleName(), CommonUtils.getAggregateId(command));
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(command));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(command, metadata));
     } catch (Exception e) {
       throw new ExceptionProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Command command) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Object command, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
-      result = method.invoke(target, command.getPayload());
+      result = method.invoke(target, command);
     } else {
-      result = method.invoke(target, command.getPayload(), command.getMetadata());
+      result = method.invoke(target, command, metadata);
     }
     return null;
   }

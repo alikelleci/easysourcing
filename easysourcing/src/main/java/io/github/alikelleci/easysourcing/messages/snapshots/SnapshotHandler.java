@@ -1,9 +1,11 @@
 package io.github.alikelleci.easysourcing.messages.snapshots;
 
 import io.github.alikelleci.easysourcing.messages.Handler;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.snapshots.exceptions.SnapshotProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -29,23 +31,24 @@ public class SnapshotHandler implements Handler<Void> {
 
   @Override
   public Void invoke(Object... args) {
-    Snapshot snapshot = (Snapshot) args[0];
+    Object snapshot = args[0];
+    Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling snapshot: {} ({})", snapshot.getPayloadType(), snapshot.getAggregateId());
+    log.debug("Handling snapshot: {} ({})", snapshot.getClass().getSimpleName(), CommonUtils.getAggregateId(snapshot));
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, metadata));
     } catch (Exception e) {
       throw new SnapshotProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Snapshot snapshot) throws InvocationTargetException, IllegalAccessException {
+  private Void doInvoke(Object snapshot, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 1) {
-      result = method.invoke(target, snapshot.getPayload());
+      result = method.invoke(target, snapshot);
     } else {
-      result = method.invoke(target, snapshot.getPayload(), snapshot.getMetadata());
+      result = method.invoke(target, snapshot, metadata);
     }
     return null;
   }

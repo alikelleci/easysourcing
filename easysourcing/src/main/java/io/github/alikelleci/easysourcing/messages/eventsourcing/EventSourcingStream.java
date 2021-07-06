@@ -3,10 +3,9 @@ package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
-import io.github.alikelleci.easysourcing.messages.upcasters.MessageTransformer;
-import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
@@ -34,37 +33,25 @@ public class EventSourcingStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Events --> Snapshots
-    KStream<String, Snapshot> snapshots = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        // Filter
-        .filter((key, value) -> key != null)
-        .filter((key, value) -> value != null)
+    // --> Events
+    KStream<String, JsonNode> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+        .filter((key, event) -> key != null)
+        .filter((key, event) -> event != null);
 
-        // Upcast & convert
-        .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new MessageTransformer<>(Event.class))
-
-        // Filter
-        .filter((key, event) -> event != null)
-        .filter((key, event) -> event.getPayload() != null)
-        .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null)
-
-        // Invoke handlers
+    // Events --> Snapshots
+    KStream<String, Object> snapshots = events
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
-
-        // Filter
         .filter((key, snapshot) -> snapshot != null)
-        .filter((key, snapshot) -> snapshot.getPayload() != null)
-        .filter((key, snapshot) -> snapshot.getTopicInfo() != null)
-        .filter((key, snapshot) -> snapshot.getAggregateId() != null);
+        .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
+        .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);
 
     // Snapshots Push
     if (operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {
       snapshots
-          .to((key, snapshot, recordContext) -> snapshot.getTopicInfo().value(),
-              Produced.with(Serdes.String(), CustomSerdes.Json(Snapshot.class)));
+          .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
+              Produced.with(Serdes.String(), CustomSerdes.Json()));
     }
+
   }
 
 }

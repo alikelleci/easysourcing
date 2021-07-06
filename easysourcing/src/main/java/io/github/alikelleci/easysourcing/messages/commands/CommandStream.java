@@ -8,6 +8,7 @@ import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHan
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
+import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -52,7 +53,7 @@ public class CommandStream {
         .filter((key, event) -> CommonUtils.getTopicInfo(event) != null)
         .filter((key, event) -> CommonUtils.getAggregateId(event) != null);
 
-    // Failed results --> Commands
+    // Failed results --> Failed commands
     KStream<String, Object> failedCommands = commandResults
         .filter((key, result) -> result instanceof Failure)
         .mapValues((key, result) -> (Failure) result)
@@ -63,6 +64,7 @@ public class CommandStream {
 
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
+        .mapValues(JsonUtils::toJsonNode)
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
         .filter((key, snapshot) -> snapshot != null)
         .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)

@@ -1,5 +1,8 @@
 package io.github.alikelleci.easysourcing.messages.snapshots;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.Metadata;
+import io.github.alikelleci.easysourcing.util.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -9,7 +12,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 
-public class SnapshotTransformer implements ValueTransformer<Snapshot, Void> {
+public class SnapshotTransformer implements ValueTransformer<JsonNode, Void> {
 
   private ProcessorContext context;
 
@@ -25,16 +28,23 @@ public class SnapshotTransformer implements ValueTransformer<Snapshot, Void> {
   }
 
   @Override
-  public Void transform(Snapshot snapshot) {
-    Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getPayload().getClass());
+  public Void transform(JsonNode jsonSnapshot) {
+    Object snapshot = JsonUtils.toJavaType(jsonSnapshot);
+    if (snapshot == null) {
+      return null;
+    }
+
+    Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }
 
+    Metadata metadata = Metadata.builder().build().injectContext(context);
+
     handlers.stream()
         .sorted(Comparator.comparingInt(SnapshotHandler::getPriority).reversed())
         .forEach(handler ->
-            handler.invoke(snapshot, context));
+            handler.invoke(snapshot, metadata));
 
     return null;
   }

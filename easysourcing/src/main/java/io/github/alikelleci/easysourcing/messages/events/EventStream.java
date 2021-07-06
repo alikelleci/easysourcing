@@ -2,8 +2,6 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.upcasters.MessageTransformer;
-import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +9,7 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.KStream;
 
 import java.util.Set;
 
@@ -29,23 +28,13 @@ public class EventStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Events --> Void
-    builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        // Filter
-        .filter((key, value) -> key != null)
-        .filter((key, value) -> value != null)
+    // --> Events
+    KStream<String, JsonNode> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+        .filter((key, event) -> key != null)
+        .filter((key, event) -> event != null);
 
-        // Upcast & convert
-        .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new MessageTransformer<>(Event.class))
-
-        // Filter
-        .filter((key, event) -> event != null)
-        .filter((key, event) -> event.getPayload() != null)
-        .filter((key, event) -> event.getTopicInfo() != null)
-        .filter((key, event) -> event.getAggregateId() != null)
-
-        // Invoke handlers
+    // Events --> Void
+    events
         .transformValues(() -> new EventTransformer(eventHandlers));
   }
 

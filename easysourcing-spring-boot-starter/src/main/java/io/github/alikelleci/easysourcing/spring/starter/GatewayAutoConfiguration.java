@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.spring.starter;
 
 import io.github.alikelleci.easysourcing.GatewayBuilder;
-import io.github.alikelleci.easysourcing.messages.MessageGateway;
 import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
@@ -16,12 +15,6 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnBean(GatewayBuilder.class)
 @EnableConfigurationProperties(EasySourcingProperties.class)
 public class GatewayAutoConfiguration {
-
-  @Bean
-  public MessageGateway messageGateway(GatewayBuilder builder) {
-    return builder
-        .messageGateway();
-  }
 
   @Bean
   public CommandGateway commandGateway(GatewayBuilder builder) {

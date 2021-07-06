@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class EventSourcingTransformer implements ValueTransformer<Object, Object> {
+public class EventSourcingTransformer implements ValueTransformer<JsonNode, Object> {
 
   private ProcessorContext context;
   private KeyValueStore<String, JsonNode> store;
@@ -32,7 +32,12 @@ public class EventSourcingTransformer implements ValueTransformer<Object, Object
   }
 
   @Override
-  public Object transform(Object event) {
+  public Object transform(JsonNode jsonEvent) {
+    Object event = JsonUtils.toJavaType(jsonEvent);
+    if (event == null) {
+      return null;
+    }
+
     EventSourcingHandler eventSourcingHandler = eventSourcingHandlers.get(event.getClass());
     if (eventSourcingHandler == null) {
       return null;
@@ -48,9 +53,9 @@ public class EventSourcingTransformer implements ValueTransformer<Object, Object
 
     snapshot = eventSourcingHandler.invoke(event, snapshot, metadata);
 
-    if (snapshot != null) {
-      store.put(key, snapshot);
-    }
+    Optional.ofNullable(snapshot)
+        .map(JsonUtils::toJsonNode)
+        .ifPresent(jsonNode -> store.put(key, jsonNode));
 
     return snapshot;
   }

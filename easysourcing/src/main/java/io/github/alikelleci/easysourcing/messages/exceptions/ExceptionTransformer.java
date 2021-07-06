@@ -1,5 +1,8 @@
 package io.github.alikelleci.easysourcing.messages.exceptions;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.Metadata;
+import io.github.alikelleci.easysourcing.util.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -9,7 +12,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 
-public class ExceptionTransformer implements ValueTransformer<Command, Void> {
+public class ExceptionTransformer implements ValueTransformer<JsonNode, Void> {
 
   private ProcessorContext context;
 
@@ -25,16 +28,23 @@ public class ExceptionTransformer implements ValueTransformer<Command, Void> {
   }
 
   @Override
-  public Void transform(Command command) {
-    Collection<ExceptionHandler> handlers = exceptionHandlers.get(command.getPayload().getClass());
+  public Void transform(JsonNode jsonCommand) {
+    Object command = JsonUtils.toJavaType(jsonCommand);
+    if (command == null) {
+      return null;
+    }
+
+    Collection<ExceptionHandler> handlers = exceptionHandlers.get(command.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }
 
+    Metadata metadata = Metadata.builder().build().injectContext(context);
+
     handlers.stream()
         .sorted(Comparator.comparingInt(ExceptionHandler::getPriority).reversed())
         .forEach(handler ->
-            handler.invoke(command, context));
+            handler.invoke(command, metadata));
 
     return null;
   }
