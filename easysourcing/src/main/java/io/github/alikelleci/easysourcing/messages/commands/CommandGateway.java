@@ -22,13 +22,14 @@ public class CommandGateway extends MessageGateway {
 
   public Future<RecordMetadata> send(Object payload, Metadata metadata) {
     if (metadata == null) {
-      metadata = new Metadata();
+      metadata = Metadata.builder().build();
     }
     Command command = Command.builder()
         .payload(payload)
-        .metadata(metadata.filter()
-            .add(ID, UUID.randomUUID().toString())
-            .add(CORRELATION_ID, UUID.randomUUID().toString()))
+        .metadata(metadata.filter().toBuilder()
+            .entry(ID, UUID.randomUUID().toString())
+            .entry(CORRELATION_ID, UUID.randomUUID().toString())
+            .build())
         .build();
 
     return send(command);

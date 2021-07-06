@@ -52,8 +52,9 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
         log.debug("Command rejected: {}", message);
         return Failure.builder()
             .command(command.toBuilder()
-                .metadata(command.getMetadata()
-                    .add(EXCEPTION, message))
+                .metadata(command.getMetadata().toBuilder()
+                    .entry(EXCEPTION, message)
+                    .build())
                 .build())
             .message(message)
             .build();

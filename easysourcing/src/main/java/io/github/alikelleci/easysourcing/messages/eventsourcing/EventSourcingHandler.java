@@ -81,8 +81,9 @@ public class EventSourcingHandler implements Handler<Snapshot> {
   private Snapshot createSnapshot(Event event, Object result) {
     Snapshot snapshot = Snapshot.builder()
         .payload(result)
-        .metadata(event.getMetadata()
-            .add(ID, UUID.randomUUID().toString()))
+        .metadata(event.getMetadata().toBuilder()
+            .entry(ID, UUID.randomUUID().toString())
+            .build())
         .build();
 
     if (snapshot.getPayload() == null) {
