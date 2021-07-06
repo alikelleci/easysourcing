@@ -17,7 +17,6 @@ import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import javax.validation.ConstraintViolation;
