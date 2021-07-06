@@ -69,7 +69,7 @@ public class EasySourcingBuilder {
   private OperationMode operationMode = OperationMode.NORMAL;
 
   //  Handlers
-  public final MultiValuedMap<String, Upcaster> upcasters = new ArrayListValuedHashMap<>();
+  private final MultiValuedMap<String, Upcaster> upcasters = new ArrayListValuedHashMap<>();
   private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers = new HashMap<>();
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers = new ArrayListValuedHashMap<>();
@@ -175,7 +175,7 @@ public class EasySourcingBuilder {
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers);
+      CommandStream commandStream = new CommandStream(commandsTopics, upcasters, commandHandlers, eventSourcingHandlers);
       commandStream.buildStream(builder);
     }
 

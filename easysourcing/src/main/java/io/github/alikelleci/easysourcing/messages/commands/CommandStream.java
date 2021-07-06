@@ -6,10 +6,12 @@ import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
+import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -23,11 +25,13 @@ import java.util.Set;
 public class CommandStream {
 
   private final Set<String> topics;
+  private final MultiValuedMap<String, Upcaster> upcasters;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
+  public CommandStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.topics = topics;
+    this.upcasters = upcasters;
     this.commandHandlers = commandHandlers;
     this.eventSourcingHandlers = eventSourcingHandlers;
   }

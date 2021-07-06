@@ -15,7 +15,7 @@ import java.util.Map;
 @Builder(toBuilder = true)
 public class Metadata {
   @Singular
-  private Map<String, Object> entries;
+  private Map<String, String> entries;
 
   private long timestamp;
   private String topic;
@@ -25,7 +25,7 @@ public class Metadata {
 
   @Transient
   public Metadata filter() {
-    Map<String, Object> map = new HashMap<>(entries);
+    Map<String, String> map = new HashMap<>(entries);
     map.keySet().removeIf(key -> StringUtils.startsWithIgnoreCase(key, "$"));
 
     return this.toBuilder()
@@ -36,7 +36,7 @@ public class Metadata {
 
   @Transient
   public Metadata injectContext(ProcessorContext context) {
-    Map<String, Object> map = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     context.headers().forEach(header ->
         map.put(header.key(), new String(header.value(), StandardCharsets.UTF_8)));
 
@@ -49,7 +49,7 @@ public class Metadata {
         .build();
   }
 
-  public Object get(String key) {
+  public String get(String key) {
     return entries.get(key);
   }
 

@@ -35,7 +35,7 @@ public class EventStream {
 
     // Events --> Void
     events
-        .transformValues(() -> new EventTransformer(eventHandlers));
+        .transformValues(() -> new EventTransformer(upcasters, eventHandlers));
   }
 
 }

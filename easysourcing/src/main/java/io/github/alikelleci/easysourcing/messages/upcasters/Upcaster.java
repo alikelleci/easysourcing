@@ -1,8 +1,8 @@
 package io.github.alikelleci.easysourcing.messages.upcasters;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.alikelleci.easysourcing.messages.Handler;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastException;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +10,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Optional;
 
 @Slf4j
 public class Upcaster implements Handler<JsonNode> {
@@ -26,22 +25,18 @@ public class Upcaster implements Handler<JsonNode> {
   @Override
   public JsonNode invoke(Object... args) {
     JsonNode jsonNode = (JsonNode) args[0];
+    Metadata metadata = (Metadata) args[1];
 
     try {
-      return doInvoke(jsonNode);
+      return doInvoke(jsonNode, metadata);
     } catch (Exception e) {
       throw new UpcastException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private JsonNode doInvoke(JsonNode jsonNode) throws InvocationTargetException, IllegalAccessException {
-    int revision = Optional.ofNullable(jsonNode.get("metadata"))
-        .map(metadata -> metadata.get("entries"))
-        .map(entries -> entries.get("$revision"))
-        .map(JsonNode::intValue)
-        .orElse(1);
-
+  private JsonNode doInvoke(JsonNode jsonNode, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Upcast annotation = method.getAnnotation(Upcast.class);
+    int revision = Integer.parseInt(metadata.get("$revision"));
 
     if (revision != annotation.revision()) {
       return jsonNode;
@@ -49,16 +44,11 @@ public class Upcaster implements Handler<JsonNode> {
 
     log.debug("Upcasting type {} (revision: {})", annotation.type(), revision);
 
-    Object result = method.invoke(target, jsonNode.get("payload"));
-    if (result == null) {
-      ((ObjectNode) jsonNode).remove("payload");
-    } else {
-      ((ObjectNode) jsonNode).set("payload", (JsonNode) result);
+    Object result = method.invoke(target, jsonNode);
+    if (JsonNode.class.isAssignableFrom(result.getClass())) {
+      return (JsonNode) result;
     }
-
-    ((ObjectNode) jsonNode.get("metadata").get("entries")).put("$revision", revision + 1);
-
-    return jsonNode;
+    return null;
   }
 
   @Override
