@@ -3,7 +3,7 @@ package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
-import io.github.alikelleci.easysourcing.messages.MessageTransformer;
+import io.github.alikelleci.easysourcing.messages.upcasters.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.events.Event;
 import io.github.alikelleci.easysourcing.messages.snapshots.Snapshot;
 import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;

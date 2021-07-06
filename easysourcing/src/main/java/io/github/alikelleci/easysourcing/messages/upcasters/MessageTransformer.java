@@ -1,6 +1,7 @@
-package io.github.alikelleci.easysourcing.messages;
+package io.github.alikelleci.easysourcing.messages.upcasters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.alikelleci.easysourcing.messages.Message;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;

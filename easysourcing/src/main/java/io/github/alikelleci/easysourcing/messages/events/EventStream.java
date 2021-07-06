@@ -2,7 +2,7 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.MessageTransformer;
+import io.github.alikelleci.easysourcing.messages.upcasters.MessageTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
