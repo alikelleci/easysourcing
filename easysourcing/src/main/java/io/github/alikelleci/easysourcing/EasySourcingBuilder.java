@@ -167,7 +167,7 @@ public class EasySourcingBuilder {
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, upcasters, commandHandlers, eventSourcingHandlers);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers);
       commandStream.buildStream(builder);
     }
 
