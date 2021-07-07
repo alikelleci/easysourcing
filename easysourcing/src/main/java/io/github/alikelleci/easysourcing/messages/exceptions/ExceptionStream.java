@@ -27,7 +27,7 @@ public class ExceptionStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Failed commands
     KStream<String, JsonNode> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        .filter((key, command) -> StringUtils.isNotBlank(key))
+        .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
     // Failed commands --> Void

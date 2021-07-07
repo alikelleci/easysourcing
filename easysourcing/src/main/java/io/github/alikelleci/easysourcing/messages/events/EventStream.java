@@ -32,7 +32,7 @@ public class EventStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Events
     KStream<String, JsonNode> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        .filter((key, event) -> StringUtils.isNotBlank(key))
+        .filter((key, event) -> key != null)
         .filter((key, event) -> event != null);
 
     // Events --> Void

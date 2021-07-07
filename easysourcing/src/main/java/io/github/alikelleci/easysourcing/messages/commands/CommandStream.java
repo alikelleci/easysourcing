@@ -36,7 +36,7 @@ public class CommandStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Commands
     KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        .filter((key, command) -> StringUtils.isNotBlank(key))
+        .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
     // Commands --> Command results
