@@ -3,14 +3,12 @@ package io.github.alikelleci.easysourcing.messages.upcasters;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Handler;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Optional;
 
 @Slf4j
 public class Upcaster implements Handler<JsonNode> {
@@ -36,26 +34,7 @@ public class Upcaster implements Handler<JsonNode> {
   }
 
   private JsonNode doInvoke(JsonNode jsonNode, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
-    Upcast annotation = method.getAnnotation(Upcast.class);
-    int revision = Optional.ofNullable(metadata.get("$revision"))
-        .map(Integer::parseInt)
-        .orElse(1);
-
-    if (revision != annotation.revision()) {
-      return jsonNode;
-    }
-
-    log.debug("Upcasting type {} (revision: {})", annotation.type(), revision);
-    Object result = method.invoke(target, jsonNode);
-
-    if (result == null) {
-      return null;
-    }
-
-    if (JsonNode.class.isAssignableFrom(result.getClass())) {
-      return (JsonNode) result;
-    }
-    return null;
+    return (JsonNode) method.invoke(target, jsonNode);
   }
 
   @Override

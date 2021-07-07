@@ -11,6 +11,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,8 +51,10 @@ public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> 
 
     handlers.stream()
         .sorted(Comparator.comparingInt(handler -> handler.getMethod().getAnnotation(Upcast.class).revision()))
-        .forEach(handler ->
-            handler.invoke(jsonNode, metadata.add("$revision", String.valueOf(revision.getAndIncrement()))));
+        .filter(handler -> handler.getMethod().getAnnotation(Upcast.class).revision() == revision.get())
+        .map(handler -> handler.invoke(jsonNode, metadata))
+        .filter(Objects::nonNull)
+        .forEach(result -> revision.incrementAndGet());
 
     return jsonNode;
   }
