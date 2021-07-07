@@ -5,9 +5,9 @@ import org.apache.kafka.common.serialization.Serdes;
 
 public class CustomSerdes {
 
-  public static final class JsonSerde<T> extends Serdes.WrapperSerde<T> {
+  private static final class JsonSerde<T> extends Serdes.WrapperSerde<T> {
 
-    public JsonSerde(Class<T> tClass) {
+    private JsonSerde(Class<T> tClass) {
       super(new JsonSerializer<>(), new JsonDeserializer<>(tClass));
     }
   }
