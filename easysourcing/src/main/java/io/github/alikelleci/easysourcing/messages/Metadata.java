@@ -53,4 +53,10 @@ public class Metadata {
     return entries.get(key);
   }
 
+  public Metadata add(String key, String value) {
+    return this.toBuilder()
+        .entry(key, value)
+        .build();
+  }
+
 }

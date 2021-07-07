@@ -27,7 +27,7 @@ public class SnapshotGateway {
     if (metadata == null) {
       metadata = Metadata.builder().build();
     }
-    metadata.getEntries().forEach((key, value) ->
+    metadata.filter().getEntries().forEach((key, value) ->
         record.headers()
             .remove(key)
             .add(key, value.toString().getBytes(StandardCharsets.UTF_8)));
