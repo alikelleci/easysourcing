@@ -73,17 +73,17 @@ public class CommandStream {
     // Events --> Push
     events
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
     // Snapshots --> Push
     snapshots
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
     // Failed commands --> Push
     failedCommands
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".exceptions"),
-            Produced.with(Serdes.String(), CustomSerdes.Json()));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
   }
 

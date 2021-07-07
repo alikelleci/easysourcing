@@ -51,7 +51,7 @@ public class EventSourcingStream {
     if (operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {
       snapshots
           .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
-              Produced.with(Serdes.String(), CustomSerdes.Json()));
+              Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
     }
 
   }
