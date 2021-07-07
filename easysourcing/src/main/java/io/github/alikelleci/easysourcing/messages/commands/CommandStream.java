@@ -10,6 +10,7 @@ import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -35,7 +36,7 @@ public class CommandStream {
   public void buildStream(StreamsBuilder builder) {
     // --> Commands
     KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
-        .filter((key, command) -> key != null)
+        .filter((key, command) -> StringUtils.isNotBlank(key))
         .filter((key, command) -> command != null);
 
     // Commands --> Command results
