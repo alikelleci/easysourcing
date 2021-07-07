@@ -30,7 +30,7 @@ public class CommandGateway {
     metadata.filter().getEntries().forEach((key, value) ->
         record.headers()
             .remove(key)
-            .add(key, value.toString().getBytes(StandardCharsets.UTF_8)));
+            .add(key, value.getBytes(StandardCharsets.UTF_8)));
 
     log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     return producer.send(record);

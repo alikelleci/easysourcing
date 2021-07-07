@@ -30,7 +30,7 @@ public class SnapshotGateway {
     metadata.filter().getEntries().forEach((key, value) ->
         record.headers()
             .remove(key)
-            .add(key, value.toString().getBytes(StandardCharsets.UTF_8)));
+            .add(key, value.getBytes(StandardCharsets.UTF_8)));
 
     log.debug("Publishing snapshot: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     return producer.send(record);
