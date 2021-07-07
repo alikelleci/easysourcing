@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
+@Deprecated
 public class JsonDeserializerOld<T> implements Deserializer<T> {
 
   private final ObjectMapper objectMapper = JacksonUtils.enhancedObjectMapper();
