@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.RevisionAdder;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
@@ -10,7 +11,6 @@ import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -73,6 +73,7 @@ public class CommandStream {
 
     // Events --> Push
     events
+        .transformValues(RevisionAdder::new)
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 

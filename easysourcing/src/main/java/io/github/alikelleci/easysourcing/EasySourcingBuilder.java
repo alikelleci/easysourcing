@@ -193,7 +193,7 @@ public class EasySourcingBuilder {
 
     Set<String> snapshotTopics = getSnapshotTopics();
     if (CollectionUtils.isNotEmpty(snapshotTopics)) {
-      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, upcasters, snapshotHandlers);
+      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
       snapshotStream.buildStream(builder);
     }
 
