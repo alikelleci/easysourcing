@@ -6,6 +6,7 @@ import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -47,7 +48,10 @@ public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> 
     }
 
     Metadata metadata = Metadata.builder().build().injectContext(context);
-    AtomicInteger revision = new AtomicInteger(Integer.parseInt(metadata.get("$revision")));
+
+    AtomicInteger revision = new AtomicInteger(Optional.ofNullable(metadata.get("$revision"))
+        .map(s -> NumberUtils.toInt(s, 1))
+        .orElse(1));
 
     handlers.stream()
         .sorted(Comparator.comparingInt(handler -> handler.getMethod().getAnnotation(Upcast.class).revision()))

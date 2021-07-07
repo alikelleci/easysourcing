@@ -3,7 +3,7 @@ package io.github.alikelleci.easysourcing;
 import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
-import io.github.alikelleci.easysourcing.support.interceptors.BasicProducerInterceptor;
+import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
 import io.github.alikelleci.easysourcing.support.interceptors.TracingProducerInterceptor;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class GatewayBuilder {
     this.producerConfig.putIfAbsent(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
     ArrayList<String> interceptors = new ArrayList<>();
-    interceptors.add(BasicProducerInterceptor.class.getName());
+    interceptors.add(CommonProducerInterceptor.class.getName());
     interceptors.add(TracingProducerInterceptor.class.getName());
 
     this.producerConfig.putIfAbsent(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);

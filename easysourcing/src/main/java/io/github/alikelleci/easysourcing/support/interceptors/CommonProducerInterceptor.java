@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public class BasicProducerInterceptor implements ProducerInterceptor<String, Object> {
+public class CommonProducerInterceptor implements ProducerInterceptor<String, Object> {
 
   @Override
   public ProducerRecord<String, Object> onSend(ProducerRecord<String, Object> producerRecord) {

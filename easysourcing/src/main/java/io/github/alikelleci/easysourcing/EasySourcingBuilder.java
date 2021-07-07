@@ -19,7 +19,7 @@ import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
 import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
-import io.github.alikelleci.easysourcing.support.interceptors.BasicProducerInterceptor;
+import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +86,7 @@ public class EasySourcingBuilder {
     this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
 
     ArrayList<String> interceptors = new ArrayList<>();
-    interceptors.add(BasicProducerInterceptor.class.getName());
+    interceptors.add(CommonProducerInterceptor.class.getName());
 
     this.streamsConfig.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), interceptors);
   }
