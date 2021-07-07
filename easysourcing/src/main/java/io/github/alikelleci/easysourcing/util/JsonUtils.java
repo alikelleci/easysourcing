@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.util.Optional;
 
@@ -16,10 +17,6 @@ public class JsonUtils {
   private ObjectMapper objectMapper = JacksonUtils.enhancedObjectMapper();
 
   public Object toJavaType(JsonNode jsonNode) {
-    if (jsonNode == null) {
-      return null;
-    }
-
     String className = Optional.ofNullable(jsonNode)
         .map(payload -> payload.get("@class"))
         .map(JsonNode::textValue)
@@ -34,19 +31,24 @@ public class JsonUtils {
       return objectMapper.convertValue(jsonNode, type);
 
     } catch (Exception e) {
-      log.error("Failed converting to JavaType", e);
+      log.error("Failed converting to JavaType", ExceptionUtils.getRootCause(e));
       return null;
     }
   }
 
   public JsonNode toJsonNode(Object object) {
-    if (object == null) {
+    String className = Optional.ofNullable(object)
+        .map(Object::getClass)
+        .map(Class::getName)
+        .orElse(null);
+
+    if (StringUtils.isBlank(className)) {
       return null;
     }
 
     try {
       ObjectNode root = objectMapper.createObjectNode();
-      root.put("@class", object.getClass().getName());
+      root.put("@class", className);
 
       ObjectNode node = objectMapper.convertValue(object, ObjectNode.class);
       root.setAll(node);
@@ -54,7 +56,7 @@ public class JsonUtils {
       return root;
 
     } catch (Exception e) {
-      log.error("Failed converting to JsonNode", e);
+      log.error("Failed converting to JsonNode", ExceptionUtils.getRootCause(e));
       return null;
     }
   }
