@@ -53,7 +53,6 @@ public class Upcaster implements Handler<JsonNode> {
     }
 
     if (JsonNode.class.isAssignableFrom(result.getClass())) {
-      metadata = metadata.add("$revision", String.valueOf(revision + 1));
       return (JsonNode) result;
     }
     return null;

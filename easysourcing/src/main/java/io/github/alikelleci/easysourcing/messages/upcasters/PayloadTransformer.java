@@ -46,11 +46,12 @@ public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> 
     }
 
     Metadata metadata = Metadata.builder().build().injectContext(context);
-
     AtomicInteger revision = new AtomicInteger(Integer.parseInt(metadata.get("$revision")));
+
     handlers.stream()
         .sorted(Comparator.comparingInt(handler -> handler.getMethod().getAnnotation(Upcast.class).revision()))
-        .forEach(handler -> handler.invoke(jsonNode, metadata));
+        .forEach(handler ->
+            handler.invoke(jsonNode, metadata.add("$revision", String.valueOf(revision.getAndIncrement()))));
 
     return jsonNode;
   }
