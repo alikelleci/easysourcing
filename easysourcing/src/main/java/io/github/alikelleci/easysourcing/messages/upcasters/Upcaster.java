@@ -10,6 +10,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 @Slf4j
 public class Upcaster implements Handler<JsonNode> {
@@ -36,16 +37,23 @@ public class Upcaster implements Handler<JsonNode> {
 
   private JsonNode doInvoke(JsonNode jsonNode, Metadata metadata) throws InvocationTargetException, IllegalAccessException {
     Upcast annotation = method.getAnnotation(Upcast.class);
-    int revision = Integer.parseInt(metadata.get("$revision"));
+    int revision = Optional.ofNullable(metadata.get("$revision"))
+        .map(Integer::parseInt)
+        .orElse(1);
 
     if (revision != annotation.revision()) {
       return jsonNode;
     }
 
     log.debug("Upcasting type {} (revision: {})", annotation.type(), revision);
-
     Object result = method.invoke(target, jsonNode);
+
+    if (result == null) {
+      return null;
+    }
+
     if (JsonNode.class.isAssignableFrom(result.getClass())) {
+      metadata = metadata.add("$revision", String.valueOf(revision + 1));
       return (JsonNode) result;
     }
     return null;
