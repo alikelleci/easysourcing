@@ -8,7 +8,7 @@ public class CustomSerdes {
   private static final class JsonSerde<T> extends Serdes.WrapperSerde<T> {
 
     private JsonSerde(Class<T> tClass) {
-      super(new JsonSerializer<>(), new JsonDeserializer<>(tClass));
+      super(new JsonSerializer<>(), new JsonDeserializerOld<>(tClass));
     }
   }
 
