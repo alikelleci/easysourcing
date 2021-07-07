@@ -3,6 +3,7 @@ package io.github.alikelleci.easysourcing.support.serializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.common.errors.SerializationException;
@@ -85,13 +86,17 @@ public class JsonDeserializerOld<T> implements Deserializer<T> {
         // Extract metadata
         JsonNode metadata = root.get("metadata");
         JsonNode entries = metadata.get("entries");
-        entries.fields().forEachRemaining(entry -> {
-          if (entry.getKey().equals("$failure")) {
-            headers.add("$exception", entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
-          } else {
-            headers.add(entry.getKey(), entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
-          }
-        });
+
+        IteratorUtils.toList(entries.fields()).stream()
+            .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+            .filter(entry -> StringUtils.isNoneBlank(entry.getKey(), entry.getValue().textValue()))
+            .forEach(entry -> {
+              if (entry.getKey().equals("$failure")) {
+                headers.add("$exception", entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
+              } else {
+                headers.add(entry.getKey(), entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
+              }
+            });
 
         // Extract payload
         root = root.get("payload");

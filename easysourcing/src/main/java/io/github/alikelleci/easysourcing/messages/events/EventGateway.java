@@ -3,6 +3,7 @@ package io.github.alikelleci.easysourcing.messages.events;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -27,10 +28,12 @@ public class EventGateway {
     if (metadata == null) {
       metadata = Metadata.builder().build();
     }
-    metadata.filter().getEntries().forEach((key, value) ->
-        record.headers()
-            .remove(key)
-            .add(key, value.getBytes(StandardCharsets.UTF_8)));
+    metadata.filter().getEntries().entrySet().stream()
+        .filter(entry -> StringUtils.isNoneBlank(entry.getKey(), entry.getValue()))
+        .forEach(entry ->
+            record.headers()
+                .remove(entry.getKey())
+                .add(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8)));
 
     log.debug("Publishing event: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     return producer.send(record);
