@@ -3,6 +3,7 @@ package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
+import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
@@ -40,6 +41,7 @@ public class EventSourcingStream {
 
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
+        .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
         .filter((key, snapshot) -> snapshot != null)
         .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)

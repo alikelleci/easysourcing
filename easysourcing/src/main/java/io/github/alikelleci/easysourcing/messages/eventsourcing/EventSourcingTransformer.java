@@ -17,9 +17,7 @@ public class EventSourcingTransformer implements ValueTransformer<JsonNode, Obje
 
   private ProcessorContext context;
   private KeyValueStore<String, JsonNode> store;
-
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
-
 
   public EventSourcingTransformer(Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.eventSourcingHandlers = eventSourcingHandlers;
@@ -32,8 +30,8 @@ public class EventSourcingTransformer implements ValueTransformer<JsonNode, Obje
   }
 
   @Override
-  public Object transform(JsonNode jsonEvent) {
-    Object event = JsonUtils.toJavaType(jsonEvent);
+  public Object transform(JsonNode jsonNode) {
+    Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
       return null;
     }
@@ -55,7 +53,7 @@ public class EventSourcingTransformer implements ValueTransformer<JsonNode, Obje
 
     Optional.ofNullable(snapshot)
         .map(JsonUtils::toJsonNode)
-        .ifPresent(jsonNode -> store.put(key, jsonNode));
+        .ifPresent(node -> store.put(key, node));
 
     return snapshot;
   }

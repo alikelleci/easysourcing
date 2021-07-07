@@ -23,7 +23,6 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
 
   private ProcessorContext context;
   private KeyValueStore<String, JsonNode> store;
-
   private final Map<Class<?>, CommandHandler> commandHandlers;
 
   public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
@@ -37,8 +36,8 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
   }
 
   @Override
-  public CommandResult transform(JsonNode jsonCommand) {
-    Object command = JsonUtils.toJavaType(jsonCommand);
+  public CommandResult transform(JsonNode jsonNode) {
+    Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
       return null;
     }

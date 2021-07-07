@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.snapshots;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +28,14 @@ public class SnapshotStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Events
-    KStream<String, JsonNode> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Snapshots
+    KStream<String, JsonNode> snapshots = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, snapshot) -> key != null)
         .filter((key, snapshot) -> snapshot != null);
 
-    // Events --> Void
-    events
+    // Snapshots --> Void
+    snapshots
+        .transformValues(() -> new PayloadTransformer(upcasters))
         .transformValues(() -> new SnapshotTransformer(snapshotHandlers));
   }
 

@@ -175,13 +175,13 @@ public class EasySourcingBuilder {
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, upcasters, commandHandlers, eventSourcingHandlers);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers);
       commandStream.buildStream(builder);
     }
 
     Set<String> exceptionsTopics = getExceptionsTopics();
     if (CollectionUtils.isNotEmpty(exceptionsTopics)) {
-      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics, upcasters, exceptionHandlers);
+      ExceptionStream exceptionStream = new ExceptionStream(exceptionsTopics, exceptionHandlers);
       exceptionStream.buildStream(builder);
     }
 

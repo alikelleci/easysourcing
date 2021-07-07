@@ -15,7 +15,6 @@ import java.util.Comparator;
 public class ExceptionTransformer implements ValueTransformer<JsonNode, Void> {
 
   private ProcessorContext context;
-
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers;
 
   public ExceptionTransformer(MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
@@ -28,8 +27,8 @@ public class ExceptionTransformer implements ValueTransformer<JsonNode, Void> {
   }
 
   @Override
-  public Void transform(JsonNode jsonCommand) {
-    Object command = JsonUtils.toJavaType(jsonCommand);
+  public Void transform(JsonNode jsonNode) {
+    Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
       return null;
     }

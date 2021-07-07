@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing.messages.exceptions;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -17,12 +16,10 @@ import java.util.Set;
 public class ExceptionStream {
 
   private final Set<String> topics;
-  private final MultiValuedMap<String, Upcaster> upcasters;
   private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers;
 
-  public ExceptionStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
+  public ExceptionStream(Set<String> topics, MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
     this.topics = topics;
-    this.upcasters = upcasters;
     this.exceptionHandlers = exceptionHandlers;
   }
 
