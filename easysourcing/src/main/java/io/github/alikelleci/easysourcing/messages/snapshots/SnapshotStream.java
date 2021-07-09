@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing.messages.snapshots;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;

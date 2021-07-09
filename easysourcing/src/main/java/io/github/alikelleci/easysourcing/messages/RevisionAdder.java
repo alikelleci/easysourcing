@@ -7,7 +7,6 @@ import org.springframework.core.annotation.AnnotationUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.UUID;
 
 
 public class RevisionAdder implements ValueTransformer<Object, Object> {
