@@ -21,7 +21,6 @@ public class EventStream {
   private final MultiValuedMap<String, Upcaster> upcasters;
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
 
-
   public EventStream(Set<String> topics, MultiValuedMap<String, Upcaster> upcasters, MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
     this.topics = topics;
     this.upcasters = upcasters;
