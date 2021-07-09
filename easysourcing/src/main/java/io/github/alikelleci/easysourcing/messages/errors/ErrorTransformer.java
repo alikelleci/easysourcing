@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.messages.exceptions;
+package io.github.alikelleci.easysourcing.messages.errors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
@@ -12,13 +12,13 @@ import java.util.Collection;
 import java.util.Comparator;
 
 
-public class ExceptionTransformer implements ValueTransformer<JsonNode, Void> {
+public class ErrorTransformer implements ValueTransformer<JsonNode, Void> {
 
   private ProcessorContext context;
-  private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers;
+  private final MultiValuedMap<Class<?>, ErrorHandler> errorHandlers;
 
-  public ExceptionTransformer(MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
-    this.exceptionHandlers = exceptionHandlers;
+  public ErrorTransformer(MultiValuedMap<Class<?>, ErrorHandler> errorHandlers) {
+    this.errorHandlers = errorHandlers;
   }
 
   @Override
@@ -33,7 +33,7 @@ public class ExceptionTransformer implements ValueTransformer<JsonNode, Void> {
       return null;
     }
 
-    Collection<ExceptionHandler> handlers = exceptionHandlers.get(command.getClass());
+    Collection<ErrorHandler> handlers = errorHandlers.get(command.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }
@@ -41,7 +41,7 @@ public class ExceptionTransformer implements ValueTransformer<JsonNode, Void> {
     Metadata metadata = Metadata.builder().build().injectContext(context);
 
     handlers.stream()
-        .sorted(Comparator.comparingInt(ExceptionHandler::getPriority).reversed())
+        .sorted(Comparator.comparingInt(ErrorHandler::getPriority).reversed())
         .forEach(handler ->
             handler.invoke(command, metadata));
 

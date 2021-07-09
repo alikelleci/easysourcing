@@ -64,8 +64,8 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
         context.headers()
-            .remove("$exception")
-            .add("$exception", message.getBytes(StandardCharsets.UTF_8));
+            .remove("$error")
+            .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
         return Failure.builder()
             .command(command)

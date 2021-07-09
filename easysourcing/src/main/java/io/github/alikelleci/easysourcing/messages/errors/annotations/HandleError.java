@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.messages.exceptions.annotations;
+package io.github.alikelleci.easysourcing.messages.errors.annotations;
 
 import io.github.alikelleci.easysourcing.common.annotations.HandleMessage;
 
@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 @HandleMessage
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HandleException {
+public @interface HandleError {
 
 }

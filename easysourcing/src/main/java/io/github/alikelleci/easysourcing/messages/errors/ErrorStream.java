@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.messages.exceptions;
+package io.github.alikelleci.easysourcing.messages.errors;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,14 +13,14 @@ import org.apache.kafka.streams.kstream.KStream;
 import java.util.Set;
 
 @Slf4j
-public class ExceptionStream {
+public class ErrorStream {
 
   private final Set<String> topics;
-  private final MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers;
+  private final MultiValuedMap<Class<?>, ErrorHandler> errorHandlers;
 
-  public ExceptionStream(Set<String> topics, MultiValuedMap<Class<?>, ExceptionHandler> exceptionHandlers) {
+  public ErrorStream(Set<String> topics, MultiValuedMap<Class<?>, ErrorHandler> errorHandlers) {
     this.topics = topics;
-    this.exceptionHandlers = exceptionHandlers;
+    this.errorHandlers = errorHandlers;
   }
 
   public void buildStream(StreamsBuilder builder) {
@@ -31,7 +31,7 @@ public class ExceptionStream {
 
     // Failed commands --> Void
     failedCommands
-        .transformValues(() -> new ExceptionTransformer(exceptionHandlers));
+        .transformValues(() -> new ErrorTransformer(errorHandlers));
   }
 
 }

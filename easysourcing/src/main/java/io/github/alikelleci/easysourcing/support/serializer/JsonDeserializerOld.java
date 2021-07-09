@@ -92,7 +92,7 @@ public class JsonDeserializerOld<T> implements Deserializer<T> {
             .filter(entry -> StringUtils.isNoneBlank(entry.getKey(), entry.getValue().textValue()))
             .forEach(entry -> {
               if (entry.getKey().equals("$failure")) {
-                headers.add("$exception", entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
+                headers.add("$error", entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
               } else {
                 headers.add(entry.getKey(), entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
               }

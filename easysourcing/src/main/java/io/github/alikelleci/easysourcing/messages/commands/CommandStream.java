@@ -84,7 +84,7 @@ public class CommandStream {
 
     // Failed commands --> Push
     failedCommands
-        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".exceptions"),
+        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".errors"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
   }
