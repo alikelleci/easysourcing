@@ -59,9 +59,9 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
     try {
       events = commandHandler.invoke(command, snapshot, metadata);
     } catch (Exception e) {
-      if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
-        String message = ExceptionUtils.getRootCauseMessage(e);
+      String message = ExceptionUtils.getRootCauseMessage(e);
 
+      if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
         context.headers()
             .remove("$exception")
