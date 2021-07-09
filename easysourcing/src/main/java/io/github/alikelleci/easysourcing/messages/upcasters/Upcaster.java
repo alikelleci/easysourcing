@@ -3,7 +3,7 @@ package io.github.alikelleci.easysourcing.messages.upcasters;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Handler;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastException;
+import io.github.alikelleci.easysourcing.messages.upcasters.exceptions.UpcastingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -29,7 +29,7 @@ public class Upcaster implements Handler<JsonNode> {
     try {
       return doInvoke(jsonNode, metadata);
     } catch (Exception e) {
-      throw new UpcastException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
+      throw new UpcastingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
