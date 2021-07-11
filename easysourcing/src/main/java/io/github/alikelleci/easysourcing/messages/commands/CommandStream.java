@@ -18,9 +18,15 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.APPLICATION_ID;
 
 @Slf4j
 public class CommandStream {
@@ -28,22 +34,25 @@ public class CommandStream {
   private final Set<String> topics;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
-  private final OperationMode operationMode;
-  private final String appId;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, OperationMode operationMode, String appId) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.eventSourcingHandlers = eventSourcingHandlers;
-    this.operationMode = operationMode;
-    this.appId = appId;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    if (operationMode == OperationMode.RETRY) {
-      topics.clear();
-      topics.add(appId.concat(".unprocessed"));
-    }
+    // Stores
+    StoreBuilder storeBuilder1 = Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("command-redirects"), Serdes.String(), Serdes.Long())
+        .withLoggingEnabled(Collections.emptyMap());
+
+    StoreBuilder storeBuilder2 = Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
+        .withLoggingEnabled(Collections.emptyMap());
+
+    builder.addStateStore(storeBuilder1);
+    builder.addStateStore(storeBuilder2);
 
     // --> Commands
     KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
@@ -52,7 +61,7 @@ public class CommandStream {
 
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
-        .transform(() -> new CommandTransformer(commandHandlers, operationMode), "redirects", "snapshots")
+        .transform(() -> new CommandTransformer(commandHandlers), "command-redirects", "snapshots")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
@@ -109,7 +118,7 @@ public class CommandStream {
 
     // Unprocessed commands --> Push
     unprocessed
-        .to((key, command, recordContext) -> appId.concat(".unprocessed"),
+        .to((key, command, recordContext) -> APPLICATION_ID.concat(".commands-retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 

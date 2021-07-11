@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.errors;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.Result.Unprocessed;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -9,8 +10,14 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 
+import java.util.Collections;
 import java.util.Set;
+
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.APPLICATION_ID;
 
 @Slf4j
 public class ErrorStream {
@@ -24,14 +31,25 @@ public class ErrorStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Failed commands
-    KStream<String, JsonNode> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // Stores
+    StoreBuilder storeBuilder1 = Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("error-redirects"), Serdes.String(), Serdes.Long())
+        .withLoggingEnabled(Collections.emptyMap());
+
+    builder.addStateStore(storeBuilder1);
+
+    // --> Error commands
+    KStream<String, JsonNode> errorCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
-    // Failed commands --> Void
-    failedCommands
-        .transformValues(() -> new ErrorTransformer(errorHandlers));
+    // -->  Error commands
+    errorCommands
+        .transform(() -> new ErrorTransformer(errorHandlers), "error-redirects")
+        .filter((key, result) -> result instanceof Unprocessed)
+        .mapValues((key, result) -> result.getPayload())
+        .to((key, result, recordContext) -> APPLICATION_ID.concat(".errors-retry"),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 
 }

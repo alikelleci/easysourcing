@@ -2,6 +2,8 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.Result;
+import io.github.alikelleci.easysourcing.messages.errors.ErrorTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
@@ -11,8 +13,14 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 
+import java.util.Collections;
 import java.util.Set;
+
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.APPLICATION_ID;
 
 @Slf4j
 public class EventStream {
@@ -28,15 +36,25 @@ public class EventStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
+    // Stores
+    StoreBuilder storeBuilder1 = Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("event-redirects"), Serdes.String(), Serdes.Long())
+        .withLoggingEnabled(Collections.emptyMap());
+
+    builder.addStateStore(storeBuilder1);
+
     // --> Events
     KStream<String, JsonNode> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null);
 
-    // Events --> Void
+    // -->  Events
     events
-        .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new EventTransformer(eventHandlers));
+        .transform(() -> new EventTransformer(eventHandlers), "event-redirects")
+        .filter((key, result) -> result instanceof Result.Unprocessed)
+        .mapValues((key, result) -> result.getPayload())
+        .to((key, result, recordContext) -> APPLICATION_ID.concat(".events-retry"),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 
 }

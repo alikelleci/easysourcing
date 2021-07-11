@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
+
 @Slf4j
 public class CommandTransformer implements Transformer<String, JsonNode, KeyValue<String, CommandResult>> {
 
@@ -29,18 +31,16 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   private ProcessorContext context;
   private KeyValueStore<String, Long> redirects;
   private KeyValueStore<String, JsonNode> snapshots;
-  private final OperationMode operationMode;
 
 
-  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers, OperationMode operationMode) {
+  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
     this.commandHandlers = commandHandlers;
-    this.operationMode = operationMode;
   }
 
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.redirects = context.getStateStore("redirects");
+    this.redirects = context.getStateStore("command-redirects");
     this.snapshots = context.getStateStore("snapshots");
   }
 
@@ -56,16 +56,15 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       return null;
     }
 
-
     if (redirects.get(key) != null) {
-      if (operationMode == OperationMode.NORMAL) {
+      if (OPERATION_MODE == OperationMode.NORMAL) {
         log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
         return KeyValue.pair(key, Unprocessed.builder()
             .command(command)
             .build());
       }
 
-      if (operationMode == OperationMode.RETRY) {
+      if (OPERATION_MODE == OperationMode.RETRY) {
         String error = Optional.ofNullable(context.headers().lastHeader("$error"))
             .map(Header::value)
             .map(bytes -> new String(bytes, StandardCharsets.UTF_8))

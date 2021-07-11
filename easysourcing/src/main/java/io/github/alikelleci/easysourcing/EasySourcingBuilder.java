@@ -45,6 +45,7 @@ import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,7 +67,9 @@ public class EasySourcingBuilder {
   private KafkaStreams.StateListener stateListener;
   private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
   private boolean inMemoryStateStore;
-  private OperationMode operationMode = OperationMode.NORMAL;
+
+  public static OperationMode OPERATION_MODE = OperationMode.NORMAL;
+  public static String APPLICATION_ID;
 
   //  Handlers
   private final MultiValuedMap<String, Upcaster> upcasters = new ArrayListValuedHashMap<>();
@@ -89,6 +92,9 @@ public class EasySourcingBuilder {
     interceptors.add(CommonProducerInterceptor.class.getName());
 
     this.streamsConfig.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), interceptors);
+
+    APPLICATION_ID = streamsConfig.getProperty(StreamsConfig.APPLICATION_ID_CONFIG);
+
   }
 
   public EasySourcingBuilder setStateListener(KafkaStreams.StateListener stateListener) {
@@ -107,7 +113,7 @@ public class EasySourcingBuilder {
   }
 
   public EasySourcingBuilder setOperationMode(OperationMode operationMode) {
-    this.operationMode = operationMode;
+    this.OPERATION_MODE = operationMode;
     return this;
   }
 
@@ -147,45 +153,22 @@ public class EasySourcingBuilder {
   }
 
   private Topology buildTopology() {
-    // Stores
-    KeyValueBytesStoreSupplier supplier1 = Stores.persistentKeyValueStore("redirects");
-    KeyValueBytesStoreSupplier supplier2 = Stores.persistentKeyValueStore("snapshots");
-    if (inMemoryStateStore) {
-      supplier1 = Stores.inMemoryKeyValueStore(supplier1.name());
-      supplier2 = Stores.inMemoryKeyValueStore(supplier2.name());
-    }
-
-    StoreBuilder storeBuilder1 = Stores
-        .keyValueStoreBuilder(supplier1, Serdes.String(), Serdes.Long())
-        .withLoggingEnabled(Collections.emptyMap());
-
-    StoreBuilder storeBuilder2 = Stores
-        .keyValueStoreBuilder(supplier2, Serdes.String(), CustomSerdes.Json(JsonNode.class))
-        .withLoggingEnabled(Collections.emptyMap());
+//    if (operationMode == OperationMode.EVENT_SOURCED ||
+//        operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {
+//      log.warn("Operation mode is set to {}", operationMode);
+//      Set<String> eventSourcedTopics = getEventSourcedTopics();
+//      if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
+//        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers, operationMode);
+//        eventSourcingStream.buildStream(builder);
+//      }
+//      return builder.build();
+//    }
 
     StreamsBuilder builder = new StreamsBuilder();
-    builder.addStateStore(storeBuilder1);
-
-    if (CollectionUtils.isNotEmpty(getCommandsTopics()) || CollectionUtils.isNotEmpty(getEventSourcedTopics())) {
-      builder.addStateStore(storeBuilder2);
-    }
-
-    if (operationMode == OperationMode.EVENT_SOURCED ||
-        operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {
-      log.warn("Operation mode is set to {}", operationMode);
-      Set<String> eventSourcedTopics = getEventSourcedTopics();
-      if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers, operationMode);
-        eventSourcingStream.buildStream(builder);
-      }
-      return builder.build();
-    }
-
-    String appId = streamsConfig.getProperty(StreamsConfig.APPLICATION_ID_CONFIG);
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers, operationMode, appId);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers);
       commandStream.buildStream(builder);
     }
 
