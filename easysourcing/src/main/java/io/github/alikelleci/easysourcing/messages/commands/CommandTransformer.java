@@ -104,7 +104,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
             .build());
       }
 
-      log.debug("Command not processed: {}", message);
+      log.error("Command not processed: {}", message);
 
       redirects.put(key, 1L);
       return KeyValue.pair(key, Unprocessed.builder()

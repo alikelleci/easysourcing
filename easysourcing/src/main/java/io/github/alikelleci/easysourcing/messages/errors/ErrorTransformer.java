@@ -90,7 +90,7 @@ public class ErrorTransformer implements Transformer<String, JsonNode, KeyValue<
           .remove("$error")
           .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
-      log.debug("Error not processed: {}", message);
+      log.error("Error not processed: {}", message);
 
       redirects.put(key, 1L);
       return KeyValue.pair(key, Unprocessed.builder()

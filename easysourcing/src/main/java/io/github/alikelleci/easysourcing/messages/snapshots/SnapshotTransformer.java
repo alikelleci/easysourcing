@@ -90,7 +90,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
           .remove("$error")
           .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
-      log.debug("Snapshot not processed: {}", message);
+      log.error("Snapshot not processed: {}", message);
 
       redirects.put(key, 1L);
       return KeyValue.pair(key, Result.Unprocessed.builder()

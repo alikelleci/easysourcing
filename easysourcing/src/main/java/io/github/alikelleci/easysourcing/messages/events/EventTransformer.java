@@ -88,7 +88,7 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
           .remove("$error")
           .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
-      log.debug("Event not processed: {}", message);
+      log.error("Event not processed: {}", message);
 
       redirects.put(key, 1L);
       return KeyValue.pair(key, Result.Unprocessed.builder()
