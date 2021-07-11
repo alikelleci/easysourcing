@@ -42,7 +42,7 @@ public class CommandStream {
 
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
-        .transform(() -> new CommandTransformer(commandHandlers), "snapshots")
+        .transform(() -> new CommandTransformer(commandHandlers), "redirects", "snapshots")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
