@@ -27,8 +27,8 @@ public class EventTransformer implements ValueTransformer<JsonNode, Void> {
   }
 
   @Override
-  public Void transform(JsonNode jsonEvent) {
-    Object event = JsonUtils.toJavaType(jsonEvent);
+  public Void transform(JsonNode jsonNode) {
+    Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
       return null;
     }
