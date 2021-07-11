@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
@@ -26,9 +27,12 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   private ProcessorContext context;
   private KeyValueStore<String, Long> redirects;
   private KeyValueStore<String, JsonNode> snapshots;
+  private final OperationMode operationMode;
 
-  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
+
+  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers, OperationMode operationMode) {
     this.commandHandlers = commandHandlers;
+    this.operationMode = operationMode;
   }
 
   @Override
@@ -50,8 +54,8 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       return null;
     }
 
-    if (redirects.get(key) != null) {
-      log.debug("Redirecting command {}", command.getClass().getSimpleName());
+    if (redirects.get(key) != null && operationMode == OperationMode.NORMAL) {
+      log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
       return KeyValue.pair(key, Unprocessed.builder()
           .command(command)
           .build());

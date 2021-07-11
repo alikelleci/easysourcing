@@ -170,7 +170,7 @@ public class EasySourcingBuilder {
       builder.addStateStore(storeBuilder2);
     }
 
-    if (operationMode != OperationMode.NORMAL) {
+    if (operationMode == OperationMode.EVENT_SOURCED) {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
@@ -180,9 +180,11 @@ public class EasySourcingBuilder {
       return builder.build();
     }
 
+    String appId = streamsConfig.getProperty(StreamsConfig.APPLICATION_ID_CONFIG);
+
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers, operationMode, appId);
       commandStream.buildStream(builder);
     }
 

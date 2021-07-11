@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
@@ -27,14 +28,23 @@ public class CommandStream {
   private final Set<String> topics;
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
+  private final OperationMode operationMode;
+  private final String appId;
 
-  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
+  public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers, Map<Class<?>, EventSourcingHandler> eventSourcingHandlers, OperationMode operationMode, String appId) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
     this.eventSourcingHandlers = eventSourcingHandlers;
+    this.operationMode = operationMode;
+    this.appId = appId;
   }
 
   public void buildStream(StreamsBuilder builder) {
+    if (operationMode == OperationMode.RETRY) {
+      topics.clear();
+      topics.add(appId.concat(".unprocessed"));
+    }
+
     // --> Commands
     KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
@@ -42,7 +52,7 @@ public class CommandStream {
 
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
-        .transform(() -> new CommandTransformer(commandHandlers), "redirects", "snapshots")
+        .transform(() -> new CommandTransformer(commandHandlers, operationMode), "redirects", "snapshots")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
@@ -99,7 +109,7 @@ public class CommandStream {
 
     // Unprocessed commands --> Push
     unprocessed
-        .to((key, command, recordContext) -> "some-app-id.unprocessed",
+        .to((key, command, recordContext) -> appId.concat(".unprocessed"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 
