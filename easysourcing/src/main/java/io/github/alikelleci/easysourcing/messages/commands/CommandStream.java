@@ -69,7 +69,7 @@ public class CommandStream {
         .branch(
             (key, value) -> value instanceof Success, // processed
             (key, value) -> value instanceof Error,   // processed
-            (key, value) -> value == null             // not processed
+            (key, value) -> true                      // not processed
         );
 
     // Successful results --> Events
