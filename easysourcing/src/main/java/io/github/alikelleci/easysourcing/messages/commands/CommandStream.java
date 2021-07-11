@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.APPLICATION_ID;
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
 public class CommandStream {
@@ -53,6 +54,11 @@ public class CommandStream {
 
     builder.addStateStore(storeBuilder1);
     builder.addStateStore(storeBuilder2);
+
+    if (OPERATION_MODE == OperationMode.RETRY) {
+      topics.clear();
+      topics.add( APPLICATION_ID.concat(".commands-retry"));
+    }
 
     // --> Commands
     KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))

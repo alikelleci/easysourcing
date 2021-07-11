@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.snapshots;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.Result;
 import io.github.alikelleci.easysourcing.messages.events.EventTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.APPLICATION_ID;
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
 public class SnapshotStream {
@@ -38,6 +40,11 @@ public class SnapshotStream {
         .withLoggingEnabled(Collections.emptyMap());
 
     builder.addStateStore(storeBuilder1);
+
+    if (OPERATION_MODE == OperationMode.RETRY) {
+      topics.clear();
+      topics.add( APPLICATION_ID.concat(".snapshots-retry"));
+    }
 
     // --> Snapshots
     KStream<String, JsonNode> snapshots = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))

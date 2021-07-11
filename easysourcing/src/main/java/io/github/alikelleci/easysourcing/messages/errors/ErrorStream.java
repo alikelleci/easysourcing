@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.messages.errors;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.Result.Unprocessed;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.APPLICATION_ID;
+import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
 public class ErrorStream {
@@ -37,6 +39,11 @@ public class ErrorStream {
         .withLoggingEnabled(Collections.emptyMap());
 
     builder.addStateStore(storeBuilder1);
+
+    if (OPERATION_MODE == OperationMode.RETRY) {
+      topics.clear();
+      topics.add( APPLICATION_ID.concat(".errors-retry"));
+    }
 
     // --> Error commands
     KStream<String, JsonNode> errorCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
