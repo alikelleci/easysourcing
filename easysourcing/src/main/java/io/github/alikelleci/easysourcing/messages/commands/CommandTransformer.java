@@ -51,6 +51,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
     }
 
     if (redirects.get(key) != null) {
+      log.debug("Redirecting command {}", command.getClass().getSimpleName());
       return KeyValue.pair(key, Unprocessed.builder()
           .command(command)
           .build());
