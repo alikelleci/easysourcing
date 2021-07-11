@@ -14,8 +14,8 @@ import java.util.Comparator;
 
 public class SnapshotTransformer implements ValueTransformer<JsonNode, Void> {
 
-  private ProcessorContext context;
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
+  private ProcessorContext context;
 
   public SnapshotTransformer(MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers) {
     this.snapshotHandlers = snapshotHandlers;

@@ -14,8 +14,8 @@ import java.util.Comparator;
 
 public class ErrorTransformer implements ValueTransformer<JsonNode, Void> {
 
-  private ProcessorContext context;
   private final MultiValuedMap<Class<?>, ErrorHandler> errorHandlers;
+  private ProcessorContext context;
 
   public ErrorTransformer(MultiValuedMap<Class<?>, ErrorHandler> errorHandlers) {
     this.errorHandlers = errorHandlers;

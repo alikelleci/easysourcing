@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> {
 
-  private ProcessorContext context;
   private final MultiValuedMap<String, Upcaster> upcasters;
+  private ProcessorContext context;
 
   public PayloadTransformer(MultiValuedMap<String, Upcaster> upcasters) {
     this.upcasters = upcasters;

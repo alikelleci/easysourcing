@@ -15,9 +15,9 @@ import java.util.Optional;
 @Slf4j
 public class EventSourcingTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
 
-  private ProcessorContext context;
-  private KeyValueStore<String, JsonNode> store;
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
+  private ProcessorContext context;
+  private KeyValueStore<String, JsonNode> snapshots;
 
   public EventSourcingTransformer(Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.eventSourcingHandlers = eventSourcingHandlers;
@@ -26,7 +26,7 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = context.getStateStore("snapshots");
+    this.snapshots = context.getStateStore("snapshots");
   }
 
   @Override
@@ -41,7 +41,7 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
       return null;
     }
 
-    Object snapshot = Optional.ofNullable(store.get(key))
+    Object snapshot = Optional.ofNullable(snapshots.get(key))
         .map(JsonUtils::toJavaType)
         .orElse(null);
 
@@ -51,7 +51,7 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
 
     Optional.ofNullable(snapshot)
         .map(JsonUtils::toJsonNode)
-        .ifPresent(node -> store.put(key, node));
+        .ifPresent(node -> snapshots.put(key, node));
 
     return KeyValue.pair(key, snapshot);
   }

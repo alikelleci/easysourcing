@@ -21,9 +21,9 @@ import java.util.Optional;
 @Slf4j
 public class CommandTransformer implements Transformer<String, JsonNode, KeyValue<String, CommandResult>> {
 
-  private ProcessorContext context;
-  private KeyValueStore<String, JsonNode> store;
   private final Map<Class<?>, CommandHandler> commandHandlers;
+  private ProcessorContext context;
+  private KeyValueStore<String, JsonNode> snapshots;
 
   public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
     this.commandHandlers = commandHandlers;
@@ -32,7 +32,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = context.getStateStore("snapshots");
+    this.snapshots = context.getStateStore("snapshots");
   }
 
   @Override
@@ -47,7 +47,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       return null;
     }
 
-    Object snapshot = Optional.ofNullable(store.get(key))
+    Object snapshot = Optional.ofNullable(snapshots.get(key))
         .map(JsonUtils::toJavaType)
         .orElse(null);
 

@@ -14,8 +14,8 @@ import java.util.Comparator;
 
 public class EventTransformer implements ValueTransformer<JsonNode, Void> {
 
-  private ProcessorContext context;
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
+  private ProcessorContext context;
 
   public EventTransformer(MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
     this.eventHandlers = eventHandlers;
