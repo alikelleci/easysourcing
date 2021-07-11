@@ -3,7 +3,6 @@ package io.github.alikelleci.easysourcing.messages.errors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
-import io.github.alikelleci.easysourcing.messages.Result.Unprocessed;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -46,15 +45,20 @@ public class ErrorStream {
     }
 
     // --> Error commands
-    KStream<String, JsonNode> errorCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    KStream<String, JsonNode> errors = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
-    // -->  Error commands
-    errorCommands
+    // Errors --> Results
+    KStream<String, Object>[] results = errors
         .transform(() -> new ErrorTransformer(errorHandlers), "error-redirects")
-        .filter((key, result) -> result instanceof Unprocessed)
-        .mapValues((key, result) -> result.getPayload())
+        .branch(
+            (key, value) -> value == null, // processed
+            (key, value) -> value != null  // not processed
+        );
+
+    // Publish unprocessed records to retry topic
+    results[1]
         .to((key, result, recordContext) -> APPLICATION_ID.concat(".errors-retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }

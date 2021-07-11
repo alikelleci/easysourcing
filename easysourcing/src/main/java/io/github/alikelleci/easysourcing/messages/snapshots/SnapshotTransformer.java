@@ -3,8 +3,6 @@ package io.github.alikelleci.easysourcing.messages.snapshots;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.Result;
-import io.github.alikelleci.easysourcing.messages.events.EventHandler;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -14,7 +12,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -26,7 +23,7 @@ import java.util.Optional;
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
-public class SnapshotTransformer implements Transformer<String, JsonNode, KeyValue<String, Result>> {
+public class SnapshotTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
 
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
   private ProcessorContext context;
@@ -43,7 +40,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
   }
 
   @Override
-  public KeyValue<String, Result> transform(String key, JsonNode jsonNode) {
+  public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object snapshot = JsonUtils.toJavaType(jsonNode);
     if (snapshot == null) {
       return null;
@@ -57,9 +54,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
         log.debug("Redirecting snapshot {} ({})", snapshot.getClass().getSimpleName(), key);
-        return KeyValue.pair(key, Result.Unprocessed.builder()
-            .payload(snapshot)
-            .build());
+        return KeyValue.pair(key, snapshot);
       }
 
       if (OPERATION_MODE == OperationMode.RETRY) {
@@ -70,9 +65,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
 
         if (StringUtils.isBlank(error)) {
           log.debug("Redirecting snapshot {} ({})", snapshot.getClass().getSimpleName(), key);
-          return KeyValue.pair(key, Result.Unprocessed.builder()
-              .payload(snapshot)
-              .build());
+          return KeyValue.pair(key, snapshot);
         }
       }
     }
@@ -93,15 +86,12 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
       log.error("Snapshot not processed: {}", message);
 
       redirects.put(key, 1L);
-      return KeyValue.pair(key, Result.Unprocessed.builder()
-          .payload(snapshot)
-          .build());
+      return KeyValue.pair(key, snapshot);
+
     }
 
     redirects.put(key, null);
-    return KeyValue.pair(key, Result.Processed.builder()
-        .payload(snapshot)
-        .build());
+    return null;
   }
 
   @Override

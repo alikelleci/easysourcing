@@ -3,8 +3,6 @@ package io.github.alikelleci.easysourcing.messages.snapshots;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
-import io.github.alikelleci.easysourcing.messages.Result;
-import io.github.alikelleci.easysourcing.messages.events.EventTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -51,11 +49,16 @@ public class SnapshotStream {
         .filter((key, snapshot) -> key != null)
         .filter((key, snapshot) -> snapshot != null);
 
-    // -->  Snapshots
-    snapshots
+    // Snapshots --> Results
+    KStream<String, Object>[] results = snapshots
         .transform(() -> new SnapshotTransformer(snapshotHandlers), "snapshot-redirects")
-        .filter((key, result) -> result instanceof Result.Unprocessed)
-        .mapValues((key, result) -> result.getPayload())
+        .branch(
+            (key, value) -> value == null, // processed
+            (key, value) -> value != null  // not processed
+        );
+
+    // Publish unprocessed records to retry topic
+    results[1]
         .to((key, result, recordContext) -> APPLICATION_ID.concat(".snapshots-retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }

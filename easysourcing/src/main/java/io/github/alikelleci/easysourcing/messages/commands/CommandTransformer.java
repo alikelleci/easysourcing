@@ -5,7 +5,6 @@ import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Unprocessed;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +24,7 @@ import java.util.Optional;
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
-public class CommandTransformer implements Transformer<String, JsonNode, KeyValue<String, CommandResult>> {
+public class CommandTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private ProcessorContext context;
@@ -45,7 +44,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   }
 
   @Override
-  public KeyValue<String, CommandResult> transform(String key, JsonNode jsonNode) {
+  public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
       return null;
@@ -59,9 +58,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
         log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
-        return KeyValue.pair(key, Unprocessed.builder()
-            .command(command)
-            .build());
+        return KeyValue.pair(key, command);
       }
 
       if (OPERATION_MODE == OperationMode.RETRY) {
@@ -72,9 +69,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
 
         if (StringUtils.isBlank(error)) {
           log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
-          return KeyValue.pair(key, Unprocessed.builder()
-              .command(command)
-              .build());
+          return KeyValue.pair(key, command);
         }
       }
     }
@@ -107,9 +102,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       log.error("Command not processed: {}", message);
 
       redirects.put(key, 1L);
-      return KeyValue.pair(key, Unprocessed.builder()
-          .command(command)
-          .build());
+      return KeyValue.pair(key, command);
     }
 
     redirects.put(key, null);

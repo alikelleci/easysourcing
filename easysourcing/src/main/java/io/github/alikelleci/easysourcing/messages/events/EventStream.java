@@ -3,9 +3,6 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
-import io.github.alikelleci.easysourcing.messages.Result;
-import io.github.alikelleci.easysourcing.messages.errors.ErrorTransformer;
-import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +44,7 @@ public class EventStream {
 
     if (OPERATION_MODE == OperationMode.RETRY) {
       topics.clear();
-      topics.add( APPLICATION_ID.concat(".events-retry"));
+      topics.add(APPLICATION_ID.concat(".events-retry"));
     }
 
     // --> Events
@@ -55,11 +52,16 @@ public class EventStream {
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null);
 
-    // -->  Events
-    events
+    // Events --> Results
+    KStream<String, Object>[] results = events
         .transform(() -> new EventTransformer(eventHandlers), "event-redirects")
-        .filter((key, result) -> result instanceof Result.Unprocessed)
-        .mapValues((key, result) -> result.getPayload())
+        .branch(
+            (key, value) -> value == null, // processed
+            (key, value) -> value != null  // not processed
+        );
+
+    // Publish unprocessed records to retry topic
+    results[1]
         .to((key, result, recordContext) -> APPLICATION_ID.concat(".events-retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }

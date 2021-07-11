@@ -3,7 +3,6 @@ package io.github.alikelleci.easysourcing.messages.events;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.Result;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -24,7 +23,7 @@ import java.util.Optional;
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
-public class EventTransformer implements Transformer<String, JsonNode, KeyValue<String, Result>> {
+public class EventTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
 
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
   private ProcessorContext context;
@@ -41,7 +40,7 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
   }
 
   @Override
-  public KeyValue<String, Result> transform(String key, JsonNode jsonNode) {
+  public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
       return null;
@@ -55,9 +54,7 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
         log.debug("Redirecting event {} ({})", event.getClass().getSimpleName(), key);
-        return KeyValue.pair(key, Result.Unprocessed.builder()
-            .payload(event)
-            .build());
+        return KeyValue.pair(key, event);
       }
 
       if (OPERATION_MODE == OperationMode.RETRY) {
@@ -68,9 +65,7 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
 
         if (StringUtils.isBlank(error)) {
           log.debug("Redirecting event {} ({})", event.getClass().getSimpleName(), key);
-          return KeyValue.pair(key, Result.Unprocessed.builder()
-              .payload(event)
-              .build());
+          return KeyValue.pair(key, event);
         }
       }
     }
@@ -91,15 +86,11 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
       log.error("Event not processed: {}", message);
 
       redirects.put(key, 1L);
-      return KeyValue.pair(key, Result.Unprocessed.builder()
-          .payload(event)
-          .build());
+      return KeyValue.pair(key, event);
     }
 
     redirects.put(key, null);
-    return KeyValue.pair(key, Result.Processed.builder()
-        .payload(event)
-        .build());
+    return null;
   }
 
   @Override
