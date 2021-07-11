@@ -3,7 +3,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
@@ -56,8 +56,8 @@ public class CommandStream {
 
     // Failed results --> Failed commands
     KStream<String, Object> failedCommands = commandResults
-        .filter((key, result) -> result instanceof Failure)
-        .mapValues((key, result) -> (Failure) result)
+        .filter((key, result) -> result instanceof Error)
+        .mapValues((key, result) -> (Error) result)
         .mapValues(CommandResult::getCommand)
         .filter((key, command) -> command != null)
         .filter((key, command) -> CommonUtils.getTopicInfo(command) != null)

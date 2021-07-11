@@ -22,7 +22,7 @@ public interface CommandResult {
 
   @Value
   @Builder
-  class Failure implements CommandResult {
+  class Error implements CommandResult {
     private Object command;
     private String message;
   }

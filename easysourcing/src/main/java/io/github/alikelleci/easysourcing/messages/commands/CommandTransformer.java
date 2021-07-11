@@ -2,7 +2,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +65,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
             .remove("$error")
             .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
-        return KeyValue.pair(key, Failure.builder()
+        return KeyValue.pair(key, Error.builder()
             .command(command)
             .message(message)
             .build());
