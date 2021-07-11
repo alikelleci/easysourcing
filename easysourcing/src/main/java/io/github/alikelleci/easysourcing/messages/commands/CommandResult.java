@@ -26,4 +26,10 @@ public interface CommandResult {
     private Object command;
     private String message;
   }
+
+  @Value
+  @Builder
+  class Unprocessed implements CommandResult {
+    private Object command;
+  }
 }

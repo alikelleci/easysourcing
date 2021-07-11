@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Unprocessed;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -23,6 +24,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private ProcessorContext context;
+  private KeyValueStore<String, Long> redirects;
   private KeyValueStore<String, JsonNode> snapshots;
 
   public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
@@ -32,6 +34,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
+    this.redirects = context.getStateStore("redirects");
     this.snapshots = context.getStateStore("snapshots");
   }
 
@@ -47,6 +50,12 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       return null;
     }
 
+    if (redirects.get(key) != null) {
+      return KeyValue.pair(key, Unprocessed.builder()
+          .command(command)
+          .build());
+    }
+
     Object snapshot = Optional.ofNullable(snapshots.get(key))
         .map(JsonUtils::toJavaType)
         .orElse(null);
@@ -58,21 +67,29 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       events = commandHandler.invoke(command, snapshot, metadata);
     } catch (Exception e) {
       String message = ExceptionUtils.getRootCauseMessage(e);
+      context.headers()
+          .remove("$error")
+          .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
-        context.headers()
-            .remove("$error")
-            .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
+        redirects.put(key, null);
         return KeyValue.pair(key, Error.builder()
             .command(command)
             .message(message)
             .build());
       }
-      throw e;
+
+      log.debug("Command not processed: {}", message);
+
+      redirects.put(key, 1L);
+      return KeyValue.pair(key, Unprocessed.builder()
+          .command(command)
+          .build());
     }
 
+    redirects.put(key, null);
     return KeyValue.pair(key, Success.builder()
         .command(command)
         .events(events)

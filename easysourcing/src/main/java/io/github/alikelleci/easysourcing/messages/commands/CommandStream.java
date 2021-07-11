@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Unprocessed;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
@@ -63,6 +64,15 @@ public class CommandStream {
         .filter((key, command) -> CommonUtils.getTopicInfo(command) != null)
         .filter((key, command) -> CommonUtils.getAggregateId(command) != null);
 
+    // Unprocessed results --> Unprocessed commands
+    KStream<String, Object> unprocessed = commandResults
+        .filter((key, result) -> result instanceof Unprocessed)
+        .mapValues((key, result) -> (Unprocessed) result)
+        .mapValues(CommandResult::getCommand)
+        .filter((key, command) -> command != null)
+        .filter((key, command) -> CommonUtils.getTopicInfo(command) != null)
+        .filter((key, command) -> CommonUtils.getAggregateId(command) != null);
+
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .mapValues(JsonUtils::toJsonNode)
@@ -87,6 +97,10 @@ public class CommandStream {
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".errors"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
+    // Unprocessed commands --> Push
+    unprocessed
+        .to((key, command, recordContext) -> "some-app-id.unprocessed",
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 
 }

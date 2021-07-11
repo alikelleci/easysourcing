@@ -147,20 +147,27 @@ public class EasySourcingBuilder {
   }
 
   private Topology buildTopology() {
-    // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshots");
+    // Stores
+    KeyValueBytesStoreSupplier supplier1 = Stores.persistentKeyValueStore("redirects");
+    KeyValueBytesStoreSupplier supplier2 = Stores.persistentKeyValueStore("snapshots");
     if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore(supplier.name());
+      supplier1 = Stores.inMemoryKeyValueStore(supplier1.name());
+      supplier2 = Stores.inMemoryKeyValueStore(supplier2.name());
     }
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(JsonNode.class))
+
+    StoreBuilder storeBuilder1 = Stores
+        .keyValueStoreBuilder(supplier1, Serdes.String(), Serdes.Long())
         .withLoggingEnabled(Collections.emptyMap());
 
+    StoreBuilder storeBuilder2 = Stores
+        .keyValueStoreBuilder(supplier2, Serdes.String(), CustomSerdes.Json(JsonNode.class))
+        .withLoggingEnabled(Collections.emptyMap());
 
     StreamsBuilder builder = new StreamsBuilder();
+    builder.addStateStore(storeBuilder1);
 
     if (CollectionUtils.isNotEmpty(getCommandsTopics()) || CollectionUtils.isNotEmpty(getEventSourcedTopics())) {
-      builder.addStateStore(storeBuilder);
+      builder.addStateStore(storeBuilder2);
     }
 
     if (operationMode != OperationMode.NORMAL) {
