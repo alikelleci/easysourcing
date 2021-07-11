@@ -40,16 +40,13 @@ public class JsonDeserializerOld<T> implements Deserializer<T> {
     try {
       JsonNode root = objectMapper.readTree(bytes);
 
+      // Check if type info is available
       String className = Optional.ofNullable(root.get("@class"))
           .map(JsonNode::textValue)
           .orElse(null);
 
-      if (StringUtils.isBlank(className)) {
-        return null;
-      }
-
       // Added for backwards compatibility
-      if (className.startsWith("com.github.easysourcing.")) {
+      if (StringUtils.startsWith(className, "com.github.easysourcing.")) {
         // Extract payload
         root = root.get("payload");
 
@@ -72,16 +69,13 @@ public class JsonDeserializerOld<T> implements Deserializer<T> {
     try {
       JsonNode root = objectMapper.readTree(bytes);
 
+      // Check if type info is available
       String className = Optional.ofNullable(root.get("@class"))
           .map(JsonNode::textValue)
           .orElse(null);
 
-      if (StringUtils.isBlank(className)) {
-        return null;
-      }
-
       // Added for backwards compatibility
-      if (className.startsWith("com.github.easysourcing.")) {
+      if (StringUtils.startsWith(className, "com.github.easysourcing.")) {
 
         // Extract metadata
         JsonNode metadata = root.get("metadata");
