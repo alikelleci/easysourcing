@@ -57,7 +57,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
 
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
-        log.warn("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
+        log.warn("Unprocessed commands found, command queued {} ({})", command.getClass().getSimpleName(), key);
         return KeyValue.pair(key, command);
       }
 
@@ -68,7 +68,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
             .orElse(null);
 
         if (StringUtils.isBlank(error)) {
-          log.warn("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
+          log.warn("Unprocessed commands found, command queued {} ({})", command.getClass().getSimpleName(), key);
           return KeyValue.pair(key, command);
         }
       }

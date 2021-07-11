@@ -53,7 +53,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
 
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
-        log.warn("Redirecting snapshot {} ({})", snapshot.getClass().getSimpleName(), key);
+        log.warn("Unprocessed snapshots found, snapshot queued {} ({})", snapshot.getClass().getSimpleName(), key);
         return KeyValue.pair(key, snapshot);
       }
 
@@ -64,7 +64,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
             .orElse(null);
 
         if (StringUtils.isBlank(error)) {
-          log.warn("Redirecting snapshot {} ({})", snapshot.getClass().getSimpleName(), key);
+          log.warn("Unprocessed snapshots found, snapshot queued {} ({})", snapshot.getClass().getSimpleName(), key);
           return KeyValue.pair(key, snapshot);
         }
       }

@@ -53,7 +53,7 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
 
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
-        log.warn("Redirecting event {} ({})", event.getClass().getSimpleName(), key);
+        log.warn("Unprocessed events found, event queued {} ({})", event.getClass().getSimpleName(), key);
         return KeyValue.pair(key, event);
       }
 
@@ -64,7 +64,7 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
             .orElse(null);
 
         if (StringUtils.isBlank(error)) {
-          log.warn("Redirecting event {} ({})", event.getClass().getSimpleName(), key);
+          log.warn("Unprocessed events found, event queued {} ({})", event.getClass().getSimpleName(), key);
           return KeyValue.pair(key, event);
         }
       }
