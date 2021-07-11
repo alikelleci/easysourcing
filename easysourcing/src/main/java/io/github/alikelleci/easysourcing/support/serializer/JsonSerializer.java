@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.support.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.common.errors.SerializationException;
