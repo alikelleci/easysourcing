@@ -42,7 +42,7 @@ public class EventSourcingStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .transformValues(() -> new PayloadTransformer(upcasters))
-        .transform(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshot-store")
+        .transform(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
         .filter((key, snapshot) -> snapshot != null)
         .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
         .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);

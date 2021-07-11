@@ -32,7 +32,7 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = context.getStateStore("snapshot-store");
+    this.store = context.getStateStore("snapshots");
   }
 
   @Override

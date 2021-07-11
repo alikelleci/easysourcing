@@ -148,7 +148,7 @@ public class EasySourcingBuilder {
 
   private Topology buildTopology() {
     // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshot-store");
+    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshots");
     if (inMemoryStateStore) {
       supplier = Stores.inMemoryKeyValueStore(supplier.name());
     }

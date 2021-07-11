@@ -26,7 +26,7 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.store = context.getStateStore("snapshot-store");
+    this.store = context.getStateStore("snapshots");
   }
 
   @Override
