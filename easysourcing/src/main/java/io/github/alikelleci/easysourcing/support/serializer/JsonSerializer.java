@@ -27,13 +27,7 @@ public class JsonSerializer<T> implements Serializer<T> {
     }
 
     try {
-      ObjectNode root = objectMapper.createObjectNode();
-      root.put("@class", object.getClass().getName());
-
-      ObjectNode objectNode = objectMapper.convertValue(object, ObjectNode.class);
-      root.setAll(objectNode);
-
-      return objectMapper.writeValueAsBytes(root);
+      return objectMapper.writeValueAsBytes(object);
 
     } catch (Exception e) {
       throw new SerializationException("Error serializing JSON", ExceptionUtils.getRootCause(e));
