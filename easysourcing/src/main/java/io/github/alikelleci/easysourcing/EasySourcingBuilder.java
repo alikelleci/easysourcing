@@ -163,7 +163,7 @@ public class EasySourcingBuilder {
       builder.addStateStore(storeBuilder);
     }
 
-    if (operationMode != OperationMode.NORMAL) {
+    if (operationMode == OperationMode.EVENT_SOURCED) {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
