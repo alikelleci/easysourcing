@@ -8,7 +8,9 @@ import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Unprocessed;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.common.header.Header;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -54,11 +56,28 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       return null;
     }
 
-    if (redirects.get(key) != null && operationMode == OperationMode.NORMAL) {
-      log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
-      return KeyValue.pair(key, Unprocessed.builder()
-          .command(command)
-          .build());
+
+    if (redirects.get(key) != null) {
+      if (operationMode == OperationMode.NORMAL) {
+        log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
+        return KeyValue.pair(key, Unprocessed.builder()
+            .command(command)
+            .build());
+      }
+
+      if (operationMode == OperationMode.RETRY) {
+        String error = Optional.ofNullable(context.headers().lastHeader("$error"))
+            .map(Header::value)
+            .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+            .orElse(null);
+
+        if (StringUtils.isBlank(error)) {
+          log.debug("Redirecting command {} ({})", command.getClass().getSimpleName(), key);
+          return KeyValue.pair(key, Unprocessed.builder()
+              .command(command)
+              .build());
+        }
+      }
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
