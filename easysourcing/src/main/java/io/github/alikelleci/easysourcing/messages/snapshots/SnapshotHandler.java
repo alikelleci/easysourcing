@@ -34,8 +34,6 @@ public class SnapshotHandler implements Handler<Void> {
     Object snapshot = args[0];
     Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling snapshot: {} ({})", snapshot.getClass().getSimpleName(), CommonUtils.getAggregateId(snapshot));
-
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, metadata));
     } catch (Exception e) {

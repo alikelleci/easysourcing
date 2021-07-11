@@ -2,17 +2,21 @@ package io.github.alikelleci.easysourcing.messages.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
 import java.util.Comparator;
 
-
-public class EventTransformer implements ValueTransformer<JsonNode, Void> {
+@Slf4j
+public class EventTransformer implements Transformer<String, JsonNode, KeyValue<String, Void>> {
 
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
   private ProcessorContext context;
@@ -27,16 +31,18 @@ public class EventTransformer implements ValueTransformer<JsonNode, Void> {
   }
 
   @Override
-  public Void transform(JsonNode jsonNode) {
+  public KeyValue<String, Void> transform(String key, JsonNode jsonNode) {
     Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     Collection<EventHandler> handlers = eventHandlers.get(event.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
-      return null;
+      return KeyValue.pair(key, null);
     }
+
+    log.debug("Handling event: {} ({})", event.getClass().getSimpleName(), key);
 
     Metadata metadata = Metadata.builder().build().injectContext(context);
 
@@ -45,7 +51,7 @@ public class EventTransformer implements ValueTransformer<JsonNode, Void> {
         .forEach(handler ->
             handler.invoke(event, metadata));
 
-    return null;
+    return KeyValue.pair(key, null);
   }
 
   @Override

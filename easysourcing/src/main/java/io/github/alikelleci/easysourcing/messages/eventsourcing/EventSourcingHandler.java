@@ -37,8 +37,6 @@ public class EventSourcingHandler implements Handler<Object> {
     Object snapshot = args[1];
     Metadata metadata = (Metadata) args[2];
 
-    log.debug("Applying event: {} ({})", event.getClass().getSimpleName(), CommonUtils.getAggregateId(event));
-
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(event, snapshot, metadata));
     } catch (Exception e) {

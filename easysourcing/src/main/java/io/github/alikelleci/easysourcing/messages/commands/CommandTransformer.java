@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -39,13 +40,15 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   public KeyValue<String, CommandResult> transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     CommandHandler commandHandler = commandHandlers.get(command.getClass());
     if (commandHandler == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
+
+    log.debug("Handling command: {} ({})", command.getClass().getSimpleName(), key);
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
         .map(JsonUtils::toJavaType)

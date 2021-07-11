@@ -49,8 +49,6 @@ public class CommandHandler implements Handler<List<Object>> {
     Object snapshot = args[1];
     Metadata metadata = (Metadata) args[2];
 
-    log.debug("Handling command: {} ({})", command.getClass().getSimpleName(), CommonUtils.getAggregateId(command));
-
     try {
       validate(command);
       return Failsafe.with(retryPolicy).get(() -> doInvoke(command, snapshot, metadata));

@@ -34,8 +34,6 @@ public class EventHandler implements Handler<Void> {
     Object event = args[0];
     Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling event: {} ({})", event.getClass().getSimpleName(), CommonUtils.getAggregateId(event));
-
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(event, metadata));
     } catch (Exception e) {

@@ -34,8 +34,6 @@ public class ErrorHandler implements Handler<Void> {
     Object command = args[0];
     Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling error: {} ({})", command.getClass().getSimpleName(), CommonUtils.getAggregateId(command));
-
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(command, metadata));
     } catch (Exception e) {
