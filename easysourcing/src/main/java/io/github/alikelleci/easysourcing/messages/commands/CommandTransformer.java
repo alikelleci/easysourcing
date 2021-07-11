@@ -47,12 +47,12 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     CommandHandler commandHandler = commandHandlers.get(command.getClass());
     if (commandHandler == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     if (redirects.get(key) != null) {

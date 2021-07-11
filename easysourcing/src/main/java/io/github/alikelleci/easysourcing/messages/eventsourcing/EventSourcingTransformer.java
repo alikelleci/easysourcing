@@ -33,12 +33,12 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
   public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     EventSourcingHandler eventSourcingHandler = eventSourcingHandlers.get(event.getClass());
     if (eventSourcingHandler == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
