@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
-import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
