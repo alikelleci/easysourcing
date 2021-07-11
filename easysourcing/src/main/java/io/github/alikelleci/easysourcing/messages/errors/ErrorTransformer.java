@@ -53,7 +53,7 @@ public class ErrorTransformer implements Transformer<String, JsonNode, KeyValue<
 
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
-        log.debug("Redirecting error {} ({})", command.getClass().getSimpleName(), key);
+        log.warn("Redirecting error {} ({})", command.getClass().getSimpleName(), key);
         return KeyValue.pair(key, command);
       }
 
@@ -64,7 +64,7 @@ public class ErrorTransformer implements Transformer<String, JsonNode, KeyValue<
             .orElse(null);
 
         if (StringUtils.isBlank(error)) {
-          log.debug("Redirecting error {} ({})", command.getClass().getSimpleName(), key);
+          log.warn("Redirecting error {} ({})", command.getClass().getSimpleName(), key);
           return KeyValue.pair(key, command);
         }
       }
