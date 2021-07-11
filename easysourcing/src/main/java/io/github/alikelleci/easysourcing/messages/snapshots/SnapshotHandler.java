@@ -5,6 +5,7 @@ import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.snapshots.exceptions.SnapshotProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -32,6 +33,8 @@ public class SnapshotHandler implements Handler<Void> {
   public Void invoke(Object... args) {
     Object snapshot = args[0];
     Metadata metadata = (Metadata) args[1];
+
+    log.debug("Handling snapshot: {} ({})", snapshot.getClass().getSimpleName(), CommonUtils.getAggregateId(snapshot));
 
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(snapshot, metadata));

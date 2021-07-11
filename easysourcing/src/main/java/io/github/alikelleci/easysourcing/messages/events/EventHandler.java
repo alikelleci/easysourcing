@@ -5,6 +5,7 @@ import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.events.exceptions.EventProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -32,6 +33,8 @@ public class EventHandler implements Handler<Void> {
   public Void invoke(Object... args) {
     Object event = args[0];
     Metadata metadata = (Metadata) args[1];
+
+    log.debug("Handling event: {} ({})", event.getClass().getSimpleName(), CommonUtils.getAggregateId(event));
 
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(event, metadata));

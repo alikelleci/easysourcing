@@ -41,8 +41,6 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
       return KeyValue.pair(key, null);
     }
 
-    log.debug("Applying event: {} ({})", event.getClass().getSimpleName(), key);
-
     Object snapshot = Optional.ofNullable(snapshots.get(key))
         .map(JsonUtils::toJavaType)
         .orElse(null);

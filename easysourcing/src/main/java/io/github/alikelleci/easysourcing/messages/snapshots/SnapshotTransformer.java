@@ -40,8 +40,6 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
       return KeyValue.pair(key, null);
     }
 
-    log.debug("Handling snapshot: {} ({})", snapshot.getClass().getSimpleName(), key);
-
     Metadata metadata = Metadata.builder().build().injectContext(context);
 
     handlers.stream()

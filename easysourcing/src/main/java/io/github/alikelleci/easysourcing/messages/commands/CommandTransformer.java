@@ -47,8 +47,6 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       return KeyValue.pair(key, null);
     }
 
-    log.debug("Handling command: {} ({})", command.getClass().getSimpleName(), key);
-
     Object snapshot = Optional.ofNullable(snapshots.get(key))
         .map(JsonUtils::toJavaType)
         .orElse(null);

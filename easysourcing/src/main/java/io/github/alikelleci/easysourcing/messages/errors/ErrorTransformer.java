@@ -40,8 +40,6 @@ public class ErrorTransformer implements Transformer<String, JsonNode, KeyValue<
       return KeyValue.pair(key, null);
     }
 
-    log.debug("Handling error: {} ({})", command.getClass().getSimpleName(), key);
-
     Metadata metadata = Metadata.builder().build().injectContext(context);
 
     handlers.stream()

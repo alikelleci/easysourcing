@@ -40,8 +40,6 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
       return KeyValue.pair(key, null);
     }
 
-    log.debug("Handling event: {} ({})", event.getClass().getSimpleName(), key);
-
     Metadata metadata = Metadata.builder().build().injectContext(context);
 
     handlers.stream()
