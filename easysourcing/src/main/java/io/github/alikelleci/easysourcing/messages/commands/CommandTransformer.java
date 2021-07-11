@@ -8,7 +8,8 @@ import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.kstream.ValueTransformer;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -19,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class CommandTransformer implements ValueTransformer<JsonNode, CommandResult> {
+public class CommandTransformer implements Transformer<String, JsonNode, KeyValue<String, CommandResult>> {
 
   private ProcessorContext context;
   private KeyValueStore<String, JsonNode> store;
@@ -36,7 +37,7 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
   }
 
   @Override
-  public CommandResult transform(JsonNode jsonNode) {
+  public KeyValue<String, CommandResult> transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
       return null;
@@ -46,8 +47,6 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
     if (commandHandler == null) {
       return null;
     }
-
-    String key = CommonUtils.getAggregateId(command);
 
     Object snapshot = Optional.ofNullable(store.get(key))
         .map(JsonUtils::toJavaType)
@@ -67,18 +66,18 @@ public class CommandTransformer implements ValueTransformer<JsonNode, CommandRes
             .remove("$error")
             .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
-        return Failure.builder()
+        return KeyValue.pair(key, Failure.builder()
             .command(command)
             .message(message)
-            .build();
+            .build());
       }
       throw e;
     }
 
-    return Success.builder()
+    return KeyValue.pair(key, Success.builder()
         .command(command)
         .events(events)
-        .build();
+        .build());
   }
 
   @Override

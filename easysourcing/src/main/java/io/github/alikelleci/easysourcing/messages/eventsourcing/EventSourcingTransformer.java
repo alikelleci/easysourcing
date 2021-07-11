@@ -2,10 +2,10 @@ package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.streams.kstream.ValueTransformer;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class EventSourcingTransformer implements ValueTransformer<JsonNode, Object> {
+public class EventSourcingTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
 
   private ProcessorContext context;
   private KeyValueStore<String, JsonNode> store;
@@ -30,7 +30,7 @@ public class EventSourcingTransformer implements ValueTransformer<JsonNode, Obje
   }
 
   @Override
-  public Object transform(JsonNode jsonNode) {
+  public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
       return null;
@@ -40,8 +40,6 @@ public class EventSourcingTransformer implements ValueTransformer<JsonNode, Obje
     if (eventSourcingHandler == null) {
       return null;
     }
-
-    String key = CommonUtils.getAggregateId(event);
 
     Object snapshot = Optional.ofNullable(store.get(key))
         .map(JsonUtils::toJavaType)
@@ -55,7 +53,7 @@ public class EventSourcingTransformer implements ValueTransformer<JsonNode, Obje
         .map(JsonUtils::toJsonNode)
         .ifPresent(node -> store.put(key, node));
 
-    return snapshot;
+    return KeyValue.pair(key, snapshot);
   }
 
   @Override
