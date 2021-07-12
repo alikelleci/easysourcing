@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
 import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
@@ -20,7 +19,6 @@ import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSn
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
-import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,15 +37,11 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +59,7 @@ public class EasySourcingBuilder {
 
   private KafkaStreams.StateListener stateListener;
   private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
-  private boolean inMemoryStateStore;
+
   private OperationMode operationMode = OperationMode.NORMAL;
 
   //  Handlers
@@ -98,11 +92,6 @@ public class EasySourcingBuilder {
 
   public EasySourcingBuilder setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
     this.uncaughtExceptionHandler = exceptionHandler;
-    return this;
-  }
-
-  public EasySourcingBuilder setInMemoryStateStore(boolean inMemoryStateStore) {
-    this.inMemoryStateStore = inMemoryStateStore;
     return this;
   }
 
@@ -147,23 +136,9 @@ public class EasySourcingBuilder {
   }
 
   private Topology buildTopology() {
-    // Snapshot store
-    KeyValueBytesStoreSupplier supplier = Stores.persistentKeyValueStore("snapshots");
-    if (inMemoryStateStore) {
-      supplier = Stores.inMemoryKeyValueStore(supplier.name());
-    }
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(supplier, Serdes.String(), CustomSerdes.Json(JsonNode.class))
-        .withLoggingEnabled(Collections.emptyMap());
-
-
     StreamsBuilder builder = new StreamsBuilder();
 
-    if (CollectionUtils.isNotEmpty(getCommandsTopics()) || CollectionUtils.isNotEmpty(getEventSourcedTopics())) {
-      builder.addStateStore(storeBuilder);
-    }
-
-    if (operationMode == OperationMode.RESTORE_STATE) {
+    if (operationMode == OperationMode.RESTORE_SNAPSHOTS) {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
