@@ -50,7 +50,7 @@ public class CommandStream {
         .mapValues((key, result) -> (Success) result)
         .flatMapValues(Success::getEvents);
 
-    // Failed results --> Failed commands
+    // Error results --> Error commands
     KStream<String, Object> failedCommands = commandResults
         .filter((key, result) -> result instanceof Error)
         .mapValues((key, result) -> (Error) result)
@@ -72,7 +72,7 @@ public class CommandStream {
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Failed commands --> Push
+    // Error commands --> Push
     failedCommands
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".errors"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));

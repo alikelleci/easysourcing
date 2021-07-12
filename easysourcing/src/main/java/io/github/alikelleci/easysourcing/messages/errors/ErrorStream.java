@@ -24,12 +24,12 @@ public class ErrorStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Failed commands
+    // --> Error commands
     KStream<String, JsonNode> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
-    // Failed commands --> Void
+    // Error commands --> Void
     failedCommands
         .transformValues(() -> new ErrorTransformer(errorHandlers));
   }
