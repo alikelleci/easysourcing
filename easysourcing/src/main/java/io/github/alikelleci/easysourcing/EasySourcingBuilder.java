@@ -163,12 +163,11 @@ public class EasySourcingBuilder {
       builder.addStateStore(storeBuilder);
     }
 
-    if (operationMode == OperationMode.EVENT_SOURCED ||
-        operationMode == OperationMode.EVENT_SOURCED_PUBLISH) {
+    if (operationMode == OperationMode.RESTORE_STATE) {
       log.warn("Operation mode is set to {}", operationMode);
       Set<String> eventSourcedTopics = getEventSourcedTopics();
       if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers, operationMode);
+        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers);
         eventSourcingStream.buildStream(builder);
       }
       return builder.build();
