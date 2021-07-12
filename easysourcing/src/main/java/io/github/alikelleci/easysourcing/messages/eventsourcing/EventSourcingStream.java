@@ -32,13 +32,6 @@ public class EventSourcingStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // Snapshots state store
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
-        .withLoggingEnabled(Collections.emptyMap());
-
-    builder.addStateStore(storeBuilder);
-
     // --> Events
     KStream<String, JsonNode> events = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, event) -> key != null)
@@ -47,7 +40,7 @@ public class EventSourcingStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots", "redirects");
 
   }
 

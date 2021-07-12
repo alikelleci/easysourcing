@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
 import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
@@ -8,17 +9,16 @@ import io.github.alikelleci.easysourcing.messages.errors.ErrorHandler;
 import io.github.alikelleci.easysourcing.messages.errors.ErrorStream;
 import io.github.alikelleci.easysourcing.messages.errors.annotations.HandleError;
 import io.github.alikelleci.easysourcing.messages.events.EventHandler;
-import io.github.alikelleci.easysourcing.messages.events.EventStream;
 import io.github.alikelleci.easysourcing.messages.events.annotations.HandleEvent;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingStream;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.annotations.ApplyEvent;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
-import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
 import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
+import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,11 +37,13 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
+import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,19 +140,25 @@ public class EasySourcingBuilder {
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
-    if (operationMode == OperationMode.RESTORE_SNAPSHOTS) {
-      log.warn("Operation mode is set to {}", operationMode);
-      Set<String> eventSourcedTopics = getEventSourcedTopics();
-      if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
-        EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers);
-        eventSourcingStream.buildStream(builder);
-      }
-      return builder.build();
+    // Redirects state store
+    builder.addStateStore(Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("redirects"), Serdes.String(), Serdes.Long())
+        .withLoggingEnabled(Collections.emptyMap()));
+
+    // Snapshots state store
+    builder.addStateStore(Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
+        .withLoggingEnabled(Collections.emptyMap()));
+
+    Set<String> eventSourcedTopics = getEventSourcedTopics();
+    if (CollectionUtils.isNotEmpty(eventSourcedTopics)) {
+      EventSourcingStream eventSourcingStream = new EventSourcingStream(eventSourcedTopics, upcasters, eventSourcingHandlers);
+      eventSourcingStream.buildStream(builder);
     }
 
     Set<String> commandsTopics = getCommandsTopics();
     if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, eventSourcingHandlers);
+      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers);
       commandStream.buildStream(builder);
     }
 
@@ -160,17 +168,17 @@ public class EasySourcingBuilder {
       errorStream.buildStream(builder);
     }
 
-    Set<String> eventsTopics = getEventsTopics();
-    if (CollectionUtils.isNotEmpty(eventsTopics)) {
-      EventStream eventStream = new EventStream(eventsTopics, upcasters, eventHandlers);
-      eventStream.buildStream(builder);
-    }
-
-    Set<String> snapshotTopics = getSnapshotTopics();
-    if (CollectionUtils.isNotEmpty(snapshotTopics)) {
-      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
-      snapshotStream.buildStream(builder);
-    }
+//    Set<String> eventsTopics = getEventsTopics();
+//    if (CollectionUtils.isNotEmpty(eventsTopics)) {
+//      EventStream eventStream = new EventStream(eventsTopics, upcasters, eventHandlers);
+//      eventStream.buildStream(builder);
+//    }
+//
+//    Set<String> snapshotTopics = getSnapshotTopics();
+//    if (CollectionUtils.isNotEmpty(snapshotTopics)) {
+//      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
+//      snapshotStream.buildStream(builder);
+//    }
 
     return builder.build();
   }

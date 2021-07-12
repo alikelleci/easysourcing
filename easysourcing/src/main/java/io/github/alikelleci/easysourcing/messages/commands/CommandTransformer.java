@@ -18,10 +18,11 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class CommandTransformer implements ValueTransformerWithKey<String, JsonNode, CommandResult> {
+public class CommandTransformer implements ValueTransformerWithKey<String, JsonNode, Object> {
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private ProcessorContext context;
+  private KeyValueStore<String, Long> redirects;
   private KeyValueStore<String, JsonNode> snapshots;
 
   public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
@@ -31,11 +32,12 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
+    this.redirects = context.getStateStore("redirects");
     this.snapshots = context.getStateStore("snapshots");
   }
 
   @Override
-  public CommandResult transform(String key, JsonNode jsonNode) {
+  public Object transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
       return null;
@@ -44,6 +46,10 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
     CommandHandler commandHandler = commandHandlers.get(command.getClass());
     if (commandHandler == null) {
       return null;
+    }
+
+    if (redirects.get(key) != null) {
+      return command;
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
@@ -71,6 +77,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
       throw e;
     }
 
+    redirects.put(key, 1L);
     return Success.builder()
         .command(command)
         .events(events)

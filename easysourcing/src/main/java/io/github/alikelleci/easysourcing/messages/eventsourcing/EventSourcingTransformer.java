@@ -17,6 +17,7 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
   private ProcessorContext context;
   private KeyValueStore<String, JsonNode> snapshots;
+  private KeyValueStore<String, Long> redirects;
 
   public EventSourcingTransformer(Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.eventSourcingHandlers = eventSourcingHandlers;
@@ -26,6 +27,7 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
     this.snapshots = context.getStateStore("snapshots");
+    this.redirects = context.getStateStore("redirects");
   }
 
   @Override
@@ -52,6 +54,7 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
         .map(JsonUtils::toJsonNode)
         .ifPresent(node -> snapshots.put(key, node));
 
+    redirects.delete(key);
     return snapshot;
   }
 
