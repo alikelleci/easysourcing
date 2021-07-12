@@ -69,7 +69,6 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
-        redirects.put(key, 1L);
         return Error.builder()
             .command(command)
             .message(message)
