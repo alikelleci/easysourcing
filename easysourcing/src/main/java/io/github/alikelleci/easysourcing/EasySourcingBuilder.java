@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
 import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
@@ -19,6 +20,7 @@ import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSn
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
+import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,11 +39,13 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
+import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +141,11 @@ public class EasySourcingBuilder {
 
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
+
+    // Snapshots state store
+    builder.addStateStore(Stores
+        .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
+        .withLoggingEnabled(Collections.emptyMap()));
 
     if (operationMode == OperationMode.RESTORE_SNAPSHOTS) {
       log.warn("Operation mode is set to {}", operationMode);

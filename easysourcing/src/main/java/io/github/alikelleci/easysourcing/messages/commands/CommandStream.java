@@ -16,10 +16,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,13 +34,6 @@ public class CommandStream {
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // Snapshots state store
-    StoreBuilder storeBuilder = Stores
-        .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
-        .withLoggingEnabled(Collections.emptyMap());
-
-    builder.addStateStore(storeBuilder);
-
     // --> Commands
     KStream<String, JsonNode> commands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
