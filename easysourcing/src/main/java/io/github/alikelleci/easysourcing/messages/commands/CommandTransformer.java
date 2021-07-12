@@ -91,7 +91,6 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
-
         redirects.put(key, null);
         return KeyValue.pair(key, Error.builder()
             .command(command)
@@ -100,7 +99,6 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       }
 
       log.error("Command not processed: {}", message);
-
       redirects.put(key, 1L);
       return KeyValue.pair(key, command);
     }

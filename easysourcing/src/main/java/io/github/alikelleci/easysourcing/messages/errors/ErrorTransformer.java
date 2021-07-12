@@ -43,12 +43,12 @@ public class ErrorTransformer implements Transformer<String, JsonNode, KeyValue<
   public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     Collection<ErrorHandler> handlers = errorHandlers.get(command.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     if (redirects.get(key) != null) {
@@ -84,13 +84,12 @@ public class ErrorTransformer implements Transformer<String, JsonNode, KeyValue<
           .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
       log.error("Error not processed: {}", message);
-
       redirects.put(key, 1L);
       return KeyValue.pair(key, command);
     }
 
     redirects.put(key, null);
-    return null;
+    return KeyValue.pair(key, null);
   }
 
   @Override

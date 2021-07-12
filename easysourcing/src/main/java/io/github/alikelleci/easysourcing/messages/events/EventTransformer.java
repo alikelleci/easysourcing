@@ -43,12 +43,12 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
   public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     Collection<EventHandler> handlers = eventHandlers.get(event.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     if (redirects.get(key) != null) {
@@ -84,13 +84,12 @@ public class EventTransformer implements Transformer<String, JsonNode, KeyValue<
           .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
       log.error("Event not processed: {}", message);
-
       redirects.put(key, 1L);
       return KeyValue.pair(key, event);
     }
 
     redirects.put(key, null);
-    return null;
+    return KeyValue.pair(key, null);
   }
 
   @Override

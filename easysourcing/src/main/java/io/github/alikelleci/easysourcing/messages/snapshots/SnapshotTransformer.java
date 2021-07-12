@@ -43,12 +43,12 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
   public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
     Object snapshot = JsonUtils.toJavaType(jsonNode);
     if (snapshot == null) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
-      return null;
+      return KeyValue.pair(key, null);
     }
 
     if (redirects.get(key) != null) {
@@ -84,14 +84,12 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
           .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
       log.error("Snapshot not processed: {}", message);
-
       redirects.put(key, 1L);
       return KeyValue.pair(key, snapshot);
-
     }
 
     redirects.put(key, null);
-    return null;
+    return KeyValue.pair(key, null);
   }
 
   @Override
