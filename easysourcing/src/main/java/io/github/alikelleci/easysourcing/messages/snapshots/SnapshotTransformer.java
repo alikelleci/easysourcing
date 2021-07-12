@@ -10,8 +10,7 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.common.header.Header;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
+import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -23,7 +22,7 @@ import java.util.Optional;
 import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
-public class SnapshotTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
+public class SnapshotTransformer implements ValueTransformerWithKey<String, JsonNode, Object> {
 
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
   private ProcessorContext context;
@@ -40,21 +39,21 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
   }
 
   @Override
-  public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
+  public Object transform(String key, JsonNode jsonNode) {
     Object snapshot = JsonUtils.toJavaType(jsonNode);
     if (snapshot == null) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     if (redirects.get(key) != null) {
       if (OPERATION_MODE == OperationMode.NORMAL) {
         log.warn("Unprocessed snapshots found, snapshot queued {} ({})", snapshot.getClass().getSimpleName(), key);
-        return KeyValue.pair(key, snapshot);
+        return snapshot;
       }
 
       if (OPERATION_MODE == OperationMode.RETRY) {
@@ -65,7 +64,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
 
         if (StringUtils.isBlank(error)) {
           log.warn("Unprocessed snapshots found, snapshot queued {} ({})", snapshot.getClass().getSimpleName(), key);
-          return KeyValue.pair(key, snapshot);
+          return snapshot;
         }
       }
     }
@@ -85,11 +84,11 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
 
       log.error("Snapshot not processed: {}", message);
       redirects.put(key, 1L);
-      return KeyValue.pair(key, snapshot);
+      return snapshot;
     }
 
     redirects.put(key, null);
-    return KeyValue.pair(key, null);
+    return null;
   }
 
   @Override

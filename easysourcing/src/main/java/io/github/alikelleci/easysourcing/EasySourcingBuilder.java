@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messages.commands.CommandHandler;
 import io.github.alikelleci.easysourcing.messages.commands.CommandStream;
@@ -12,7 +11,6 @@ import io.github.alikelleci.easysourcing.messages.events.EventHandler;
 import io.github.alikelleci.easysourcing.messages.events.EventStream;
 import io.github.alikelleci.easysourcing.messages.events.annotations.HandleEvent;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
-import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingStream;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.annotations.ApplyEvent;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotHandler;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotStream;
@@ -20,7 +18,6 @@ import io.github.alikelleci.easysourcing.messages.snapshots.annotations.HandleSn
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.messages.upcasters.annotations.Upcast;
 import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
-import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,16 +36,11 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

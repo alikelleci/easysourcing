@@ -65,7 +65,7 @@ public class CommandStream {
 
     // Commands --> Results
     KStream<String, Object>[] results = commands
-        .transform(() -> new CommandTransformer(commandHandlers), "command-redirects", "snapshots")
+        .transformValues(() -> new CommandTransformer(commandHandlers), "command-redirects", "snapshots")
         .branch(
             (key, value) -> value instanceof Success, // processed
             (key, value) -> value instanceof Error,   // processed
@@ -97,7 +97,7 @@ public class CommandStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .mapValues(JsonUtils::toJsonNode)
-        .transform(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
         .filter((key, snapshot) -> snapshot != null)
         .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
         .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);

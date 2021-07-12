@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing.messages.eventsourcing;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.OperationMode;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
@@ -12,12 +11,9 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Map;
 import java.util.Set;
-
-import static io.github.alikelleci.easysourcing.EasySourcingBuilder.OPERATION_MODE;
 
 @Slf4j
 public class EventSourcingStream {
@@ -42,18 +38,10 @@ public class EventSourcingStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
 //        .transformValues(() -> new PayloadTransformer(upcasters))
-        .transform(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
         .filter((key, snapshot) -> snapshot != null)
         .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
         .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);
-
-    // Snapshots Push
-    if (OPERATION_MODE == OperationMode.EVENT_SOURCED_PUBLISH) {
-      snapshots
-          .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
-              Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-    }
-
   }
 
 }

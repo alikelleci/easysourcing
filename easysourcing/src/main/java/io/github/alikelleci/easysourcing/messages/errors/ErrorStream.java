@@ -41,7 +41,7 @@ public class ErrorStream {
 
     if (OPERATION_MODE == OperationMode.RETRY) {
       topics.clear();
-      topics.add( APPLICATION_ID.concat(".errors-retry"));
+      topics.add(APPLICATION_ID.concat(".errors-retry"));
     }
 
     // --> Error commands
@@ -51,7 +51,7 @@ public class ErrorStream {
 
     // Errors --> Results
     KStream<String, Object>[] results = errors
-        .transform(() -> new ErrorTransformer(errorHandlers), "error-redirects")
+        .transformValues(() -> new ErrorTransformer(errorHandlers), "error-redirects")
         .branch(
             (key, value) -> value == null, // processed
             (key, value) -> value != null  // not processed

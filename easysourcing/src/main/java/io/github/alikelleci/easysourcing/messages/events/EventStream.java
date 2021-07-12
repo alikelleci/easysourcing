@@ -54,7 +54,7 @@ public class EventStream {
 
     // Events --> Results
     KStream<String, Object>[] results = events
-        .transform(() -> new EventTransformer(eventHandlers), "event-redirects")
+        .transformValues(() -> new EventTransformer(eventHandlers), "event-redirects")
         .branch(
             (key, value) -> value == null, // processed
             (key, value) -> value != null  // not processed

@@ -41,7 +41,7 @@ public class SnapshotStream {
 
     if (OPERATION_MODE == OperationMode.RETRY) {
       topics.clear();
-      topics.add( APPLICATION_ID.concat(".snapshots-retry"));
+      topics.add(APPLICATION_ID.concat(".snapshots-retry"));
     }
 
     // --> Snapshots
@@ -51,7 +51,7 @@ public class SnapshotStream {
 
     // Snapshots --> Results
     KStream<String, Object>[] results = snapshots
-        .transform(() -> new SnapshotTransformer(snapshotHandlers), "snapshot-redirects")
+        .transformValues(() -> new SnapshotTransformer(snapshotHandlers), "snapshot-redirects")
         .branch(
             (key, value) -> value == null, // processed
             (key, value) -> value != null  // not processed
