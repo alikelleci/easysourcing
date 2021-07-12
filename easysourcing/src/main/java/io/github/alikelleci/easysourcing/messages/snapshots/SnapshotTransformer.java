@@ -6,15 +6,14 @@ import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
+import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
 import java.util.Comparator;
 
 @Slf4j
-public class SnapshotTransformer implements Transformer<String, JsonNode, KeyValue<String, Void>> {
+public class SnapshotTransformer implements ValueTransformerWithKey<String, JsonNode, Void> {
 
   private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
   private ProcessorContext context;
@@ -29,15 +28,15 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
   }
 
   @Override
-  public KeyValue<String, Void> transform(String key, JsonNode jsonNode) {
+  public Void transform(String key, JsonNode jsonNode) {
     Object snapshot = JsonUtils.toJavaType(jsonNode);
     if (snapshot == null) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getClass());
     if (CollectionUtils.isEmpty(handlers)) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     Metadata metadata = Metadata.builder().build().injectContext(context);
@@ -47,7 +46,7 @@ public class SnapshotTransformer implements Transformer<String, JsonNode, KeyVal
         .forEach(handler ->
             handler.invoke(snapshot, metadata));
 
-    return KeyValue.pair(key, null);
+    return null;
   }
 
   @Override

@@ -7,7 +7,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.kafka.streams.kstream.ValueTransformer;
+import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.util.Collection;
@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> {
+public class PayloadTransformer implements ValueTransformerWithKey<String, JsonNode, JsonNode> {
 
   private final MultiValuedMap<String, Upcaster> upcasters;
   private ProcessorContext context;
@@ -32,7 +32,7 @@ public class PayloadTransformer implements ValueTransformer<JsonNode, JsonNode> 
   }
 
   @Override
-  public JsonNode transform(JsonNode jsonNode) {
+  public JsonNode transform(String key, JsonNode jsonNode) {
     String className = Optional.ofNullable(jsonNode)
         .map(node -> node.get("@class"))
         .map(JsonNode::textValue)

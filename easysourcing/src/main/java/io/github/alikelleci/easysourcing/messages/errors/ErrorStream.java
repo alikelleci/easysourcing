@@ -31,7 +31,7 @@ public class ErrorStream {
 
     // Failed commands --> Void
     failedCommands
-        .transform(() -> new ErrorTransformer(errorHandlers));
+        .transformValues(() -> new ErrorTransformer(errorHandlers));
   }
 
 }

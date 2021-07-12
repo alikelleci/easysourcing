@@ -31,7 +31,7 @@ public class SnapshotStream {
 
     // Snapshots --> Void
     snapshots
-        .transform(() -> new SnapshotTransformer(snapshotHandlers));
+        .transformValues(() -> new SnapshotTransformer(snapshotHandlers));
   }
 
 }

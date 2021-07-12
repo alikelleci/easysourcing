@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
+import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -13,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class EventSourcingTransformer implements Transformer<String, JsonNode, KeyValue<String, Object>> {
+public class EventSourcingTransformer implements ValueTransformerWithKey<String, JsonNode, Object> {
 
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
   private ProcessorContext context;
@@ -30,15 +29,15 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
   }
 
   @Override
-  public KeyValue<String, Object> transform(String key, JsonNode jsonNode) {
+  public Object transform(String key, JsonNode jsonNode) {
     Object event = JsonUtils.toJavaType(jsonNode);
     if (event == null) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     EventSourcingHandler eventSourcingHandler = eventSourcingHandlers.get(event.getClass());
     if (eventSourcingHandler == null) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
@@ -53,7 +52,7 @@ public class EventSourcingTransformer implements Transformer<String, JsonNode, K
         .map(JsonUtils::toJsonNode)
         .ifPresent(node -> snapshots.put(key, node));
 
-    return KeyValue.pair(key, snapshot);
+    return snapshot;
   }
 
   @Override

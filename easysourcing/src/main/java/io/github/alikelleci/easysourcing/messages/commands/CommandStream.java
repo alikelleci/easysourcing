@@ -41,7 +41,7 @@ public class CommandStream {
 
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
-        .transform(() -> new CommandTransformer(commandHandlers), "snapshots")
+        .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
@@ -66,7 +66,7 @@ public class CommandStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .mapValues(JsonUtils::toJsonNode)
-        .transform(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
         .filter((key, snapshot) -> snapshot != null)
         .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
         .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);

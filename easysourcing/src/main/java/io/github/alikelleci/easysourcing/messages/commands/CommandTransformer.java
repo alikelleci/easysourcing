@@ -7,8 +7,7 @@ import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
+import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -19,7 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class CommandTransformer implements Transformer<String, JsonNode, KeyValue<String, CommandResult>> {
+public class CommandTransformer implements ValueTransformerWithKey<String, JsonNode, CommandResult> {
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private ProcessorContext context;
@@ -36,15 +35,15 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
   }
 
   @Override
-  public KeyValue<String, CommandResult> transform(String key, JsonNode jsonNode) {
+  public CommandResult transform(String key, JsonNode jsonNode) {
     Object command = JsonUtils.toJavaType(jsonNode);
     if (command == null) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     CommandHandler commandHandler = commandHandlers.get(command.getClass());
     if (commandHandler == null) {
-      return KeyValue.pair(key, null);
+      return null;
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
@@ -64,18 +63,18 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
-        return KeyValue.pair(key, Error.builder()
+        return Error.builder()
             .command(command)
             .message(message)
-            .build());
+            .build();
       }
       throw e;
     }
 
-    return KeyValue.pair(key, Success.builder()
+    return Success.builder()
         .command(command)
         .events(events)
-        .build());
+        .build();
   }
 
   @Override
