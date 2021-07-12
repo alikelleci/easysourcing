@@ -14,6 +14,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,6 +27,10 @@ public class CommandStream {
   public CommandStream(Set<String> topics, Map<Class<?>, CommandHandler> commandHandlers) {
     this.topics = topics;
     this.commandHandlers = commandHandlers;
+
+    Set<String> copy = new HashSet<>(topics);
+    topics.forEach(topic -> copy.add(topic + ".retry"));
+    this.topics.addAll(copy);
   }
 
   public void buildStream(StreamsBuilder builder) {
