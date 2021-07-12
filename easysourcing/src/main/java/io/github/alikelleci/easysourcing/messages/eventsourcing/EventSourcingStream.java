@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.upcasters.PayloadTransformer;
 import io.github.alikelleci.easysourcing.messages.upcasters.Upcaster;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
-import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.common.serialization.Serdes;
@@ -38,10 +37,7 @@ public class EventSourcingStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
-        .filter((key, snapshot) -> snapshot != null)
-        .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
-        .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
 
   }
 

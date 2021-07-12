@@ -22,7 +22,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CommandHandler implements Handler<List<Object>> {
@@ -96,14 +98,14 @@ public class CommandHandler implements Handler<List<Object>> {
       events.add(result);
     }
 
-    events.forEach(event -> {
-      CommonUtils.validatePayload(event);
-      if (!StringUtils.equals(CommonUtils.getAggregateId(event), CommonUtils.getAggregateId(command))) {
-        throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + CommonUtils.getAggregateId(command) + ", but was " + CommonUtils.getAggregateId(event));
-      }
-    });
-
-    return events;
+    return events.stream()
+        .filter(Objects::nonNull)
+        .peek(event -> {
+          CommonUtils.validatePayload(event);
+          if (!StringUtils.equals(CommonUtils.getAggregateId(event), CommonUtils.getAggregateId(command))) {
+            throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + CommonUtils.getAggregateId(command) + ", but was " + CommonUtils.getAggregateId(event));
+          }
+        }).collect(Collectors.toList());
   }
 
   private void validate(Object command) {

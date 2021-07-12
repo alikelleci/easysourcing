@@ -42,34 +42,24 @@ public class CommandStream {
     // Commands --> Command results
     KStream<String, CommandResult> commandResults = commands
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
-        .filter((key, result) -> result != null)
-        .filter((key, result) -> result.getCommand() != null);
+        .filter((key, result) -> result != null);
 
     // Successful results --> Events
     KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Success)
         .mapValues((key, result) -> (Success) result)
-        .flatMapValues(Success::getEvents)
-        .filter((key, event) -> event != null)
-        .filter((key, event) -> CommonUtils.getTopicInfo(event) != null)
-        .filter((key, event) -> CommonUtils.getAggregateId(event) != null);
+        .flatMapValues(Success::getEvents);
 
     // Failed results --> Failed commands
     KStream<String, Object> failedCommands = commandResults
         .filter((key, result) -> result instanceof Error)
         .mapValues((key, result) -> (Error) result)
-        .mapValues(CommandResult::getCommand)
-        .filter((key, command) -> command != null)
-        .filter((key, command) -> CommonUtils.getTopicInfo(command) != null)
-        .filter((key, command) -> CommonUtils.getAggregateId(command) != null);
+        .mapValues(CommandResult::getCommand);
 
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .mapValues(JsonUtils::toJsonNode)
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots")
-        .filter((key, snapshot) -> snapshot != null)
-        .filter((key, snapshot) -> CommonUtils.getTopicInfo(snapshot) != null)
-        .filter((key, snapshot) -> CommonUtils.getAggregateId(snapshot) != null);
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
 
     // Events --> Push
     events
