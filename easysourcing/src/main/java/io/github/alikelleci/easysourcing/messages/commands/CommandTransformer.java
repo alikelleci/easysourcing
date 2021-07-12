@@ -58,13 +58,12 @@ public class CommandTransformer implements Transformer<String, JsonNode, KeyValu
       events = commandHandler.invoke(command, snapshot, metadata);
     } catch (Exception e) {
       String message = ExceptionUtils.getRootCauseMessage(e);
+      context.headers()
+          .remove("$error")
+          .add("$error", message.getBytes(StandardCharsets.UTF_8));
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
-        context.headers()
-            .remove("$error")
-            .add("$error", message.getBytes(StandardCharsets.UTF_8));
-
         return KeyValue.pair(key, Error.builder()
             .command(command)
             .message(message)
