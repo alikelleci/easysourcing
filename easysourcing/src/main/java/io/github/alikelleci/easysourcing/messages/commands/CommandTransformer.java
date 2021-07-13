@@ -50,9 +50,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
     }
 
     ValueAndTimestamp<JsonNode> vt = snapshots.get(key);
-    Long timestamp1 = timestamps.get(key);
-    Long timestamp2 = vt != null ? vt.timestamp() : null;
-    if (timestamp1 != null && !timestamp1.equals(timestamp2)) {
+    Long actualTimestamp = vt != null ? vt.timestamp() : -1L;
+    Long expectedTimestamp = timestamps.get(key);
+    if (expectedTimestamp != null && expectedTimestamp > actualTimestamp ) {
       return command;
     }
 
