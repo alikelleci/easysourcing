@@ -2,7 +2,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +67,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
-        return Error.builder()
+        return Failure.builder()
             .command(command)
             .message(message)
             .build();

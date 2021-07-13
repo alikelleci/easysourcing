@@ -19,11 +19,11 @@ public interface CommandResult {
     private List<Object> events;
   }
 
-
   @Value
   @Builder
-  class Error implements CommandResult {
+  class Failure implements CommandResult {
     private Object command;
     private String message;
   }
+
 }
