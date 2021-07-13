@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.support.interceptors;
 
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import org.apache.kafka.clients.producer.ProducerInterceptor;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -13,8 +14,8 @@ public class CommonProducerInterceptor implements ProducerInterceptor<String, Ob
   @Override
   public ProducerRecord<String, Object> onSend(ProducerRecord<String, Object> producerRecord) {
     producerRecord.headers()
-        .remove("$id")
-        .add("$id", UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
+        .remove(Metadata.ID)
+        .add(Metadata.ID, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
 
     return producerRecord;
   }

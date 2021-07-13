@@ -1,8 +1,8 @@
-package io.github.alikelleci.easysourcing.messages.errors;
+package io.github.alikelleci.easysourcing.messages.results;
 
 import io.github.alikelleci.easysourcing.messages.Handler;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.errors.exceptions.ErrorProcessingException;
+import io.github.alikelleci.easysourcing.messages.results.exceptions.ResultProcessingException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
@@ -15,18 +15,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @Slf4j
-public class ErrorHandler implements Handler<Void> {
+public class ResultHandler implements Handler<Void> {
 
   private final Object target;
   private final Method method;
   private final RetryPolicy<Object> retryPolicy;
 
-  public ErrorHandler(Object target, Method method) {
+  public ResultHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
     this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
-        .onRetry(e -> log.warn("Handling error failed, retrying... ({})", e.getAttemptCount()))
-        .onRetriesExceeded(e -> log.error("Handling error failed after {} attempts.", e.getAttemptCount()));
+        .onRetry(e -> log.warn("Handling command result failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Handling command result failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
@@ -34,12 +34,12 @@ public class ErrorHandler implements Handler<Void> {
     Object command = args[0];
     Metadata metadata = (Metadata) args[1];
 
-    log.debug("Handling error: {} ({})", command.getClass().getSimpleName(), CommonUtils.getAggregateId(command));
+    log.debug("Handling command result: {} ({})", command.getClass().getSimpleName(), CommonUtils.getAggregateId(command));
 
     try {
       return Failsafe.with(retryPolicy).get(() -> doInvoke(command, metadata));
     } catch (Exception e) {
-      throw new ErrorProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
+      throw new ResultProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 

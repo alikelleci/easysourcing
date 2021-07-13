@@ -49,7 +49,7 @@ public class PayloadTransformer implements ValueTransformerWithKey<String, JsonN
 
     Metadata metadata = Metadata.builder().build().injectContext(context);
 
-    AtomicInteger revision = new AtomicInteger(Optional.ofNullable(metadata.get("$revision"))
+    AtomicInteger revision = new AtomicInteger(Optional.ofNullable(metadata.get(Metadata.REVISION))
         .map(s -> NumberUtils.toInt(s, 1))
         .orElse(1));
 

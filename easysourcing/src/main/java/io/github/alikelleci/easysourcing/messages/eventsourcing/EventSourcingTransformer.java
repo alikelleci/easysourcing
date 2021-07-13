@@ -54,6 +54,8 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
         .map(JsonUtils::toJsonNode)
         .ifPresent(node -> snapshots.put(key, ValueAndTimestamp.make(node, context.timestamp())));
 
+    redirects.delete(key);
+
     return snapshot;
   }
 

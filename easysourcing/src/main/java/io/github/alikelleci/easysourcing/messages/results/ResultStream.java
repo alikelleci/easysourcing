@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.messages.errors;
+package io.github.alikelleci.easysourcing.messages.results;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,25 +13,25 @@ import org.apache.kafka.streams.kstream.KStream;
 import java.util.Set;
 
 @Slf4j
-public class ErrorStream {
+public class ResultStream {
 
   private final Set<String> topics;
-  private final MultiValuedMap<Class<?>, ErrorHandler> errorHandlers;
+  private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers;
 
-  public ErrorStream(Set<String> topics, MultiValuedMap<Class<?>, ErrorHandler> errorHandlers) {
+  public ResultStream(Set<String> topics, MultiValuedMap<Class<?>, ResultHandler> resultHandlers) {
     this.topics = topics;
-    this.errorHandlers = errorHandlers;
+    this.resultHandlers = resultHandlers;
   }
 
   public void buildStream(StreamsBuilder builder) {
-    // --> Error commands
-    KStream<String, JsonNode> failedCommands = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
+    // --> Results
+    KStream<String, JsonNode> results = builder.stream(topics, Consumed.with(Serdes.String(), CustomSerdes.Json(JsonNode.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
-    // Error commands --> Void
-    failedCommands
-        .transformValues(() -> new ErrorTransformer(errorHandlers));
+    // Results --> Void
+    results
+        .transformValues(() -> new ResultTransformer(resultHandlers));
   }
 
 }
