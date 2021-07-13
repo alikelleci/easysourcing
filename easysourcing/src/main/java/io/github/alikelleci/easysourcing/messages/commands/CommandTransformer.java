@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failed;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Successful;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Unprocessed;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -50,7 +51,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
     }
 
     if (redirects.get(key) != null) {
-      return CommandResult.Unprocessed.builder()
+      return Unprocessed.builder()
           .command(command)
           .build();
     }
