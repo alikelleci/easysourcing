@@ -10,6 +10,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import javax.validation.ValidationException;
 import java.nio.charset.StandardCharsets;
@@ -22,8 +23,8 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
 
   private final Map<Class<?>, CommandHandler> commandHandlers;
   private ProcessorContext context;
-  private KeyValueStore<String, Long> redirects;
-  private KeyValueStore<String, JsonNode> snapshots;
+  private KeyValueStore<String, Long> timestamps;
+  private KeyValueStore<String, ValueAndTimestamp<JsonNode>> snapshots;
 
   public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
     this.commandHandlers = commandHandlers;
@@ -32,7 +33,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
-    this.redirects = context.getStateStore("redirects");
+    this.timestamps = context.getStateStore("timestamps");
     this.snapshots = context.getStateStore("snapshots");
   }
 
@@ -48,11 +49,15 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
       return null;
     }
 
-    if (redirects.get(key) != null) {
+    ValueAndTimestamp<JsonNode> vt = snapshots.get(key);
+    Long timestamp1 = timestamps.get(key);
+    Long timestamp2 = vt != null ? vt.timestamp() : null;
+    if (timestamp1 != null && !timestamp1.equals(timestamp2)) {
       return command;
     }
 
-    Object snapshot = Optional.ofNullable(snapshots.get(key))
+    Object snapshot = Optional.ofNullable(vt)
+        .map(ValueAndTimestamp::value)
         .map(JsonUtils::toJavaType)
         .orElse(null);
 
@@ -77,7 +82,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
       throw e;
     }
 
-    redirects.put(key, 1L);
+    timestamps.put(key, context.timestamp());
     return Success.builder()
         .command(command)
         .events(events)

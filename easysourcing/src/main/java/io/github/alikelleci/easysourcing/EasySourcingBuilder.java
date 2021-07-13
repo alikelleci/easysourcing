@@ -144,12 +144,12 @@ public class EasySourcingBuilder {
         CollectionUtils.isNotEmpty(getEventSourcedTopics())) {
       // Redirects state store
       builder.addStateStore(Stores
-          .keyValueStoreBuilder(Stores.persistentKeyValueStore("redirects"), Serdes.String(), Serdes.Long())
+          .keyValueStoreBuilder(Stores.persistentKeyValueStore("timestamps"), Serdes.String(), Serdes.Long())
           .withLoggingEnabled(Collections.emptyMap()));
 
       // Snapshots state store
       builder.addStateStore(Stores
-          .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
+          .timestampedKeyValueStoreBuilder(Stores.persistentTimestampedKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
           .withLoggingEnabled(Collections.emptyMap()));
     }
 

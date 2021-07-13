@@ -41,7 +41,7 @@ public class CommandStream {
 
     // Commands --> Command results
     KStream<String, Object> commandResults = commands
-        .transformValues(() -> new CommandTransformer(commandHandlers), "redirects", "snapshots")
+        .transformValues(() -> new CommandTransformer(commandHandlers), "timestamps", "snapshots")
         .filter((key, result) -> result != null);
 
     // Successful results --> Events

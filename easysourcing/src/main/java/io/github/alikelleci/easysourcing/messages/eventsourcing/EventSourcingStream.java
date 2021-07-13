@@ -37,7 +37,7 @@ public class EventSourcingStream {
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .transformValues(() -> new PayloadTransformer(upcasters))
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots", "redirects");
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
 
   }
 

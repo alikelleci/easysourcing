@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.util.Map;
 import java.util.Optional;
@@ -16,8 +17,7 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
 
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers;
   private ProcessorContext context;
-  private KeyValueStore<String, JsonNode> snapshots;
-  private KeyValueStore<String, Long> redirects;
+  private KeyValueStore<String, ValueAndTimestamp<JsonNode>> snapshots;
 
   public EventSourcingTransformer(Map<Class<?>, EventSourcingHandler> eventSourcingHandlers) {
     this.eventSourcingHandlers = eventSourcingHandlers;
@@ -27,7 +27,6 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
     this.snapshots = context.getStateStore("snapshots");
-    this.redirects = context.getStateStore("redirects");
   }
 
   @Override
@@ -43,6 +42,7 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))
+        .map(ValueAndTimestamp::value)
         .map(JsonUtils::toJavaType)
         .orElse(null);
 
@@ -52,9 +52,8 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
 
     Optional.ofNullable(snapshot)
         .map(JsonUtils::toJsonNode)
-        .ifPresent(node -> snapshots.put(key, node));
+        .ifPresent(node -> snapshots.put(key, ValueAndTimestamp.make(node, context.timestamp())));
 
-    redirects.delete(key);
     return snapshot;
   }
 
