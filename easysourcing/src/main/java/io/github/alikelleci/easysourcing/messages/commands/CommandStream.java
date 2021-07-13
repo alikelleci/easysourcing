@@ -43,7 +43,7 @@ public class CommandStream {
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
         .filter((key, result) -> result != null);
 
-    // Success --> Events
+    // Successful --> Events
     KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Successful)
         .mapValues((key, result) -> (Successful) result)
