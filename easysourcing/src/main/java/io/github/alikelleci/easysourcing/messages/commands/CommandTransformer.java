@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 @Slf4j
 public class CommandTransformer implements ValueTransformerWithKey<String, JsonNode, CommandResult> {
 
@@ -57,9 +58,12 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
       events = commandHandler.invoke(command, snapshot, metadata);
     } catch (Exception e) {
       String message = ExceptionUtils.getRootCauseMessage(e);
+
       context.headers()
-          .remove("$error")
-          .add("$error", message.getBytes(StandardCharsets.UTF_8));
+          .remove(Metadata.RESULT)
+          .add(Metadata.RESULT, "failed".getBytes(StandardCharsets.UTF_8))
+          .remove(Metadata.CAUSE)
+          .add(Metadata.CAUSE, message.getBytes(StandardCharsets.UTF_8));
 
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
@@ -70,6 +74,10 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
       }
       throw e;
     }
+
+    context.headers()
+        .remove(Metadata.RESULT)
+        .add(Metadata.RESULT, "successful".getBytes(StandardCharsets.UTF_8));
 
     return Success.builder()
         .command(command)

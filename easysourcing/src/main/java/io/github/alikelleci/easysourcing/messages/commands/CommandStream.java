@@ -3,7 +3,6 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
@@ -39,27 +38,27 @@ public class CommandStream {
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
-    // Commands --> Command results
+    // Commands --> Results
     KStream<String, CommandResult> commandResults = commands
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
         .filter((key, result) -> result != null);
 
-    // Successful results --> Events
+    // Success --> Events
     KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Success)
         .mapValues((key, result) -> (Success) result)
         .flatMapValues(Success::getEvents);
 
-    // Error results --> Error commands
-    KStream<String, Object> failedCommands = commandResults
-        .filter((key, result) -> result instanceof Error)
-        .mapValues((key, result) -> (Error) result)
-        .mapValues(CommandResult::getCommand);
-
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .mapValues(JsonUtils::toJsonNode)
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
+
+    // Results --> Push
+    commandResults
+        .mapValues(CommandResult::getCommand)
+        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
     // Events --> Push
     events
@@ -71,12 +70,6 @@ public class CommandStream {
     snapshots
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
-    // Error commands --> Push
-    failedCommands
-        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".errors"),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
   }
 
 }

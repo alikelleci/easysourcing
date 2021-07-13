@@ -1,4 +1,5 @@
-package io.github.alikelleci.easysourcing.messages.errors.annotations;
+package io.github.alikelleci.easysourcing.messages.results.annotations;
+
 
 import io.github.alikelleci.easysourcing.common.annotations.HandleMessage;
 
@@ -8,8 +9,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @HandleMessage
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HandleError {
+public @interface HandleResult {
 
 }

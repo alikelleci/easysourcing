@@ -14,6 +14,12 @@ import java.util.Map;
 @Value
 @Builder(toBuilder = true)
 public class Metadata {
+  public static final String ID = "$id";
+  public static final String CORRELATION_ID = "$correlationId";
+  public static final String REVISION = "$revision";
+  public static final String RESULT = "$result";
+  public static final String CAUSE = "$cause";
+
   @Singular
   private Map<String, String> entries;
 

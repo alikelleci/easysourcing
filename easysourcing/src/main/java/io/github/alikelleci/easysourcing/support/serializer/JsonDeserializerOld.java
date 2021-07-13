@@ -2,6 +2,7 @@ package io.github.alikelleci.easysourcing.support.serializer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -85,8 +86,10 @@ public class JsonDeserializerOld<T> implements Deserializer<T> {
             .filter(entry -> entry.getKey() != null && entry.getValue() != null)
             .filter(entry -> StringUtils.isNoneBlank(entry.getKey(), entry.getValue().textValue()))
             .forEach(entry -> {
-              if (entry.getKey().equals("$failure")) {
-                headers.add("$error", entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
+              if (entry.getKey().equals("$result") && entry.getValue().textValue().equals("success")) {
+                headers.add(Metadata.RESULT, "successful".getBytes(StandardCharsets.UTF_8));
+              } else if (entry.getKey().equals("$failure")) {
+                headers.add(Metadata.CAUSE, entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
               } else {
                 headers.add(entry.getKey(), entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
               }

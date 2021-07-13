@@ -26,8 +26,8 @@ public class RevisionAdder implements ValueTransformer<Object, Object> {
         .orElse(1);
 
     context.headers()
-        .remove("$revision")
-        .add("$revision", String.valueOf(revision).getBytes(StandardCharsets.UTF_8));
+        .remove(Metadata.REVISION)
+        .add(Metadata.REVISION, String.valueOf(revision).getBytes(StandardCharsets.UTF_8));
 
     return object;
   }
