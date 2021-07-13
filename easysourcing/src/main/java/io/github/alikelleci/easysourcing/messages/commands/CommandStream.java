@@ -3,8 +3,9 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Error;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Successful;
+import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
+import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -39,32 +40,37 @@ public class CommandStream {
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null);
 
-    // Commands --> Command results
-    KStream<String, Object> commandResults = commands
+    // Commands --> Results
+    KStream<String, CommandResult> commandResults = commands
         .transformValues(() -> new CommandTransformer(commandHandlers), "redirects", "snapshots")
         .filter((key, result) -> result != null);
 
-    // Successful results --> Events
+    // Successful --> Events
+    KStream<String, Object> events = commandResults
+        .filter((key, result) -> result instanceof Successful)
+        .mapValues((key, result) -> (Successful) result)
+        .flatMapValues(Successful::getEvents);
+
+    // Events --> Snapshots
+    KStream<String, Object> snapshots = events
+        .mapValues(JsonUtils::toJsonNode)
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
+
+    // Results --> Push
     commandResults
-        .filter((key, result) -> result instanceof Success)
-        .mapValues((key, result) -> (Success) result)
-        .flatMapValues(Success::getEvents)
+        .mapValues(CommandResult::getCommand)
+        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
+    // Events --> Push
+    events
         .transformValues(RevisionAdder::new)
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Error results --> Error commands
-    commandResults
-        .filter((key, result) -> result instanceof Error)
-        .mapValues((key, result) -> (Error) result)
-        .mapValues(CommandResult::getCommand)
-        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".errors"),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
-    // Unprocessed --> Unprocessed commands
-    commandResults
-        .filter((key, result) -> !(result instanceof Success) && !(result instanceof Error))
-        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".retry"),
+    // Snapshots --> Push
+    snapshots
+        .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 

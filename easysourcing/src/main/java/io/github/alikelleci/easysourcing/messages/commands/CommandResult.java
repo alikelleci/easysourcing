@@ -13,17 +13,17 @@ public interface CommandResult {
 
   @Value
   @Builder
-  class Success implements CommandResult {
+  class Successful implements CommandResult {
     private Object command;
     @Singular
     private List<Object> events;
   }
 
-
   @Value
   @Builder
-  class Error implements CommandResult {
+  class Failed implements CommandResult {
     private Object command;
     private String message;
   }
+
 }
