@@ -142,10 +142,13 @@ public class EasySourcingBuilder {
   private Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
-    // Snapshots state store
-    builder.addStateStore(Stores
-        .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
-        .withLoggingEnabled(Collections.emptyMap()));
+    if (CollectionUtils.isNotEmpty(getCommandsTopics()) ||
+        CollectionUtils.isNotEmpty(getEventSourcedTopics())) {
+      // Snapshots state store
+      builder.addStateStore(Stores
+          .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshots"), Serdes.String(), CustomSerdes.Json(JsonNode.class))
+          .withLoggingEnabled(Collections.emptyMap()));
+    }
 
     if (operationMode == OperationMode.RESTORE_SNAPSHOTS) {
       log.warn("Operation mode is set to {}", operationMode);
