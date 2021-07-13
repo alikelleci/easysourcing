@@ -3,7 +3,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Successful;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
@@ -45,9 +45,9 @@ public class CommandStream {
 
     // Success --> Events
     KStream<String, Object> events = commandResults
-        .filter((key, result) -> result instanceof Success)
-        .mapValues((key, result) -> (Success) result)
-        .flatMapValues(Success::getEvents);
+        .filter((key, result) -> result instanceof Successful)
+        .mapValues((key, result) -> (Successful) result)
+        .flatMapValues(Successful::getEvents);
 
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
