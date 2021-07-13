@@ -55,6 +55,7 @@ public class EventSourcingTransformer implements ValueTransformerWithKey<String,
         .ifPresent(node -> snapshots.put(key, node));
 
     redirects.delete(key);
+
     return snapshot;
   }
 

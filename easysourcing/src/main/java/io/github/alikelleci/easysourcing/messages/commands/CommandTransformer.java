@@ -50,7 +50,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
     }
 
     if (redirects.get(key) != null) {
-      return command;
+      return CommandResult.Unprocessed.builder()
+          .command(command)
+          .build();
     }
 
     Object snapshot = Optional.ofNullable(snapshots.get(key))

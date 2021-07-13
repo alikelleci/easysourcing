@@ -4,8 +4,7 @@ package io.github.alikelleci.easysourcing.messages.commands;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.RevisionAdder;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Successful;
-import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
-import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Unprocessed;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -51,13 +50,9 @@ public class CommandStream {
         .mapValues((key, result) -> (Successful) result)
         .flatMapValues(Successful::getEvents);
 
-    // Events --> Snapshots
-    KStream<String, Object> snapshots = events
-        .mapValues(JsonUtils::toJsonNode)
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
-
     // Results --> Push
     commandResults
+        .filter((ke, commandResult) -> !(commandResult instanceof Unprocessed))
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
@@ -68,9 +63,12 @@ public class CommandStream {
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Snapshots --> Push
-    snapshots
-        .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
+    // Unprocessed commands --> Push
+    commandResults
+        .filter((s, commandResult) -> commandResult instanceof Unprocessed)
+        .mapValues((key, result) -> (Unprocessed) result)
+        .mapValues((key, result) -> result.getCommand())
+        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value().concat(".retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 
