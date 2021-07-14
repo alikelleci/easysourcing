@@ -15,13 +15,17 @@ import java.util.concurrent.Future;
 @Slf4j
 public abstract class Gateway {
 
-  private final Producer<String, Object> producer;
+  protected final Producer<String, Object> producer;
 
   public Gateway(Producer<String, Object> producer) {
     this.producer = producer;
   }
 
-  protected Future<RecordMetadata> send(ProducerRecord<String, Object> record) {
+  protected ProducerRecord<String, Object> createProducerRecord(Object payload, Metadata metadata) {
+    CommonUtils.validatePayload(payload);
+
+    ProducerRecord<String, Object> record = new ProducerRecord<>(CommonUtils.getTopicInfo(payload).value(), CommonUtils.getAggregateId(payload), payload);
+
     String id = UUID.randomUUID().toString();
     String correlationId = UUID.randomUUID().toString();
 
@@ -30,14 +34,6 @@ public abstract class Gateway {
         .add(Metadata.ID, id.getBytes(StandardCharsets.UTF_8))
         .remove(Metadata.CORRELATION_ID)
         .add(Metadata.CORRELATION_ID, correlationId.getBytes(StandardCharsets.UTF_8));
-
-    return producer.send(record);
-  }
-
-  public Future<RecordMetadata> send(Object payload, Metadata metadata) {
-    CommonUtils.validatePayload(payload);
-
-    ProducerRecord<String, Object> record = new ProducerRecord<>(CommonUtils.getTopicInfo(payload).value(), CommonUtils.getAggregateId(payload), payload);
 
     if (metadata == null) {
       metadata = Metadata.builder().build();
@@ -49,7 +45,12 @@ public abstract class Gateway {
                 .remove(entry.getKey())
                 .add(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8)));
 
-    return this.send(record);
+    return record;
+  }
+
+  public Future<RecordMetadata> send(Object payload, Metadata metadata) {
+    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    return producer.send(record);
   }
 
   public Future<RecordMetadata> send(Object payload) {
