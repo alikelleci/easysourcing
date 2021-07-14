@@ -15,7 +15,7 @@ public interface CommandResult {
 
   @Value
   @Builder
-  class Successful implements CommandResult {
+  class Success implements CommandResult {
     private Object command;
     @Singular
     private List<Object> events;
@@ -23,7 +23,7 @@ public interface CommandResult {
 
   @Value
   @Builder
-  class Failed implements CommandResult {
+  class Failure implements CommandResult {
     private Object command;
     private String message;
   }
