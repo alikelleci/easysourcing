@@ -41,11 +41,10 @@ public class RequestReplyGateway extends CommandGateway {
   }
 
   private void startConsumer(String replyTopic) {
-    consumer.subscribe(Collections.singletonList(replyTopic));
-
     Thread thread = new Thread(() -> {
-      while (!closed.get()) {
-        try {
+      try {
+        consumer.subscribe(Collections.singletonList(replyTopic));
+        while (!closed.get()) {
           ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
@@ -53,12 +52,12 @@ public class RequestReplyGateway extends CommandGateway {
               results.put(correlationId, record.value());
             }
           });
-        } catch (WakeupException e) {
-          // Ignore exception if closing
-          if (!closed.get()) throw e;
-        } finally {
-          consumer.close();
         }
+      } catch (WakeupException e) {
+        // Ignore exception if closing
+        if (!closed.get()) throw e;
+      } finally {
+        consumer.close();
       }
     });
 
