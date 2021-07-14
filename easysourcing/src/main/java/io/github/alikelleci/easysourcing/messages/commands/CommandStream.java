@@ -78,8 +78,7 @@ public class CommandStream {
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-
-    // Results --> Reply channel push
+    // Results --> Reply To
     commandResults
         .transformValues(FilterReplyTo::new)
         .filter((key, result) -> result != null)
