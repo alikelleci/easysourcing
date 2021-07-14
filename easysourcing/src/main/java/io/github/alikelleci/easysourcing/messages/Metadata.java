@@ -19,6 +19,7 @@ public class Metadata {
   public static final String REVISION = "$revision";
   public static final String RESULT = "$result";
   public static final String CAUSE = "$cause";
+  public static final String REPLY_TO = "$replyTo";
 
   @Singular
   private Map<String, String> entries;
