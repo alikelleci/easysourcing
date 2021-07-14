@@ -1,17 +1,26 @@
 package io.github.alikelleci.easysourcing;
 
 import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
+import io.github.alikelleci.easysourcing.messages.commands.CommandResult;
 import io.github.alikelleci.easysourcing.messages.commands.RequestReplyGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
+import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
+import java.util.UUID;
 
 @Slf4j
 public class GatewayBuilder {
@@ -38,7 +47,7 @@ public class GatewayBuilder {
   }
 
   public RequestReplyGateway requestReplyGateway(String replyTopic) {
-    return new RequestReplyGateway(producer(), replyTopic);
+    return new RequestReplyGateway(producer(), consumer(), replyTopic);
   }
 
   public EventGateway eventGateway() {
@@ -53,6 +62,28 @@ public class GatewayBuilder {
     return new KafkaProducer<>(this.producerConfig,
         new StringSerializer(),
         new JsonSerializer<>());
+  }
+
+  private Consumer<String, CommandResult> consumer() {
+    return new KafkaConsumer<>(consumerConfig(),
+        new StringDeserializer(),
+        new JsonDeserializer<>(CommandResult.class));
+  }
+
+  private Properties consumerConfig() {
+    Properties properties = new Properties();
+    properties.putIfAbsent(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.producerConfig.getProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG));
+    properties.putIfAbsent(ConsumerConfig.GROUP_ID_CONFIG, "command-gateway-" + UUID.randomUUID().toString());
+    properties.putIfAbsent(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    properties.putIfAbsent(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    properties.putIfAbsent(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+    properties.putIfAbsent(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
+    properties.putIfAbsent(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+    properties.putIfAbsent(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, CooperativeStickyAssignor.class.getName());
+    properties.putIfAbsent(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, this.producerConfig.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+
+
+    return properties;
   }
 
 }
