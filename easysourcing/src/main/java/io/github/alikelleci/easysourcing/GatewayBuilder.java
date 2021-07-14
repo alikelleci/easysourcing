@@ -28,11 +28,11 @@ public class GatewayBuilder {
     this.producerConfig.putIfAbsent(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
     this.producerConfig.putIfAbsent(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
-    ArrayList<String> interceptors = new ArrayList<>();
-    interceptors.add(CommonProducerInterceptor.class.getName());
-    interceptors.add(TracingProducerInterceptor.class.getName());
-
-    this.producerConfig.putIfAbsent(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
+//    ArrayList<String> interceptors = new ArrayList<>();
+//    interceptors.add(CommonProducerInterceptor.class.getName());
+//    interceptors.add(TracingProducerInterceptor.class.getName());
+//
+//    this.producerConfig.putIfAbsent(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
   }
 
   public CommandGateway commandGateway() {

@@ -12,7 +12,6 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import javax.validation.ValidationException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,26 +58,16 @@ public class CommandTransformer implements ValueTransformerWithKey<String, JsonN
     } catch (Exception e) {
       String message = ExceptionUtils.getRootCauseMessage(e);
 
-      context.headers()
-          .remove(Metadata.RESULT)
-          .add(Metadata.RESULT, "failure".getBytes(StandardCharsets.UTF_8))
-          .remove(Metadata.CAUSE)
-          .add(Metadata.CAUSE, message.getBytes(StandardCharsets.UTF_8));
-
       if (ExceptionUtils.getRootCause(e) instanceof ValidationException) {
         log.debug("Command rejected: {}", message);
 
         return Failure.builder()
             .command(command)
-            .message(message)
+            .cause(message)
             .build();
       }
       throw e;
     }
-
-    context.headers()
-        .remove(Metadata.RESULT)
-        .add(Metadata.RESULT, "success".getBytes(StandardCharsets.UTF_8));
 
     return Success.builder()
         .command(command)

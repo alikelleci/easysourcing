@@ -2,7 +2,9 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.RevisionAdder;
+import io.github.alikelleci.easysourcing.messages.AddEventHeaders;
+import io.github.alikelleci.easysourcing.messages.AddResultHeaders;
+import io.github.alikelleci.easysourcing.messages.AddSnapshotHeaders;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
@@ -43,31 +45,33 @@ public class CommandStream {
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
         .filter((key, result) -> result != null);
 
+    // Results --> Push
+    commandResults
+        .transformValues(AddResultHeaders::new)
+        .mapValues(CommandResult::getCommand)
+        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
     // Successful --> Events
     KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Success)
         .mapValues((key, result) -> (Success) result)
         .flatMapValues(Success::getEvents);
 
+    // Events --> Push
+    events
+        .transformValues(AddEventHeaders::new)
+        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
     // Events --> Snapshots
     KStream<String, Object> snapshots = events
         .mapValues(JsonUtils::toJsonNode)
         .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
 
-    // Results --> Push
-    commandResults
-        .mapValues(CommandResult::getCommand)
-        .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
-    // Events --> Push
-    events
-        .transformValues(RevisionAdder::new)
-        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
     // Snapshots --> Push
     snapshots
+        .transformValues(AddSnapshotHeaders::new)
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }

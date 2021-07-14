@@ -9,6 +9,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 @Slf4j
@@ -18,6 +19,20 @@ public class SnapshotGateway {
 
   public SnapshotGateway(Producer<String, Object> producer) {
     this.producer = producer;
+  }
+
+  protected Future<RecordMetadata> send(ProducerRecord<String, Object> record) {
+    String id = UUID.randomUUID().toString();
+    String correlationId = UUID.randomUUID().toString();
+
+    record.headers()
+        .remove(Metadata.ID)
+        .add(Metadata.ID, id.getBytes(StandardCharsets.UTF_8))
+        .remove(Metadata.CORRELATION_ID)
+        .add(Metadata.CORRELATION_ID, correlationId.getBytes(StandardCharsets.UTF_8));
+
+    log.debug("Publishing snapshot: {} ({})", record.value().getClass().getSimpleName(), CommonUtils.getAggregateId(record.value()));
+    return producer.send(record);
   }
 
   public Future<RecordMetadata> publish(Object payload, Metadata metadata) {
@@ -35,7 +50,6 @@ public class SnapshotGateway {
                 .remove(entry.getKey())
                 .add(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8)));
 
-    log.debug("Publishing snapshot: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     return producer.send(record);
   }
 
