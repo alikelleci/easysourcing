@@ -68,7 +68,6 @@ public class CommandStream {
     // Unprocessed commands --> Push
     commandResults
         .filter((s, commandResult) -> commandResult instanceof Unprocessed)
-        .mapValues((key, result) -> (Unprocessed) result)
         .mapValues((key, result) -> result.getCommand())
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value().concat(".retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
