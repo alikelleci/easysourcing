@@ -46,12 +46,10 @@ public abstract class Gateway {
     return record;
   }
 
-
   public void send(Object payload, Metadata metadata) {
     ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
     producer.send(record);
   }
-
 
   public void send(Object payload) {
     this.send(payload, null);
