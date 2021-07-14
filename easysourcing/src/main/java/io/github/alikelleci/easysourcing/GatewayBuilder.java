@@ -8,6 +8,7 @@ import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
 import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -59,20 +60,25 @@ public class GatewayBuilder {
   }
 
   private Producer<String, Object> producer() {
-    return new KafkaProducer<>(this.producerConfig,
+    Producer<String, Object> producer = new KafkaProducer<>(this.producerConfig,
         new StringSerializer(),
         new JsonSerializer<>());
+
+    Runtime.getRuntime().addShutdownHook(new Thread(producer::close));
+    return producer;
   }
 
   private Consumer<String, CommandResult> consumer() {
-    return new KafkaConsumer<>(consumerConfig(),
+    KafkaConsumer<String, CommandResult> consumer = new KafkaConsumer<>(consumerConfig(),
         new StringDeserializer(),
         new JsonDeserializer<>(CommandResult.class));
+
+    Runtime.getRuntime().addShutdownHook(new Thread(consumer::close));
+    return consumer;
   }
 
   private Properties consumerConfig() {
     Properties properties = new Properties();
-    properties.putIfAbsent(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.producerConfig.getProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG));
     properties.putIfAbsent(ConsumerConfig.GROUP_ID_CONFIG, "command-gateway-" + UUID.randomUUID().toString());
     properties.putIfAbsent(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     properties.putIfAbsent(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -80,7 +86,16 @@ public class GatewayBuilder {
     properties.putIfAbsent(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
     properties.putIfAbsent(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
     properties.putIfAbsent(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, CooperativeStickyAssignor.class.getName());
-    properties.putIfAbsent(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, this.producerConfig.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+
+    String bootstrapServers = this.producerConfig.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG);
+    if (StringUtils.isNotBlank(bootstrapServers)) {
+      properties.putIfAbsent(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    }
+
+    String protocol = this.producerConfig.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
+    if (StringUtils.isNotBlank(protocol)) {
+      properties.putIfAbsent(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, protocol);
+    }
 
 
     return properties;
