@@ -86,8 +86,8 @@ public class JsonDeserializerOld<T> implements Deserializer<T> {
             .filter(entry -> entry.getKey() != null && entry.getValue() != null)
             .filter(entry -> StringUtils.isNoneBlank(entry.getKey(), entry.getValue().textValue()))
             .forEach(entry -> {
-              if (entry.getKey().equals("$result") && entry.getValue().textValue().equals("success")) {
-                headers.add(Metadata.RESULT, "successful".getBytes(StandardCharsets.UTF_8));
+              if (entry.getKey().equals("$result") && entry.getValue().textValue().equals("failed")) {
+                headers.add(Metadata.RESULT, "failure".getBytes(StandardCharsets.UTF_8));
               } else if (entry.getKey().equals("$failure")) {
                 headers.add(Metadata.CAUSE, entry.getValue().textValue().getBytes(StandardCharsets.UTF_8));
               } else {

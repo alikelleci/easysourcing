@@ -61,8 +61,8 @@ public class ResultTransformer implements ValueTransformerWithKey<String, JsonNo
               .orElse(null);
 
           if (handleAll ||
-              (handleSuccess && StringUtils.equals(result, "successful")) ||
-              (handleFailure && StringUtils.equals(result, "failed"))) {
+              (handleSuccess && StringUtils.equals(result, "success")) ||
+              (handleFailure && StringUtils.equals(result, "failure"))) {
             handler.invoke(command, metadata);
           }
         });
