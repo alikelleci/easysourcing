@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -86,7 +87,7 @@ public class RequestReplyGateway extends CommandGateway {
         e.printStackTrace();
         return null;
       }
-    }).get();
+    }).get(1, TimeUnit.MINUTES);
   }
 
   public CommandResult sendAndWait(Object payload) {
