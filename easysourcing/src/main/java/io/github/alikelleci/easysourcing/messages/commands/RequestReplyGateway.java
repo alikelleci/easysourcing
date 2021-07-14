@@ -18,37 +18,42 @@ import org.thavam.util.concurrent.blockingMap.BlockingMap;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 @Slf4j
 public class RequestReplyGateway extends CommandGateway {
 
-  private Map<String, CommandResult> results = new ConcurrentHashMap<>();
-  private BlockingMap<String, CommandResult> map = new BlockingHashMap<>();
+  private final String replyTopic;
   private Consumer<String, CommandResult> consumer;
+  private BlockingMap<String, CommandResult> results = new BlockingHashMap<>();
 
-  public RequestReplyGateway(Producer<String, Object> producer) {
+  private boolean running = true;
+
+
+  public RequestReplyGateway(Producer<String, Object> producer, String replyTopic) {
     super(producer);
+    this.replyTopic = replyTopic;
 
     consumer = new KafkaConsumer<>(properties(), new StringDeserializer(), new JsonDeserializer<>(CommandResult.class));
-    consumer.subscribe(Collections.singletonList("my-reply-topic"));
+    consumer.subscribe(Collections.singletonList(replyTopic));
 
     Thread thread = new Thread(() -> {
-      while (true) {
+      while (running) {
         ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
         consumerRecords.forEach(record -> {
           String id = new String(record.headers().lastHeader("x-correlation-id").value(), StandardCharsets.UTF_8);
-
           results.put(id, record.value());
-          map.put(id, record.value());
         });
       }
     });
+
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      running = false;
+      consumer.close();
+    }));
 
     thread.start();
   }
@@ -57,7 +62,6 @@ public class RequestReplyGateway extends CommandGateway {
   public Future<CommandResult> senddddd(Object payload) {
     CommonUtils.validatePayload(payload);
 
-    String replyTopic = "my-reply-topic";
     String id = UUID.randomUUID().toString();
 
     ProducerRecord<String, Object> record = new ProducerRecord<>(CommonUtils.getTopicInfo(payload).value(), CommonUtils.getAggregateId(payload), payload);
@@ -69,11 +73,9 @@ public class RequestReplyGateway extends CommandGateway {
 
     return CompletableFuture.supplyAsync(() -> {
       try {
-        System.out.println("sssssssssssssssssssssssss");
-        return map.take(id);
+        return results.take(id);
       } catch (InterruptedException e) {
         e.printStackTrace();
-        System.out.println("bbbbbbbbbbbbbbbbbbbbbbbb");
         return null;
       }
     });

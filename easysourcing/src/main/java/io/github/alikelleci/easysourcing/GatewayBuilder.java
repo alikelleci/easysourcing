@@ -40,8 +40,8 @@ public class GatewayBuilder {
     return new CommandGateway(producer());
   }
 
-  public RequestReplyGateway requestReplyGateway() {
-    return new RequestReplyGateway(producer());
+  public RequestReplyGateway requestReplyGateway(String replyTopic) {
+    return new RequestReplyGateway(producer(), replyTopic);
   }
 
   public EventGateway eventGateway() {

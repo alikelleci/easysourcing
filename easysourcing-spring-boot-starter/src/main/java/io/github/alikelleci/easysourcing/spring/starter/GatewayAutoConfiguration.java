@@ -26,7 +26,7 @@ public class GatewayAutoConfiguration {
   @Bean
   public RequestReplyGateway requestReplyGateway(GatewayBuilder builder) {
     return builder
-        .requestReplyGateway();
+        .requestReplyGateway("my-reply-topic");
   }
 
   @Bean
