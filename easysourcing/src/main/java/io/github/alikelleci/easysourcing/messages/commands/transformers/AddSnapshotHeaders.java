@@ -1,17 +1,14 @@
-package io.github.alikelleci.easysourcing.messages.events;
+package io.github.alikelleci.easysourcing.messages.commands.transformers;
 
-import io.github.alikelleci.easysourcing.common.annotations.Revision;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.springframework.core.annotation.AnnotationUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import java.util.UUID;
 
 
-public class AddEventHeaders implements ValueTransformer<Object, Object> {
+public class AddSnapshotHeaders implements ValueTransformer<Object, Object> {
 
   private ProcessorContext context;
 
@@ -31,13 +28,6 @@ public class AddEventHeaders implements ValueTransformer<Object, Object> {
 
     context.headers()
         .add(Metadata.ID, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
-
-    int revision = Optional.ofNullable(AnnotationUtils.findAnnotation(object.getClass(), Revision.class))
-        .map(Revision::value)
-        .orElse(1);
-
-    context.headers()
-        .add(Metadata.REVISION, String.valueOf(revision).getBytes(StandardCharsets.UTF_8));
 
     return object;
   }

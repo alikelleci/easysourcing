@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.messages.results;
+package io.github.alikelleci.easysourcing.messages.commands.transformers;
 
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult;

@@ -3,11 +3,11 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
-import io.github.alikelleci.easysourcing.messages.events.AddEventHeaders;
+import io.github.alikelleci.easysourcing.messages.commands.transformers.AddEventHeaders;
+import io.github.alikelleci.easysourcing.messages.commands.transformers.AddResultHeaders;
+import io.github.alikelleci.easysourcing.messages.commands.transformers.AddSnapshotHeaders;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
-import io.github.alikelleci.easysourcing.messages.results.AddResultHeaders;
-import io.github.alikelleci.easysourcing.messages.snapshots.AddSnapshotHeaders;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
