@@ -2,8 +2,10 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.alikelleci.easysourcing.messages.RevisionAdder;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;
+import io.github.alikelleci.easysourcing.messages.commands.transformers.AddEventHeaders;
+import io.github.alikelleci.easysourcing.messages.commands.transformers.AddResultHeaders;
+import io.github.alikelleci.easysourcing.messages.commands.transformers.AddSnapshotHeaders;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messages.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
@@ -44,7 +46,7 @@ public class CommandStream {
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
         .filter((key, result) -> result != null);
 
-    // Successful --> Events
+    // Success --> Events
     KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Success)
         .mapValues((key, result) -> (Success) result)
@@ -57,18 +59,20 @@ public class CommandStream {
 
     // Results --> Push
     commandResults
+        .transformValues(AddResultHeaders::new)
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
     // Events --> Push
     events
-        .transformValues(RevisionAdder::new)
+        .transformValues(AddEventHeaders::new)
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
     // Snapshots --> Push
     snapshots
+        .transformValues(AddSnapshotHeaders::new)
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
