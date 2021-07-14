@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 import io.github.alikelleci.easysourcing.messages.Metadata;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -74,6 +75,7 @@ public class RequestReplyGateway extends CommandGateway {
         .remove(Metadata.REPLY_TO)
         .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
 
+    log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     super.producer.send(record);
 
     return CompletableFuture.supplyAsync(() -> {
