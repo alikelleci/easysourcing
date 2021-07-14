@@ -11,6 +11,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
 import org.thavam.util.concurrent.blockingMap.BlockingHashMap;
 import org.thavam.util.concurrent.blockingMap.BlockingMap;
 
@@ -47,12 +48,7 @@ public class RequestReplyGateway extends CommandGateway {
         try {
           ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
           consumerRecords.forEach(record -> {
-
-            String correlationId = Optional.ofNullable(record.headers().lastHeader(Metadata.CORRELATION_ID))
-                .map(Header::value)
-                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-                .orElse(null);
-
+            String correlationId = getCorrelationId(record.headers());
             if (StringUtils.isNotBlank(correlationId)) {
               results.put(correlationId, record.value());
             }
@@ -73,6 +69,13 @@ public class RequestReplyGateway extends CommandGateway {
     thread.start();
   }
 
+  private String getCorrelationId(Headers headers) {
+    return Optional.ofNullable(headers.lastHeader(Metadata.CORRELATION_ID))
+        .map(Header::value)
+        .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+        .orElse(null);
+  }
+
 
   @Override
   protected Future<RecordMetadata> send(ProducerRecord<String, Object> record) {
@@ -88,11 +91,7 @@ public class RequestReplyGateway extends CommandGateway {
 
     return CompletableFuture.supplyAsync(() -> {
       try {
-        String correlationId = Optional.ofNullable(record.headers().lastHeader(Metadata.CORRELATION_ID))
-            .map(Header::value)
-            .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-            .orElse(null);
-
+        String correlationId = getCorrelationId(record.headers());
         return results.take(correlationId);
       } catch (InterruptedException e) {
         e.printStackTrace();
