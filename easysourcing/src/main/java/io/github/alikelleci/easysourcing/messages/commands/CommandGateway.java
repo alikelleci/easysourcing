@@ -9,6 +9,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 @Slf4j
@@ -18,6 +19,18 @@ public class CommandGateway {
 
   public CommandGateway(Producer<String, Object> producer) {
     this.producer = producer;
+  }
+
+  protected Future<RecordMetadata> send(ProducerRecord<String, Object> record) {
+    String id = UUID.randomUUID().toString();
+    String correlationId = UUID.randomUUID().toString();
+
+    record.headers()
+        .add("$id", id.getBytes(StandardCharsets.UTF_8))
+        .add("$correlationId", correlationId.getBytes(StandardCharsets.UTF_8));
+
+    log.debug("Sending command: {} ({})", record.value().getClass().getSimpleName(), CommonUtils.getAggregateId(record.value()));
+    return producer.send(record);
   }
 
   public Future<RecordMetadata> send(Object payload, Metadata metadata) {
@@ -35,17 +48,11 @@ public class CommandGateway {
                 .remove(entry.getKey())
                 .add(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8)));
 
-    log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
-    return producer.send(record);
+    return this.send(record);
   }
 
   public Future<RecordMetadata> send(Object payload) {
     return this.send(payload, null);
-  }
-
-  Future<RecordMetadata> sendd(ProducerRecord<String, Object> record) {
-    log.debug("Sending command: {} ({})", record.value().getClass().getSimpleName(), CommonUtils.getAggregateId(record.value()));
-    return producer.send(record);
   }
 
 }

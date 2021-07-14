@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
-import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -44,7 +43,7 @@ public class RequestReplyGateway extends CommandGateway {
       while (running) {
         ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
         consumerRecords.forEach(record -> {
-          String id = new String(record.headers().lastHeader("x-correlation-id").value(), StandardCharsets.UTF_8);
+          String id = new String(record.headers().lastHeader("$id").value(), StandardCharsets.UTF_8);
           results.put(id, record.value());
         });
       }
@@ -58,29 +57,21 @@ public class RequestReplyGateway extends CommandGateway {
     thread.start();
   }
 
-
-  public Future<CommandResult> senddddd(Object payload) {
-    CommonUtils.validatePayload(payload);
-
-    String id = UUID.randomUUID().toString();
-
-    ProducerRecord<String, Object> record = new ProducerRecord<>(CommonUtils.getTopicInfo(payload).value(), CommonUtils.getAggregateId(payload), payload);
+  protected Future<CommandResult> sendAndWait(ProducerRecord<String, Object> record) {
     record.headers()
-        .add("x-reply-topic", replyTopic.getBytes(StandardCharsets.UTF_8))
-        .add("x-correlation-id", id.getBytes(StandardCharsets.UTF_8));
+        .add("$replyTopic", replyTopic.getBytes(StandardCharsets.UTF_8));
 
-    sendd(record);
+    this.send(record);
 
     return CompletableFuture.supplyAsync(() -> {
       try {
+        String id = new String(record.headers().lastHeader("$id").value(), StandardCharsets.UTF_8);
         return results.take(id);
       } catch (InterruptedException e) {
         e.printStackTrace();
         return null;
       }
     });
-
-
   }
 
   private static Properties properties() {
