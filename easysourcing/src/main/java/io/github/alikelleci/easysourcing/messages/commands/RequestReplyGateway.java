@@ -1,8 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
-import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializerOld;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -14,6 +12,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.thavam.util.concurrent.blockingMap.BlockingHashMap;
+import org.thavam.util.concurrent.blockingMap.BlockingMap;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 public class RequestReplyGateway extends CommandGateway {
 
   private Map<String, CommandResult> results = new ConcurrentHashMap<>();
+  private BlockingMap<String, CommandResult> map = new BlockingHashMap<>();
   private Consumer<String, CommandResult> consumer;
 
   public RequestReplyGateway(Producer<String, Object> producer) {
@@ -42,7 +43,9 @@ public class RequestReplyGateway extends CommandGateway {
         ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
         consumerRecords.forEach(record -> {
           String id = new String(record.headers().lastHeader("x-correlation-id").value(), StandardCharsets.UTF_8);
+
           results.put(id, record.value());
+          map.put(id, record.value());
         });
       }
     });
@@ -65,14 +68,17 @@ public class RequestReplyGateway extends CommandGateway {
     sendd(record);
 
     return CompletableFuture.supplyAsync(() -> {
-      while (true) {
-        CommandResult object = results.get(id);
-        if (object != null) {
-          results.remove(id);
-          return object;
-        }
+      try {
+        System.out.println("sssssssssssssssssssssssss");
+        return map.take(id);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        System.out.println("bbbbbbbbbbbbbbbbbbbbbbbb");
+        return null;
       }
     });
+
+
   }
 
   private static Properties properties() {
