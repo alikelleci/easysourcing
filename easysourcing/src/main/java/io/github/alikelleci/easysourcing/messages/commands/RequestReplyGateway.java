@@ -44,7 +44,7 @@ public class RequestReplyGateway extends CommandGateway {
       try {
         consumer.subscribe(Collections.singletonList(replyTopic));
         while (!closed.get()) {
-          ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
+          ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(1000));
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
             if (StringUtils.isNotBlank(correlationId)) {
