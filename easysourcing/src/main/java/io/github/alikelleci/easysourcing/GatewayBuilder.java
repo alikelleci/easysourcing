@@ -60,21 +60,15 @@ public class GatewayBuilder {
   }
 
   private Producer<String, Object> producer() {
-    Producer<String, Object> producer = new KafkaProducer<>(this.producerConfig,
+    return new KafkaProducer<>(this.producerConfig,
         new StringSerializer(),
         new JsonSerializer<>());
-
-    Runtime.getRuntime().addShutdownHook(new Thread(producer::close));
-    return producer;
   }
 
   private Consumer<String, CommandResult> consumer() {
-    KafkaConsumer<String, CommandResult> consumer = new KafkaConsumer<>(consumerConfig(),
+    return new KafkaConsumer<>(consumerConfig(),
         new StringDeserializer(),
         new JsonDeserializer<>(CommandResult.class));
-
-    Runtime.getRuntime().addShutdownHook(new Thread(consumer::close));
-    return consumer;
   }
 
   private Properties consumerConfig() {
