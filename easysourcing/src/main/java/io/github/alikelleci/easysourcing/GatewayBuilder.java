@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing;
 
 import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
+import io.github.alikelleci.easysourcing.messages.commands.RequestReplyGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
 import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
 import io.github.alikelleci.easysourcing.support.interceptors.CommonProducerInterceptor;
@@ -37,6 +38,10 @@ public class GatewayBuilder {
 
   public CommandGateway commandGateway() {
     return new CommandGateway(producer());
+  }
+
+  public RequestReplyGateway requestReplyGateway() {
+    return new RequestReplyGateway(producer());
   }
 
   public EventGateway eventGateway() {

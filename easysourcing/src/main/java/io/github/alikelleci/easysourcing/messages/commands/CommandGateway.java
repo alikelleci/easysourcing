@@ -43,4 +43,9 @@ public class CommandGateway {
     return this.send(payload, null);
   }
 
+  Future<RecordMetadata> sendd(ProducerRecord<String, Object> record) {
+    log.debug("Sending command: {} ({})", record.value().getClass().getSimpleName(), CommonUtils.getAggregateId(record.value()));
+    return producer.send(record);
+  }
+
 }

@@ -16,6 +16,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,6 +71,13 @@ public class CommandStream {
     snapshots
         .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
+
+    // Results --> Reply channel push
+    commandResults
+//        .mapValues(CommandResult::getCommand)
+        .to((key, command, recordContext) -> new String(recordContext.headers().lastHeader("x-reply-topic").value(), StandardCharsets.UTF_8),
+            Produced.with(Serdes.String(), CustomSerdes.Json(CommandResult.class)));
   }
 
 }
