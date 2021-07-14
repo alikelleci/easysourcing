@@ -1,5 +1,6 @@
-package io.github.alikelleci.easysourcing.messages;
+package io.github.alikelleci.easysourcing.messages.results;
 
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult.Success;

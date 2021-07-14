@@ -1,5 +1,6 @@
-package io.github.alikelleci.easysourcing.messages;
+package io.github.alikelleci.easysourcing.messages.snapshots;
 
+import io.github.alikelleci.easysourcing.messages.Metadata;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
