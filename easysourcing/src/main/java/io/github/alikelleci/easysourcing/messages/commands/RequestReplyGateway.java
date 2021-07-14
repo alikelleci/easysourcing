@@ -9,6 +9,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.header.Header;
 import org.thavam.util.concurrent.blockingMap.BlockingHashMap;
 import org.thavam.util.concurrent.blockingMap.BlockingMap;
@@ -19,16 +20,16 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class RequestReplyGateway extends CommandGateway {
 
-  private final String replyTopic;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private Consumer<String, CommandResult> consumer;
+
+  private final String replyTopic;
   private BlockingMap<String, CommandResult> results = new BlockingHashMap<>();
-
-  private boolean running = true;
-
 
   public RequestReplyGateway(Producer<String, Object> producer, Consumer<String, CommandResult> consumer, String replyTopic) {
     super(producer);
@@ -42,27 +43,33 @@ public class RequestReplyGateway extends CommandGateway {
     consumer.subscribe(Collections.singletonList(replyTopic));
 
     Thread thread = new Thread(() -> {
-      while (running) {
-        ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
-        consumerRecords.forEach(record -> {
+      while (!closed.get()) {
+        try {
+          ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(100));
+          consumerRecords.forEach(record -> {
 
-          String correlationId = Optional.ofNullable(record.headers().lastHeader(Metadata.CORRELATION_ID))
-              .map(Header::value)
-              .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-              .orElse(null);
+            String correlationId = Optional.ofNullable(record.headers().lastHeader(Metadata.CORRELATION_ID))
+                .map(Header::value)
+                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+                .orElse(null);
 
-          if (StringUtils.isNotBlank(correlationId)) {
-            results.put(correlationId, record.value());
-          }
-        });
+            if (StringUtils.isNotBlank(correlationId)) {
+              results.put(correlationId, record.value());
+            }
+          });
+        } catch (WakeupException e) {
+          // Ignore exception if closing
+          if (!closed.get()) throw e;
+        } finally {
+          consumer.close();
+        }
       }
     });
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      running = false;
-      consumer.close();
+      closed.set(true);
+      consumer.wakeup();
     }));
-
     thread.start();
   }
 
