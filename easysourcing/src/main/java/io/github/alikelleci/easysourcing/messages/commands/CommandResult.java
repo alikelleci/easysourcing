@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -8,7 +7,6 @@ import lombok.Value;
 import java.util.List;
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public interface CommandResult {
 
   Object getCommand();
