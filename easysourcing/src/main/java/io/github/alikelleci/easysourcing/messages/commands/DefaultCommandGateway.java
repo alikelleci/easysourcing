@@ -3,6 +3,8 @@ package io.github.alikelleci.easysourcing.messages.commands;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.RecordReceiver;
+import io.github.alikelleci.easysourcing.messages.commands.exceptions.CommandExecutionException;
+import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,13 +27,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class DefaultCommandGateway implements CommandGateway, RecordReceiver<JsonNode> {
+public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
 
   private final Producer<String, Object> producer;
   private final Consumer<String, JsonNode> consumer;
   private final String replyTopic;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final BlockingMap<String, JsonNode> results = new BlockingHashMap<>();
+  private final BlockingMap<String, Object> results = new BlockingHashMap<>();
 
   public DefaultCommandGateway(Producer<String, Object> producer, Consumer<String, JsonNode> consumer, String replyTopic) {
     this.producer = producer;
@@ -57,13 +59,17 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Jso
 
     return CompletableFuture.supplyAsync(() -> {
       String correlationId = getCorrelationId(record.headers());
-      return receive(correlationId);
+      Object result = receive(correlationId);
+      if (result instanceof Throwable) {
+        throw new RuntimeException((Throwable) result);
+      }
+      return result;
     });
   }
 
   @Override
   @SneakyThrows
-  public JsonNode receive(String correlationId) {
+  public Object receive(String correlationId) {
     return results.take(correlationId, 1, TimeUnit.MINUTES);
   }
 
@@ -76,7 +82,13 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Jso
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
             if (StringUtils.isNotBlank(correlationId)) {
-              results.put(correlationId, record.value());
+              String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
+              if (result.equals("success")) {
+                results.put(correlationId, JsonUtils.toJavaType(record.value()));
+              } else {
+                String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
+                results.put(correlationId, new CommandExecutionException(cause));
+              }
             }
           });
         }
