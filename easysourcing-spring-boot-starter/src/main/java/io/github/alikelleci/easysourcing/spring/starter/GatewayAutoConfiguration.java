@@ -3,7 +3,6 @@ package io.github.alikelleci.easysourcing.spring.starter;
 import io.github.alikelleci.easysourcing.GatewayBuilder;
 import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
-import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -28,9 +27,4 @@ public class GatewayAutoConfiguration {
         .eventGateway();
   }
 
-  @Bean
-  public SnapshotGateway snapshotGateway(GatewayBuilder builder) {
-    return builder
-        .snapshotGateway();
-  }
 }
