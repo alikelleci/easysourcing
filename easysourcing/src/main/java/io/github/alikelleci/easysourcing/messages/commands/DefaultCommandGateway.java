@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class DefaultCommandGateway implements CommandGateway, RecordReceiver<ConsumerRecord<String, JsonNode>> {
+public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
 
   private final Producer<String, Object> producer;
   private final Consumer<String, JsonNode> consumer;
@@ -63,23 +63,23 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Con
 
     return CompletableFuture.supplyAsync(() -> {
       String correlationId = getCorrelationId(producerRecord.headers());
-      ConsumerRecord<String, JsonNode> consumerRecord = receive(correlationId);
-      String result = new String(consumerRecord.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
-      if (result.equals("success")) {
-        return JsonUtils.toJavaType(consumerRecord.value());
-      } else {
-        String cause = new String(consumerRecord.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
-        throw new CommandExecutionException(cause);
-      }
+      return receive(correlationId);
     });
   }
 
   @Override
   @SneakyThrows
-  public ConsumerRecord<String, JsonNode> receive(String correlationId) {
+  public Object receive(String correlationId) {
     ConsumerRecord<String, JsonNode> consumerRecord = results.take(correlationId, 1, TimeUnit.MINUTES);
     results.remove(correlationId);
-    return consumerRecord;
+
+    String result = new String(consumerRecord.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
+    if (result.equals("success")) {
+      return JsonUtils.toJavaType(consumerRecord.value());
+    } else {
+      String cause = new String(consumerRecord.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
+      throw new CommandExecutionException(cause);
+    }
   }
 
   private void startConsumer(String replyTopic) {
