@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -28,13 +29,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
+public class DefaultCommandGateway implements CommandGateway, RecordReceiver<ConsumerRecord<String, JsonNode>> {
 
   private final Producer<String, Object> producer;
   private final Consumer<String, JsonNode> consumer;
   private final String replyTopic;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final BlockingMap<String, Object> results = new BlockingHashMap<>();
+  private final BlockingMap<String, ConsumerRecord<String, JsonNode>> results = new BlockingHashMap<>();
 
   public DefaultCommandGateway(Producer<String, Object> producer, Consumer<String, JsonNode> consumer, String replyTopic) {
     this.producer = producer;
@@ -52,22 +53,22 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
 
   @Override
   public CompletableFuture<Object> send(Object payload, Metadata metadata) {
-    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
-    record.headers()
+    ProducerRecord<String, Object> producerRecord = createProducerRecord(payload, metadata);
+    producerRecord.headers()
         .remove(Metadata.REPLY_TO)
         .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
 
     log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
-    producer.send(record);
+    producer.send(producerRecord);
 
     return CompletableFuture.supplyAsync(() -> {
-      String correlationId = getCorrelationId(record.headers());
-      Object object = receive(correlationId);
-      String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
+      String correlationId = getCorrelationId(producerRecord.headers());
+      ConsumerRecord<String, JsonNode> consumerRecord = receive(correlationId);
+      String result = new String(consumerRecord.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
       if (result.equals("success")) {
-        return object;
+        return JsonUtils.toJavaType(consumerRecord.value());
       } else {
-        String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
+        String cause = new String(consumerRecord.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
         throw new CommandExecutionException(cause);
       }
     });
@@ -75,10 +76,10 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
 
   @Override
   @SneakyThrows
-  public Object receive(String correlationId) {
-    Object result = results.take(correlationId, 1, TimeUnit.MINUTES);
+  public ConsumerRecord<String, JsonNode> receive(String correlationId) {
+    ConsumerRecord<String, JsonNode> consumerRecord = results.take(correlationId, 1, TimeUnit.MINUTES);
     results.remove(correlationId);
-    return result;
+    return consumerRecord;
   }
 
   private void startConsumer(String replyTopic) {
@@ -90,7 +91,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
             if (StringUtils.isNotBlank(correlationId)) {
-              results.put(correlationId, JsonUtils.toJavaType(record.value()));
+              results.put(correlationId, record);
             }
           });
         }
