@@ -48,17 +48,6 @@ public class CommandStream {
         .transformValues(() -> new CommandTransformer(commandHandlers), "snapshots")
         .filter((key, result) -> result != null);
 
-    // Success --> Events
-    KStream<String, Object> events = commandResults
-        .filter((key, result) -> result instanceof Success)
-        .mapValues((key, result) -> (Success) result)
-        .flatMapValues(Success::getEvents);
-
-    // Events --> Snapshots
-    KStream<String, Object> snapshots = events
-        .mapValues(JsonUtils::toJsonNode)
-        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
-
     // Results --> Push
     commandResults
         .transformValues(AddResultHeaders::new)
@@ -66,25 +55,36 @@ public class CommandStream {
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Events --> Push
-    events
-        .transformValues(AddEventHeaders::new)
-        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
-    // Snapshots --> Push
-    snapshots
-        .transformValues(AddSnapshotHeaders::new)
-        .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
-    // Results --> Reply To
+    // Results --> Reply
     commandResults
         .transformValues(FilterReplyTo::new)
         .filter((key, result) -> result != null)
         .transformValues(AddResultHeaders::new)
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> new String(recordContext.headers().lastHeader(Metadata.REPLY_TO).value(), StandardCharsets.UTF_8),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
+    // Successful results --> Events
+    KStream<String, Object> events = commandResults
+        .filter((key, result) -> result instanceof Success)
+        .mapValues((key, result) -> (Success) result)
+        .flatMapValues(Success::getEvents);
+
+    // Events --> Push
+    events
+        .transformValues(AddEventHeaders::new)
+        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
+    // Events --> Snapshots
+    KStream<String, Object> snapshots = events
+        .mapValues(JsonUtils::toJsonNode)
+        .transformValues(() -> new EventSourcingTransformer(eventSourcingHandlers), "snapshots");
+
+    // Snapshots --> Push
+    snapshots
+        .transformValues(AddSnapshotHeaders::new)
+        .to((key, snapshot, recordContext) -> CommonUtils.getTopicInfo(snapshot).value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 

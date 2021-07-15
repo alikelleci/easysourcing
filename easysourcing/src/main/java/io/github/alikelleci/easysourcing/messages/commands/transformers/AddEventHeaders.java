@@ -27,7 +27,8 @@ public class AddEventHeaders implements ValueTransformer<Object, Object> {
         .remove(Metadata.ID)
         .remove(Metadata.REVISION)
         .remove(Metadata.RESULT)
-        .remove(Metadata.CAUSE);
+        .remove(Metadata.CAUSE)
+        .remove(Metadata.REPLY_TO);
 
     context.headers()
         .add(Metadata.ID, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
