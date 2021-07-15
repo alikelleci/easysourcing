@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.RecordReceiver;
 import io.github.alikelleci.easysourcing.messages.commands.exceptions.CommandExecutionException;
+import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
   @Override
   public void sendAndForget(Object payload, Metadata metadata) {
     ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     producer.send(record);
   }
 
@@ -55,6 +57,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
         .remove(Metadata.REPLY_TO)
         .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
 
+    log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     producer.send(record);
 
     return CompletableFuture.supplyAsync(() -> {
