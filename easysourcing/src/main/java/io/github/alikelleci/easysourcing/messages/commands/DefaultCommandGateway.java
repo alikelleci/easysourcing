@@ -91,8 +91,8 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
             if (requests.containsKey(correlationId)) {
-              results.put(correlationId, record);
               requests.remove(correlationId);
+              results.put(correlationId, record);
             }
           });
         }
