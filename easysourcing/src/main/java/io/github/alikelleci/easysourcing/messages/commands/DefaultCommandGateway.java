@@ -69,7 +69,6 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
   @SneakyThrows
   public Object receive(String correlationId) {
     ConsumerRecord<String, JsonNode> consumerRecord = results.take(correlationId, 1, TimeUnit.MINUTES);
-    results.remove(correlationId);
 
     String result = new String(consumerRecord.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
     if (result.equals("success")) {
