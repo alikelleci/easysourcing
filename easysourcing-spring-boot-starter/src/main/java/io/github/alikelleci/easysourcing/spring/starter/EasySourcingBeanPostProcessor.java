@@ -1,8 +1,8 @@
 package io.github.alikelleci.easysourcing.spring.starter;
 
 import io.github.alikelleci.easysourcing.EasySourcingBuilder;
-import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import io.github.alikelleci.easysourcing.common.annotations.HandleMessage;
+import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
