@@ -55,7 +55,7 @@ public class CommandStream {
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Results --> Reply
+    // Results --> Push reply
     commandResults
         .transformValues(FilterReplyTo::new)
         .filter((key, result) -> result != null)
