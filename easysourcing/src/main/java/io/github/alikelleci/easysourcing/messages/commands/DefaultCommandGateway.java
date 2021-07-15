@@ -31,11 +31,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
 
+  private final BlockingMap<String, ConsumerRecord<String, JsonNode>> results = new BlockingHashMap<>();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Producer<String, Object> producer;
   private final Consumer<String, JsonNode> consumer;
   private final String replyTopic;
-  private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final BlockingMap<String, ConsumerRecord<String, JsonNode>> results = new BlockingHashMap<>();
 
   public DefaultCommandGateway(Producer<String, Object> producer, Consumer<String, JsonNode> consumer, String replyTopic) {
     this.producer = producer;
