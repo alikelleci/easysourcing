@@ -15,20 +15,20 @@ public interface CommandGateway extends Gateway {
     sendAndForget(payload, null);
   }
 
-  CompletableFuture<Object> send(Object payload, Metadata metadata);
+  <R> CompletableFuture<R> send(Object payload, Metadata metadata);
 
-  default CompletableFuture<Object> send(Object payload) {
+  default <R> CompletableFuture<R> send(Object payload) {
     return send(payload, null);
   }
 
   @SneakyThrows
-  default Object sendAndWait(Object payload, Metadata metadata) {
-    CompletableFuture<Object> future = send(payload);
+  default <R> R sendAndWait(Object payload, Metadata metadata) {
+    CompletableFuture<R> future = send(payload);
     return future.get(1, TimeUnit.MINUTES);
   }
 
   @SneakyThrows
-  default Object sendAndWait(Object payload) {
+  default <R> R sendAndWait(Object payload) {
     return sendAndWait(payload, null);
   }
 
