@@ -50,7 +50,6 @@ public class GatewayBuilder {
     return new DefaultEventGateway(producer());
   }
 
-
   private Producer<String, Object> producer() {
     return new KafkaProducer<>(this.producerConfig,
         new StringSerializer(),

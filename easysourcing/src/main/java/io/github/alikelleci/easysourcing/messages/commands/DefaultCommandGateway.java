@@ -73,7 +73,9 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
   @Override
   @SneakyThrows
   public Object receive(String correlationId) {
-    return results.take(correlationId, 1, TimeUnit.MINUTES);
+    Object result = results.take(correlationId, 1, TimeUnit.MINUTES);
+    results.remove(correlationId);
+    return result;
   }
 
   private void startConsumer(String replyTopic) {
