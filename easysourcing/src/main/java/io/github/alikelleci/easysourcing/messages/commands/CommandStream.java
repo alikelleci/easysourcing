@@ -45,12 +45,6 @@ public class CommandStream {
         .transformValues(() -> new CommandTransformer(commandHandlers), "redirects", "snapshots")
         .filter((key, result) -> result != null);
 
-    // Success --> Events
-    KStream<String, Object> events = commandResults
-        .filter((key, result) -> result instanceof Success)
-        .mapValues((key, result) -> (Success) result)
-        .flatMapValues(Success::getEvents);
-
     // Results --> Push
     commandResults
         .filter((ke, commandResult) -> !(commandResult instanceof Unprocessed))
@@ -59,18 +53,25 @@ public class CommandStream {
         .to((key, command, recordContext) -> CommonUtils.getTopicInfo(command).value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Events --> Push
-    events
-        .transformValues(AddEventHeaders::new)
-        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
-            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
-
     // Unprocessed commands --> Push
     commandResults
         .filter((s, commandResult) -> commandResult instanceof Unprocessed)
         .mapValues((key, result) -> result.getCommand())
         .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value().concat(".retry"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
+    // Success --> Events
+    KStream<String, Object> events = commandResults
+        .filter((key, result) -> result instanceof Success)
+        .mapValues((key, result) -> (Success) result)
+        .flatMapValues(Success::getEvents);
+
+    // Events --> Push
+    events
+        .transformValues(AddEventHeaders::new)
+        .to((key, event, recordContext) -> CommonUtils.getTopicInfo(event).value(),
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
+
   }
 
 }
