@@ -2,11 +2,9 @@ package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.messages.RecordReceiver;
 import io.github.alikelleci.easysourcing.messages.commands.exceptions.CommandExecutionException;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -16,8 +14,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
-import org.thavam.util.concurrent.blockingMap.BlockingHashMap;
-import org.thavam.util.concurrent.blockingMap.BlockingMap;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -26,14 +22,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
+public class DefaultCommandGateway implements CommandGateway {
 
-  private final Map<String, Integer> requests = new ConcurrentHashMap<>();
-  private final BlockingMap<String, ConsumerRecord<String, JsonNode>> results = new BlockingHashMap<>();
+  private final Map<String, CompletableFuture<Object>> futures = new ConcurrentHashMap<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Producer<String, Object> producer;
   private final Consumer<String, JsonNode> consumer;
@@ -55,31 +49,28 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
 
   @Override
   public CompletableFuture<Object> send(Object payload, Metadata metadata) {
-    ProducerRecord<String, Object> producerRecord = createProducerRecord(payload, metadata);
-    producerRecord.headers()
+    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    record.headers()
         .remove(Metadata.REPLY_TO)
         .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
 
     log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
-    producer.send(producerRecord);
+    producer.send(record);
 
-    String correlationId = getCorrelationId(producerRecord.headers());
-    requests.put(correlationId, 1);
-    return CompletableFuture.supplyAsync(() -> receive(correlationId));
+    String correlationId = getCorrelationId(record.headers());
+    CompletableFuture<Object> future = new CompletableFuture<>();
+    futures.put(correlationId, future);
+
+    return future;
   }
 
-  @Override
-  @SneakyThrows
-  public Object receive(String correlationId) {
-    ConsumerRecord<String, JsonNode> consumerRecord = results.take(correlationId, 1, TimeUnit.MINUTES);
-
-    String result = new String(consumerRecord.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
-    if (result.equals("success")) {
-      return JsonUtils.toJavaType(consumerRecord.value());
-    } else {
-      String cause = new String(consumerRecord.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
-      throw new CommandExecutionException(cause);
+  public Exception checkForErrors(ConsumerRecord<String, JsonNode> record) {
+    String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
+    if (result.equals("failure")) {
+      String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
+      return new CommandExecutionException(cause);
     }
+    return null;
   }
 
   private void startConsumer(String replyTopic) {
@@ -90,9 +81,14 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
           ConsumerRecords<String, JsonNode> consumerRecords = consumer.poll(Duration.ofMillis(1000));
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
-            if (requests.containsKey(correlationId)) {
-              results.put(correlationId, record);
-              requests.remove(correlationId);
+            CompletableFuture<Object> future = futures.remove(correlationId);
+            if (future != null) {
+              Exception exception = checkForErrors(record);
+              if (exception == null) {
+                future.complete(JsonUtils.toJavaType(record.value()));
+              } else {
+                future.completeExceptionally(exception);
+              }
             }
           });
         }
