@@ -8,7 +8,6 @@ import io.github.alikelleci.easysourcing.util.CommonUtils;
 import io.github.alikelleci.easysourcing.util.JsonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -23,14 +22,17 @@ import org.thavam.util.concurrent.blockingMap.BlockingMap;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
 
+  private final Map<String, String> requests = new ConcurrentHashMap<>();
   private final BlockingMap<String, ConsumerRecord<String, JsonNode>> results = new BlockingHashMap<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Producer<String, Object> producer;
@@ -62,6 +64,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
     producer.send(producerRecord);
 
     String correlationId = getCorrelationId(producerRecord.headers());
+    requests.put(correlationId, null);
     return CompletableFuture.supplyAsync(() -> receive(correlationId));
   }
 
@@ -87,8 +90,9 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
           ConsumerRecords<String, JsonNode> consumerRecords = consumer.poll(Duration.ofMillis(1000));
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
-            if (StringUtils.isNotBlank(correlationId)) {
+            if (requests.containsKey(correlationId)) {
               results.put(correlationId, record);
+              requests.remove(correlationId);
             }
           });
         }

@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
 import io.github.alikelleci.easysourcing.messages.commands.DefaultCommandGateway;
 import io.github.alikelleci.easysourcing.messages.events.DefaultEventGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
@@ -42,7 +43,7 @@ public class GatewayBuilder {
 //    this.producerConfig.putIfAbsent(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
   }
 
-  public DefaultCommandGateway commandGateway(String replyTopic) {
+  public CommandGateway commandGateway(String replyTopic) {
     return new DefaultCommandGateway(producer(), consumer(), replyTopic);
   }
 
