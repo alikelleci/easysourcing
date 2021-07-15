@@ -64,7 +64,7 @@ public class CommandStream {
         .to((key, command, recordContext) -> new String(recordContext.headers().lastHeader(Metadata.REPLY_TO).value(), StandardCharsets.UTF_8),
             Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
 
-    // Successful results --> Events
+    // Success --> Events
     KStream<String, Object> events = commandResults
         .filter((key, result) -> result instanceof Success)
         .mapValues((key, result) -> (Success) result)
