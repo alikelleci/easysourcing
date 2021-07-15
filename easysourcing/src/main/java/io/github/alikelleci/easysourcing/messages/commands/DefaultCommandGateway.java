@@ -64,15 +64,6 @@ public class DefaultCommandGateway implements CommandGateway {
     return future;
   }
 
-  public Exception checkForErrors(ConsumerRecord<String, JsonNode> record) {
-    String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
-    if (result.equals("failure")) {
-      String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
-      return new CommandExecutionException(cause);
-    }
-    return null;
-  }
-
   private void startConsumer(String replyTopic) {
     Thread thread = new Thread(() -> {
       try {
@@ -112,5 +103,14 @@ public class DefaultCommandGateway implements CommandGateway {
         .map(Header::value)
         .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
         .orElse(null);
+  }
+
+  private Exception checkForErrors(ConsumerRecord<String, JsonNode> record) {
+    String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
+    if (result.equals("failure")) {
+      String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
+      return new CommandExecutionException(cause);
+    }
+    return null;
   }
 }
