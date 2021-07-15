@@ -39,6 +39,26 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Com
     startConsumer(replyTopic);
   }
 
+  @Override
+  public void sendAndForget(Object payload, Metadata metadata) {
+    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    producer.send(record);
+  }
+
+  @Override
+  public CompletableFuture<CommandResult> send(Object payload, Metadata metadata) {
+    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    record.headers()
+        .remove(Metadata.REPLY_TO)
+        .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
+
+    producer.send(record);
+
+    return CompletableFuture.supplyAsync(() -> {
+      String correlationId = getCorrelationId(record.headers());
+      return receive(correlationId);
+    });
+  }
 
   @Override
   @SneakyThrows
@@ -79,26 +99,5 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Com
         .map(Header::value)
         .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
         .orElse(null);
-  }
-
-  @Override
-  public void sendAndForget(Object payload, Metadata metadata) {
-    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
-    producer.send(record);
-  }
-
-  @Override
-  public CompletableFuture<CommandResult> send(Object payload, Metadata metadata) {
-    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
-    record.headers()
-        .remove(Metadata.REPLY_TO)
-        .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
-
-    producer.send(record);
-
-    return CompletableFuture.supplyAsync(() -> {
-      String correlationId = getCorrelationId(record.headers());
-      return receive(correlationId);
-    });
   }
 }
