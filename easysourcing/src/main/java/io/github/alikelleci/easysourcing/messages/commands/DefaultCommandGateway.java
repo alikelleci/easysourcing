@@ -61,10 +61,8 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
     log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
     producer.send(producerRecord);
 
-    return CompletableFuture.supplyAsync(() -> {
-      String correlationId = getCorrelationId(producerRecord.headers());
-      return receive(correlationId);
-    });
+    String correlationId = getCorrelationId(producerRecord.headers());
+    return CompletableFuture.supplyAsync(() -> receive(correlationId));
   }
 
   @Override
