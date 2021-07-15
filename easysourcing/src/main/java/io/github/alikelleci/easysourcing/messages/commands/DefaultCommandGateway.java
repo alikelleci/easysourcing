@@ -62,11 +62,14 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
 
     return CompletableFuture.supplyAsync(() -> {
       String correlationId = getCorrelationId(record.headers());
-      Object result = receive(correlationId);
-      if (result instanceof Throwable) {
-        throw new RuntimeException((Throwable) result);
+      Object object = receive(correlationId);
+      String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
+      if (result.equals("success")) {
+        return object;
+      } else {
+        String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
+        throw new CommandExecutionException(cause);
       }
-      return result;
     });
   }
 
@@ -87,13 +90,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
             if (StringUtils.isNotBlank(correlationId)) {
-              String result = new String(record.headers().lastHeader(Metadata.RESULT).value(), StandardCharsets.UTF_8);
-              if (result.equals("success")) {
-                results.put(correlationId, JsonUtils.toJavaType(record.value()));
-              } else {
-                String cause = new String(record.headers().lastHeader(Metadata.CAUSE).value(), StandardCharsets.UTF_8);
-                results.put(correlationId, new CommandExecutionException(cause));
-              }
+              results.put(correlationId, JsonUtils.toJavaType(record.value()));
             }
           });
         }
