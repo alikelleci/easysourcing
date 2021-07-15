@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Object> {
 
-  private final Map<String, String> requests = new ConcurrentHashMap<>();
+  private final Map<String, Integer> requests = new ConcurrentHashMap<>();
   private final BlockingMap<String, ConsumerRecord<String, JsonNode>> results = new BlockingHashMap<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Producer<String, Object> producer;
@@ -64,7 +64,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Obj
     producer.send(producerRecord);
 
     String correlationId = getCorrelationId(producerRecord.headers());
-    requests.put(correlationId, null);
+    requests.put(correlationId, 1);
     return CompletableFuture.supplyAsync(() -> receive(correlationId));
   }
 
