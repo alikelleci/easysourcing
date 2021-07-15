@@ -1,7 +1,7 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.util.CommonUtils;
+import io.github.alikelleci.easysourcing.messages.RecordReceiver;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,20 +24,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class RequestReplyGateway extends CommandGateway {
+public class DefaultCommandGateway implements CommandGateway, RecordReceiver<CommandResult> {
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
-  private Consumer<String, CommandResult> consumer;
-
+  private final Producer<String, Object> producer;
+  private final Consumer<String, CommandResult> consumer;
   private final String replyTopic;
-  private BlockingMap<String, CommandResult> results = new BlockingHashMap<>();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final BlockingMap<String, CommandResult> results = new BlockingHashMap<>();
 
-  public RequestReplyGateway(Producer<String, Object> producer, Consumer<String, CommandResult> consumer, String replyTopic) {
-    super(producer);
+  public DefaultCommandGateway(Producer<String, Object> producer, Consumer<String, CommandResult> consumer, String replyTopic) {
+    this.producer = producer;
     this.consumer = consumer;
     this.replyTopic = replyTopic;
-
     startConsumer(replyTopic);
+  }
+
+
+  @Override
+  @SneakyThrows
+  public CommandResult receive(String correlationId) {
+    return results.take(correlationId, 1, TimeUnit.MINUTES);
   }
 
   private void startConsumer(String replyTopic) {
@@ -68,37 +74,31 @@ public class RequestReplyGateway extends CommandGateway {
     thread.start();
   }
 
-
-  @SneakyThrows
-  public CommandResult sendAndWait(Object payload, Metadata metadata) {
-    ProducerRecord<String, Object> record = super.createProducerRecord(payload, metadata);
-    record.headers()
-        .remove(Metadata.REPLY_TO)
-        .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
-
-    log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
-    super.producer.send(record);
-
-    return CompletableFuture.supplyAsync(() -> {
-      try {
-        String correlationId = getCorrelationId(record.headers());
-        return results.take(correlationId);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-        return null;
-      }
-    }).get(1, TimeUnit.MINUTES);
-  }
-
-  public CommandResult sendAndWait(Object payload) {
-    return this.sendAndWait(payload, null);
-  }
-
-
   private String getCorrelationId(Headers headers) {
     return Optional.ofNullable(headers.lastHeader(Metadata.CORRELATION_ID))
         .map(Header::value)
         .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
         .orElse(null);
+  }
+
+  @Override
+  public void sendAndForget(Object payload, Metadata metadata) {
+    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    producer.send(record);
+  }
+
+  @Override
+  public CompletableFuture<CommandResult> send(Object payload, Metadata metadata) {
+    ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
+    record.headers()
+        .remove(Metadata.REPLY_TO)
+        .add(Metadata.REPLY_TO, replyTopic.getBytes(StandardCharsets.UTF_8));
+
+    producer.send(record);
+
+    return CompletableFuture.supplyAsync(() -> {
+      String correlationId = getCorrelationId(record.headers());
+      return receive(correlationId);
+    });
   }
 }

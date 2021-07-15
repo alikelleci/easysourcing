@@ -1,22 +1,35 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
-import io.github.alikelleci.easysourcing.Gateway;
+import io.github.alikelleci.easysourcing.messages.Gateway;
 import io.github.alikelleci.easysourcing.messages.Metadata;
-import io.github.alikelleci.easysourcing.util.CommonUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.Producer;
+import lombok.SneakyThrows;
 
-@Slf4j
-public class CommandGateway extends Gateway {
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
-  public CommandGateway(Producer<String, Object> producer) {
-    super(producer);
+public interface CommandGateway extends Gateway {
+
+  void sendAndForget(Object payload, Metadata metadata);
+
+  default void sendAndForget(Object payload) {
+    sendAndForget(payload, null);
   }
 
-  @Override
-  public void send(Object payload, Metadata metadata) {
-    log.debug("Sending command: {} ({})", payload.getClass().getSimpleName(), CommonUtils.getAggregateId(payload));
-    super.send(payload, metadata);
+  CompletableFuture<CommandResult> send(Object payload, Metadata metadata);
+
+  default CompletableFuture<CommandResult> send(Object payload) {
+    return send(payload, null);
+  }
+
+  @SneakyThrows
+  default CommandResult sendAndWait(Object payload, Metadata metadata) {
+    CompletableFuture<CommandResult> future = send(payload);
+    return future.get(1, TimeUnit.MINUTES);
+  }
+
+  @SneakyThrows
+  default CommandResult sendAndWait(Object payload) {
+    return sendAndWait(payload, null);
   }
 
 }

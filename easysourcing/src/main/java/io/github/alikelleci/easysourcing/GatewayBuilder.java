@@ -1,10 +1,9 @@
 package io.github.alikelleci.easysourcing;
 
-import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
 import io.github.alikelleci.easysourcing.messages.commands.CommandResult;
-import io.github.alikelleci.easysourcing.messages.commands.RequestReplyGateway;
+import io.github.alikelleci.easysourcing.messages.commands.DefaultCommandGateway;
+import io.github.alikelleci.easysourcing.messages.events.DefaultEventGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
-import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
 import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
@@ -43,21 +42,14 @@ public class GatewayBuilder {
 //    this.producerConfig.putIfAbsent(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
   }
 
-  public CommandGateway commandGateway() {
-    return new CommandGateway(producer());
-  }
-
-  public RequestReplyGateway requestReplyGateway(String replyTopic) {
-    return new RequestReplyGateway(producer(), consumer(), replyTopic);
+  public DefaultCommandGateway commandGateway(String replyTopic) {
+    return new DefaultCommandGateway(producer(), consumer(), replyTopic);
   }
 
   public EventGateway eventGateway() {
-    return new EventGateway(producer());
+    return new DefaultEventGateway(producer());
   }
 
-  public SnapshotGateway snapshotGateway() {
-    return new SnapshotGateway(producer());
-  }
 
   private Producer<String, Object> producer() {
     return new KafkaProducer<>(this.producerConfig,
