@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing;
 
 import io.github.alikelleci.easysourcing.messages.commands.CommandGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
-import io.github.alikelleci.easysourcing.messages.snapshots.SnapshotGateway;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -38,10 +37,6 @@ public class GatewayBuilder {
 
   public EventGateway eventGateway() {
     return new EventGateway(producer());
-  }
-
-  public SnapshotGateway snapshotGateway() {
-    return new SnapshotGateway(producer());
   }
 
   private Producer<String, Object> producer() {
