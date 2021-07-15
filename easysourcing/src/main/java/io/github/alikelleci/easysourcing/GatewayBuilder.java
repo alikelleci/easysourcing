@@ -1,6 +1,6 @@
 package io.github.alikelleci.easysourcing;
 
-import io.github.alikelleci.easysourcing.messages.commands.CommandResult;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.commands.DefaultCommandGateway;
 import io.github.alikelleci.easysourcing.messages.events.DefaultEventGateway;
 import io.github.alikelleci.easysourcing.messages.events.EventGateway;
@@ -57,10 +57,10 @@ public class GatewayBuilder {
         new JsonSerializer<>());
   }
 
-  private Consumer<String, CommandResult> consumer() {
+  private Consumer<String, JsonNode> consumer() {
     return new KafkaConsumer<>(consumerConfig(),
         new StringDeserializer(),
-        new JsonDeserializer<>(CommandResult.class));
+        new JsonDeserializer<>(JsonNode.class));
   }
 
   private Properties consumerConfig() {

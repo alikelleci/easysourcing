@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.RecordReceiver;
 import lombok.SneakyThrows;
@@ -24,15 +25,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class DefaultCommandGateway implements CommandGateway, RecordReceiver<CommandResult> {
+public class DefaultCommandGateway implements CommandGateway, RecordReceiver<JsonNode> {
 
   private final Producer<String, Object> producer;
-  private final Consumer<String, CommandResult> consumer;
+  private final Consumer<String, JsonNode> consumer;
   private final String replyTopic;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final BlockingMap<String, CommandResult> results = new BlockingHashMap<>();
+  private final BlockingMap<String, JsonNode> results = new BlockingHashMap<>();
 
-  public DefaultCommandGateway(Producer<String, Object> producer, Consumer<String, CommandResult> consumer, String replyTopic) {
+  public DefaultCommandGateway(Producer<String, Object> producer, Consumer<String, JsonNode> consumer, String replyTopic) {
     this.producer = producer;
     this.consumer = consumer;
     this.replyTopic = replyTopic;
@@ -46,7 +47,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Com
   }
 
   @Override
-  public CompletableFuture<CommandResult> send(Object payload, Metadata metadata) {
+  public CompletableFuture<Object> send(Object payload, Metadata metadata) {
     ProducerRecord<String, Object> record = createProducerRecord(payload, metadata);
     record.headers()
         .remove(Metadata.REPLY_TO)
@@ -62,7 +63,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Com
 
   @Override
   @SneakyThrows
-  public CommandResult receive(String correlationId) {
+  public JsonNode receive(String correlationId) {
     return results.take(correlationId, 1, TimeUnit.MINUTES);
   }
 
@@ -71,7 +72,7 @@ public class DefaultCommandGateway implements CommandGateway, RecordReceiver<Com
       try {
         consumer.subscribe(Collections.singletonList(replyTopic));
         while (!closed.get()) {
-          ConsumerRecords<String, CommandResult> consumerRecords = consumer.poll(Duration.ofMillis(1000));
+          ConsumerRecords<String, JsonNode> consumerRecords = consumer.poll(Duration.ofMillis(1000));
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
             if (StringUtils.isNotBlank(correlationId)) {

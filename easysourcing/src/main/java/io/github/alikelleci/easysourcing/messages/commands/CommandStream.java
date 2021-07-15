@@ -83,8 +83,9 @@ public class CommandStream {
         .transformValues(FilterReplyTo::new)
         .filter((key, result) -> result != null)
         .transformValues(AddResultHeaders::new)
+        .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> new String(recordContext.headers().lastHeader(Metadata.REPLY_TO).value(), StandardCharsets.UTF_8),
-            Produced.with(Serdes.String(), CustomSerdes.Json(CommandResult.class)));
+            Produced.with(Serdes.String(), CustomSerdes.Json(Object.class)));
   }
 
 }
