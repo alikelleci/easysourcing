@@ -1,6 +1,8 @@
 package io.github.alikelleci.easysourcing.messages.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.alikelleci.easysourcing.messages.Metadata;
 import io.github.alikelleci.easysourcing.messages.commands.exceptions.CommandExecutionException;
 import io.github.alikelleci.easysourcing.util.CommonUtils;
@@ -27,7 +29,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class DefaultCommandGateway implements CommandGateway {
 
-  private final Map<String, CompletableFuture<Object>> futures = new ConcurrentHashMap<>();
+  //private final Map<String, CompletableFuture<Object>> futures = new ConcurrentHashMap<>();
+  private final Cache<String, CompletableFuture<Object>> cache = Caffeine.newBuilder()
+      .expireAfterWrite(Duration.ofMinutes(1))
+      .build();
+
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Producer<String, Object> producer;
   private final Consumer<String, JsonNode> consumer;
@@ -59,7 +65,7 @@ public class DefaultCommandGateway implements CommandGateway {
 
     String correlationId = getCorrelationId(record.headers());
     CompletableFuture<Object> future = new CompletableFuture<>();
-    futures.put(correlationId, future);
+    cache.put(correlationId, future);
 
     return future;
   }
@@ -72,7 +78,8 @@ public class DefaultCommandGateway implements CommandGateway {
           ConsumerRecords<String, JsonNode> consumerRecords = consumer.poll(Duration.ofMillis(1000));
           consumerRecords.forEach(record -> {
             String correlationId = getCorrelationId(record.headers());
-            CompletableFuture<Object> future = futures.remove(correlationId);
+            // CompletableFuture<Object> future = futures.remove(correlationId);
+            CompletableFuture<Object> future = cache.getIfPresent(correlationId);
             if (future != null) {
               Exception exception = checkForErrors(record);
               if (exception == null) {
@@ -80,6 +87,7 @@ public class DefaultCommandGateway implements CommandGateway {
               } else {
                 future.completeExceptionally(exception);
               }
+              cache.invalidate(correlationId);
             }
           });
         }
