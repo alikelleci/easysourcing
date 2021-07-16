@@ -8,6 +8,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ public class Metadata {
   @Singular
   private Map<String, String> entries;
 
+  private Instant time;
   private long timestamp;
   private String topic;
   private int partition;
@@ -48,6 +50,7 @@ public class Metadata {
 
     return this.toBuilder()
         .entries(map)
+        .time(Instant.ofEpochMilli(context.timestamp()))
         .timestamp(context.timestamp())
         .topic(context.topic())
         .partition(context.partition())
