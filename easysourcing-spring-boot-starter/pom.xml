@@ -6,7 +6,7 @@
     <parent>
         <artifactId>easysourcing-parent</artifactId>
         <groupId>io.github.alikelleci</groupId>
-        <version>2.7.7</version>
+        <version>1.0.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
