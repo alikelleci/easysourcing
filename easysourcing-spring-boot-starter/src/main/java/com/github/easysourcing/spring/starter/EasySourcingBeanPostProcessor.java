@@ -2,7 +2,7 @@ package com.github.easysourcing.spring.starter;
 
 import com.github.easysourcing.EasySourcingBuilder;
 import com.github.easysourcing.messages.annotations.HandleMessage;
-import com.github.easysourcing.messages.HandlerUtils;
+import com.github.easysourcing.utils.HandlerUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 

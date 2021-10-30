@@ -14,6 +14,15 @@ import java.util.Map;
 @Value
 @Builder(toBuilder = true)
 public class Metadata {
+  public static final String ID = "$id";
+  public static final String CORRELATION_ID = "$correlationId";
+  public static final String RESULT = "$result";
+  public static final String FAILURE = "$failure";
+
+  public static final String TIMESTAMP = "$timestamp";
+  public static final String TOPIC = "$topic";
+  public static final String PARTITION = "$partition";
+  public static final String OFFSET = "$offset";
 
   @Singular
   Map<String, String> entries;
@@ -32,10 +41,10 @@ public class Metadata {
   @Transient
   public Metadata inject(ProcessorContext context) {
     return this.toBuilder()
-        .entry(MetadataKeys.TIMESTAMP, String.valueOf(context.timestamp()))
-        .entry(MetadataKeys.TOPIC, String.valueOf(context.topic()))
-        .entry(MetadataKeys.PARTITION, String.valueOf(context.partition()))
-        .entry(MetadataKeys.OFFSET, String.valueOf(context.offset()))
+        .entry(TIMESTAMP, String.valueOf(context.timestamp()))
+        .entry(TOPIC, String.valueOf(context.topic()))
+        .entry(PARTITION, String.valueOf(context.partition()))
+        .entry(OFFSET, String.valueOf(context.offset()))
         .build();
   }
 

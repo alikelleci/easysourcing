@@ -1,12 +1,14 @@
 package com.github.easysourcing.messages.commands;
 
-import com.github.easysourcing.messages.MetadataKeys;
 import com.github.easysourcing.messages.events.Event;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
 
 import java.util.List;
+
+import static com.github.easysourcing.messages.Metadata.FAILURE;
+import static com.github.easysourcing.messages.Metadata.RESULT;
 
 
 public interface CommandResult {
@@ -24,7 +26,7 @@ public interface CommandResult {
     public Command getCommand() {
       return command.toBuilder()
           .metadata(command.getMetadata().toBuilder()
-              .entry(MetadataKeys.RESULT, "success")
+              .entry(RESULT, "success")
               .build())
           .build();
     }
@@ -41,8 +43,8 @@ public interface CommandResult {
     public Command getCommand() {
       return command.toBuilder()
           .metadata(command.getMetadata().toBuilder()
-              .entry(MetadataKeys.RESULT, "failed")
-              .entry(MetadataKeys.FAILURE, message)
+              .entry(RESULT, "failed")
+              .entry(FAILURE, message)
               .build())
           .build();
     }

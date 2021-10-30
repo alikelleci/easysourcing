@@ -1,6 +1,7 @@
 package com.github.easysourcing.messages.results;
 
 
+import com.github.easysourcing.constants.Topics;
 import com.github.easysourcing.messages.commands.Command;
 import com.github.easysourcing.support.serializer.CustomSerdes;
 import lombok.extern.slf4j.Slf4j;
@@ -15,18 +16,9 @@ import java.util.Set;
 @Slf4j
 public class ResultStream {
 
-  private final Set<String> topics;
-  private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers;
-
-  public ResultStream(Set<String> topics, MultiValuedMap<Class<?>, ResultHandler> resultHandlers) {
-    this.topics = topics;
-    this.resultHandlers = resultHandlers;
-  }
-
   public void buildStream(StreamsBuilder builder) {
     // --> Results
-    KStream<String, Command> resultKStream = builder.stream(topics,
-        Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
+    KStream<String, Command> resultKStream = builder.stream(Topics.RESULTS, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)
@@ -35,7 +27,7 @@ public class ResultStream {
 
     // Results --> Void
     resultKStream
-        .transformValues(() -> new ResultTransformer(resultHandlers));
+        .transformValues(ResultTransformer::new);
   }
 
 }

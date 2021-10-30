@@ -1,5 +1,6 @@
 package com.github.easysourcing.messages.events;
 
+import com.github.easysourcing.constants.Handlers;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
@@ -13,12 +14,6 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
 
   private ProcessorContext context;
 
-  private final MultiValuedMap<Class<?>, EventHandler> eventHandlers;
-
-  public EventTransformer(MultiValuedMap<Class<?>, EventHandler> eventHandlers) {
-    this.eventHandlers = eventHandlers;
-  }
-
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
@@ -26,7 +21,7 @@ public class EventTransformer implements ValueTransformer<Event, Void> {
 
   @Override
   public Void transform(Event event) {
-    Collection<EventHandler> handlers = eventHandlers.get(event.getPayload().getClass());
+    Collection<EventHandler> handlers = Handlers.EVENT_HANDLERS.get(event.getPayload().getClass());
     if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }

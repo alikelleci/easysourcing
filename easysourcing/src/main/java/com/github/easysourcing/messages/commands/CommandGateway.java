@@ -3,13 +3,15 @@ package com.github.easysourcing.messages.commands;
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
 import com.github.easysourcing.messages.Metadata;
-import com.github.easysourcing.messages.MetadataKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.util.UUID;
 import java.util.concurrent.Future;
+
+import static com.github.easysourcing.messages.Metadata.CORRELATION_ID;
+import static com.github.easysourcing.messages.Metadata.ID;
 
 @Slf4j
 public class CommandGateway extends MessageGateway {
@@ -26,8 +28,8 @@ public class CommandGateway extends MessageGateway {
     Command command = Command.builder()
         .payload(payload)
         .metadata(metadata.filter().toBuilder()
-            .entry(MetadataKeys.ID, UUID.randomUUID().toString())
-            .entry(MetadataKeys.CORRELATION_ID, UUID.randomUUID().toString())
+            .entry(ID, UUID.randomUUID().toString())
+            .entry(CORRELATION_ID, UUID.randomUUID().toString())
             .build())
         .build();
 

@@ -1,4 +1,4 @@
-package com.github.easysourcing.support;
+package com.github.easysourcing.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
