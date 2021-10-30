@@ -19,7 +19,7 @@
     <properties>
         <kafka.version>2.7.0</kafka.version>
         <jackson.version>2.11.3</jackson.version>
-        <lombok.version>1.18.20</lombok.version>
+        <lombok.version>1.18.22</lombok.version>
     </properties>
 
     <dependencies>
