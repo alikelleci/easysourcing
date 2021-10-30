@@ -148,6 +148,11 @@ public class EasySourcingBuilder {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
       Handlers.SNAPSHOT_HANDLERS.put(type, new SnapshotHandler(listener, method));
+
+      TopicInfo topicInfo = AnnotationUtils.findAnnotation(type, TopicInfo.class);
+      if (topicInfo != null) {
+        Topics.SNAPSHOTS.add(topicInfo.value());
+      }
     }
   }
 
