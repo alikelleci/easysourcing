@@ -1,5 +1,6 @@
 package com.github.easysourcing.messages.commands;
 
+import com.github.easysourcing.constants.Handlers;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.events.Event;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +19,6 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
   private ProcessorContext context;
   private KeyValueStore<String, Aggregate> store;
 
-  private final Map<Class<?>, CommandHandler> commandHandlers;
-
-  public CommandTransformer(Map<Class<?>, CommandHandler> commandHandlers) {
-    this.commandHandlers = commandHandlers;
-  }
-
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
@@ -32,7 +27,7 @@ public class CommandTransformer implements ValueTransformer<Command, CommandResu
 
   @Override
   public CommandResult transform(Command command) {
-    CommandHandler commandHandler = commandHandlers.get(command.getPayload().getClass());
+    CommandHandler commandHandler = Handlers.COMMAND_HANDLERS.get(command.getPayload().getClass());
     if (commandHandler == null) {
       return null;
     }

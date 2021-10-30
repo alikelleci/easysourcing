@@ -6,7 +6,7 @@
     <parent>
         <artifactId>easysourcing-parent</artifactId>
         <groupId>io.github.alikelleci</groupId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -18,7 +18,7 @@
 
     <properties>
         <spring-boot.version>2.4.0</spring-boot.version>
-        <lombok.version>1.18.20</lombok.version>
+        <lombok.version>1.18.22</lombok.version>
     </properties>
 
     <dependencies>

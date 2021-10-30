@@ -1,25 +1,17 @@
 package com.github.easysourcing.messages.aggregates;
 
+import com.github.easysourcing.constants.Handlers;
 import com.github.easysourcing.messages.events.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import java.util.Map;
-
 @Slf4j
 public class AggregateTransformer implements ValueTransformer<Event, Aggregate> {
 
   private ProcessorContext context;
   private KeyValueStore<String, Aggregate> store;
-
-  private final Map<Class<?>, Aggregator> aggregators;
-
-
-  public AggregateTransformer(Map<Class<?>, Aggregator> aggregators) {
-    this.aggregators = aggregators;
-  }
 
   @Override
   public void init(ProcessorContext processorContext) {
@@ -29,7 +21,7 @@ public class AggregateTransformer implements ValueTransformer<Event, Aggregate> 
 
   @Override
   public Aggregate transform(Event event) {
-    Aggregator aggregator = aggregators.get(event.getPayload().getClass());
+    Aggregator aggregator = Handlers.AGGREGATORS.get(event.getPayload().getClass());
     if (aggregator == null) {
       return null;
     }

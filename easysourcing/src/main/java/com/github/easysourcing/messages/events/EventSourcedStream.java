@@ -54,7 +54,7 @@ public class EventSourcedStream {
 
     // Events --> Snapshots
     KStream<String, Aggregate> aggregateKStream = eventKStream
-        .transformValues(() -> new AggregateTransformer(aggregators), supplier.name())
+        .transformValues(AggregateTransformer::new, supplier.name())
         .filter((key, aggregate) -> aggregate != null);
 
     // Snapshots Push

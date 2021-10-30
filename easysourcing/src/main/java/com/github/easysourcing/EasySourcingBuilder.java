@@ -1,25 +1,20 @@
 package com.github.easysourcing;
 
+import com.github.easysourcing.constants.Handlers;
+import com.github.easysourcing.constants.Topics;
+import com.github.easysourcing.utils.HandlerUtils;
+import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.aggregates.annotations.ApplyEvent;
 import com.github.easysourcing.messages.annotations.TopicInfo;
 import com.github.easysourcing.messages.commands.CommandHandler;
-import com.github.easysourcing.messages.commands.CommandStream;
-import com.github.easysourcing.messages.events.EventHandler;
-import com.github.easysourcing.messages.results.annotations.HandleResult;
-import com.github.easysourcing.messages.HandlerUtils;
-import com.github.easysourcing.messages.aggregates.Aggregator;
 import com.github.easysourcing.messages.commands.annotations.HandleCommand;
-import com.github.easysourcing.messages.events.EventStream;
+import com.github.easysourcing.messages.events.EventHandler;
 import com.github.easysourcing.messages.events.annotations.HandleEvent;
 import com.github.easysourcing.messages.results.ResultHandler;
-import com.github.easysourcing.messages.results.ResultStream;
+import com.github.easysourcing.messages.results.annotations.HandleResult;
 import com.github.easysourcing.messages.snapshots.SnapshotHandler;
-import com.github.easysourcing.messages.snapshots.SnapshotStream;
 import com.github.easysourcing.messages.snapshots.annotations.HandleSnapshot;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -28,18 +23,13 @@ import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -53,15 +43,6 @@ public class EasySourcingBuilder {
 
   private KafkaStreams.StateListener stateListener;
   private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
-  private boolean inMemoryStateStore;
-
-  //  Handlers
-  private final Map<Class<?>, CommandHandler> commandHandlers = new HashMap<>();
-  private final Map<Class<?>, Aggregator> aggregators = new HashMap<>();
-  private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers = new ArrayListValuedHashMap<>();
-  private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
-  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
-
 
   public EasySourcingBuilder(Properties streamsConfig) {
     this.streamsConfig = streamsConfig;
@@ -79,11 +60,6 @@ public class EasySourcingBuilder {
 
   public EasySourcingBuilder setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
     this.uncaughtExceptionHandler = exceptionHandler;
-    return this;
-  }
-
-  public EasySourcingBuilder setInMemoryStateStore(boolean inMemoryStateStore) {
-    this.inMemoryStateStore = inMemoryStateStore;
     return this;
   }
 
@@ -114,110 +90,65 @@ public class EasySourcingBuilder {
 
   public EasySourcing build() {
     createTopics();
-    Topology topology = buildTopology();
-    return new EasySourcing(topology, this.streamsConfig, stateListener, uncaughtExceptionHandler);
-  }
-
-  private Topology buildTopology() {
-    StreamsBuilder builder = new StreamsBuilder();
-
-    Set<String> commandsTopics = getCommandsTopics();
-    if (CollectionUtils.isNotEmpty(commandsTopics)) {
-      CommandStream commandStream = new CommandStream(commandsTopics, commandHandlers, aggregators, inMemoryStateStore);
-      commandStream.buildStream(builder);
-    }
-
-    Set<String> resultTopics = getResultTopics();
-    if (CollectionUtils.isNotEmpty(resultTopics)) {
-      ResultStream resultStream = new ResultStream(resultTopics, resultHandlers);
-      resultStream.buildStream(builder);
-    }
-
-    Set<String> eventsTopics = getEventsTopics();
-    if (CollectionUtils.isNotEmpty(eventsTopics)) {
-      EventStream eventStream = new EventStream(eventsTopics, eventHandlers);
-      eventStream.buildStream(builder);
-    }
-
-    Set<String> snapshotTopics = getSnapshotTopics();
-    if (CollectionUtils.isNotEmpty(snapshotTopics)) {
-      SnapshotStream snapshotStream = new SnapshotStream(snapshotTopics, snapshotHandlers);
-      snapshotStream.buildStream(builder);
-    }
-
-    return builder.build();
+    return new EasySourcing(
+        this.streamsConfig,
+        stateListener,
+        uncaughtExceptionHandler);
   }
 
   private void addCommandHandler(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();
-      commandHandlers.put(type, new CommandHandler(listener, method));
+      Handlers.COMMAND_HANDLERS.put(type, new CommandHandler(listener, method));
+
+      TopicInfo topicInfo = AnnotationUtils.findAnnotation(type, TopicInfo.class);
+      if (topicInfo != null) {
+        Topics.COMMANDS.add(topicInfo.value());
+      }
     }
   }
 
   private void addAggregator(Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();
-      aggregators.put(type, new Aggregator(listener, method));
+      Handlers.AGGREGATORS.put(type, new Aggregator(listener, method));
+
+//      TopicInfo topicInfo = AnnotationUtils.findAnnotation(type, TopicInfo.class);
+//      if (topicInfo != null) {
+//        Topics.EVENTS.add(topicInfo.value());
+//      }
     }
   }
 
   private void addResultHandler(Object listener, Method method) {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
-      resultHandlers.put(type, new ResultHandler(listener, method));
+      Handlers.RESULT_HANDLERS.put(type, new ResultHandler(listener, method));
+
+      TopicInfo topicInfo = AnnotationUtils.findAnnotation(type, TopicInfo.class);
+      if (topicInfo != null) {
+        Topics.RESULTS.add(topicInfo.value().concat(".results"));
+      }
     }
   }
 
   private void addEventHandler(Object listener, Method method) {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
-      eventHandlers.put(type, new EventHandler(listener, method));
+      Handlers.EVENT_HANDLERS.put(type, new EventHandler(listener, method));
+
+      TopicInfo topicInfo = AnnotationUtils.findAnnotation(type, TopicInfo.class);
+      if (topicInfo != null) {
+        Topics.EVENTS.add(topicInfo.value());
+      }
     }
   }
 
   private void addSnapshotHandler(Object listener, Method method) {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
-      snapshotHandlers.put(type, new SnapshotHandler(listener, method));
+      Handlers.SNAPSHOT_HANDLERS.put(type, new SnapshotHandler(listener, method));
     }
-  }
-
-  private Set<String> getCommandsTopics() {
-    return Stream.of(commandHandlers.keySet())
-        .flatMap(Collection::stream)
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-  }
-
-  private Set<String> getResultTopics() {
-    return Stream.of(resultHandlers.keySet())
-        .flatMap(Collection::stream)
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .map(s -> s.concat(".results"))
-        .collect(Collectors.toSet());
-  }
-
-  private Set<String> getEventsTopics() {
-    return Stream.of(eventHandlers.keySet())
-        .flatMap(Collection::stream)
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
-  }
-
-  private Set<String> getSnapshotTopics() {
-    return Stream.of(snapshotHandlers.keySet())
-        .flatMap(Collection::stream)
-        .map(type -> AnnotationUtils.findAnnotation(type, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
-        .collect(Collectors.toSet());
   }
 
   private void createTopics() {
@@ -239,11 +170,11 @@ public class EasySourcingBuilder {
       Set<String> brokerTopics = adminClient.listTopics(listTopicsOptions).names().get();
 
       Set<NewTopic> topicsToCreate = Stream.of(
-          getCommandsTopics(),
-          getResultTopics(),
-          getEventsTopics(),
-          getSnapshotTopics()
-      )
+              Topics.COMMANDS,
+              Topics.EVENTS,
+              Topics.RESULTS,
+              Topics.SNAPSHOTS
+          )
           .flatMap(Collection::stream)
           .filter(topic -> !brokerTopics.contains(topic))
           .map(topic -> new NewTopic(topic, 1, (short) 1))

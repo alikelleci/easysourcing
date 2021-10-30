@@ -6,7 +6,6 @@ import com.github.easysourcing.messages.exceptions.AggregateIdMismatchException;
 import com.github.easysourcing.messages.exceptions.AggregateIdMissingException;
 import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
-import com.github.easysourcing.messages.MetadataKeys;
 import com.github.easysourcing.messages.commands.exceptions.CommandExecutionException;
 import com.github.easysourcing.messages.events.Event;
 import com.github.easysourcing.retry.Retry;
@@ -30,6 +29,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static com.github.easysourcing.messages.Metadata.ID;
 
 @Slf4j
 public class CommandHandler implements Handler<List<Event>> {
@@ -107,7 +108,7 @@ public class CommandHandler implements Handler<List<Event>> {
         .map(payload -> Event.builder()
             .payload(payload)
             .metadata(command.getMetadata().toBuilder()
-                .entry(MetadataKeys.ID, UUID.randomUUID().toString())
+                .entry(ID, UUID.randomUUID().toString())
                 .build())
             .build())
         .collect(Collectors.toList());

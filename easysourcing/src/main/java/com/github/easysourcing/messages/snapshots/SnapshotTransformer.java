@@ -1,8 +1,8 @@
 package com.github.easysourcing.messages.snapshots;
 
+import com.github.easysourcing.constants.Handlers;
 import com.github.easysourcing.messages.aggregates.Aggregate;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -14,12 +14,6 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
 
   private ProcessorContext context;
 
-  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers;
-
-  public SnapshotTransformer(MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers) {
-    this.snapshotHandlers = snapshotHandlers;
-  }
-
   @Override
   public void init(ProcessorContext processorContext) {
     this.context = processorContext;
@@ -27,7 +21,7 @@ public class SnapshotTransformer implements ValueTransformer<Aggregate, Void> {
 
   @Override
   public Void transform(Aggregate snapshot) {
-    Collection<SnapshotHandler> handlers = snapshotHandlers.get(snapshot.getPayload().getClass());
+    Collection<SnapshotHandler> handlers = Handlers.SNAPSHOT_HANDLERS.get(snapshot.getPayload().getClass());
     if (CollectionUtils.isEmpty(handlers)) {
       return null;
     }

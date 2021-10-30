@@ -9,7 +9,6 @@ import com.github.easysourcing.messages.exceptions.PayloadMissingException;
 import com.github.easysourcing.messages.exceptions.TopicInfoMissingException;
 import com.github.easysourcing.retry.Retry;
 import com.github.easysourcing.retry.RetryUtil;
-import com.github.easysourcing.messages.MetadataKeys;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -20,6 +19,8 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
+
+import static com.github.easysourcing.messages.Metadata.ID;
 
 @Slf4j
 public class Aggregator implements Handler<Aggregate> {
@@ -80,7 +81,7 @@ public class Aggregator implements Handler<Aggregate> {
     Aggregate aggregate = Aggregate.builder()
         .payload(result)
         .metadata(event.getMetadata().toBuilder()
-            .entry(MetadataKeys.ID, UUID.randomUUID().toString())
+            .entry(ID, UUID.randomUUID().toString())
             .build())
         .build();
 
