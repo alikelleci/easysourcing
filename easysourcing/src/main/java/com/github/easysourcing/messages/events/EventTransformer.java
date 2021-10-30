@@ -2,7 +2,6 @@ package com.github.easysourcing.messages.events;
 
 import com.github.easysourcing.constants.Handlers;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 

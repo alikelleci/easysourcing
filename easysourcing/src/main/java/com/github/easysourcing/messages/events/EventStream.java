@@ -14,7 +14,7 @@ public class EventStream {
 
   public void buildStream(StreamsBuilder builder) {
     // --> Events
-    KStream<String, Event> eventKStream = builder.stream(Topics.EVENTS, Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
+    KStream<String, Event> events = builder.stream(Topics.EVENTS, Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
         .filter((key, event) -> key != null)
         .filter((key, event) -> event != null)
         .filter((key, event) -> event.getPayload() != null)
@@ -22,7 +22,7 @@ public class EventStream {
         .filter((key, event) -> event.getAggregateId() != null);
 
     // Events --> Void
-    eventKStream
+    events
         .transformValues(EventTransformer::new);
   }
 

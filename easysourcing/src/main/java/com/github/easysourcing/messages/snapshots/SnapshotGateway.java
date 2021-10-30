@@ -2,8 +2,8 @@ package com.github.easysourcing.messages.snapshots;
 
 import com.github.easysourcing.messages.Message;
 import com.github.easysourcing.messages.MessageGateway;
-import com.github.easysourcing.messages.aggregates.Aggregate;
 import com.github.easysourcing.messages.Metadata;
+import com.github.easysourcing.messages.aggregates.Aggregate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.RecordMetadata;

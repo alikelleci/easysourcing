@@ -28,7 +28,7 @@ public class CommandStream {
         .withLoggingEnabled(Collections.emptyMap()));
 
     // --> Commands
-    KStream<String, Command> commandKStream = builder.stream(Topics.COMMANDS, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
+    KStream<String, Command> commands = builder.stream(Topics.COMMANDS, Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
         .filter((key, command) -> key != null)
         .filter((key, command) -> command != null)
         .filter((key, command) -> command.getPayload() != null)
@@ -36,36 +36,36 @@ public class CommandStream {
         .filter((key, command) -> command.getAggregateId() != null);
 
     // Commands --> Results
-    KStream<String, CommandResult> resultKStream = commandKStream
+    KStream<String, CommandResult> commandResults = commands
         .transformValues(CommandTransformer::new, supplier.name())
         .filter((key, result) -> result != null)
         .filter((key, result) -> result.getCommand() != null);
 
     // Results --> Events
-    KStream<String, Event> eventKStream = resultKStream
+    KStream<String, Event> events = commandResults
         .filter((key, result) -> result instanceof CommandResult.Success)
         .mapValues((key, result) -> (CommandResult.Success) result)
         .flatMapValues(CommandResult.Success::getEvents)
         .filter((key, event) -> event != null);
 
     // Events --> Snapshots
-    KStream<String, Aggregate> aggregateKStream = eventKStream
+    KStream<String, Aggregate> snapshots = events
         .transformValues(AggregateTransformer::new, supplier.name())
         .filter((key, aggregate) -> aggregate != null);
 
     // Results --> Push
-    resultKStream
+    commandResults
         .mapValues(CommandResult::getCommand)
         .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".results"),
             Produced.with(Serdes.String(), CustomSerdes.Json(Command.class)));
 
     // Events --> Push
-    eventKStream
+    events
         .to((key, event, recordContext) -> event.getTopicInfo().value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Event.class)));
 
     // Snapshots --> Push
-    aggregateKStream
+    snapshots
         .to((key, aggregate, recordContext) -> aggregate.getTopicInfo().value(),
             Produced.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)));
 
