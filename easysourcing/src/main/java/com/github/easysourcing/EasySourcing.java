@@ -59,7 +59,7 @@ public class EasySourcing {
     }
 
     log.info("EasySourcing is shutting down...");
-    kafkaStreams.close(Duration.ofMillis(1000));
+    kafkaStreams.close();
     kafkaStreams = null;
   }
 
@@ -109,7 +109,7 @@ public class EasySourcing {
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       log.info("EasySourcing is shutting down...");
-      kafkaStreams.close(Duration.ofMillis(1000));
+      kafkaStreams.close();
     }));
   }
 }
