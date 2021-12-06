@@ -17,7 +17,6 @@ import java.beans.Transient;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public class Message {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
