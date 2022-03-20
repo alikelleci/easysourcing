@@ -63,7 +63,7 @@ public class EasySourcing {
     kafkaStreams = null;
   }
 
-  private Topology buildTopology() {
+  protected Topology buildTopology() {
     StreamsBuilder builder = new StreamsBuilder();
 
     if (CollectionUtils.isNotEmpty(Topics.COMMANDS)) {
