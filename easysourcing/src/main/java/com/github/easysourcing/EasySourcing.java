@@ -291,7 +291,7 @@ public class EasySourcing {
         .map(aClass -> AnnotationUtils.findAnnotation(aClass, TopicInfo.class))
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
-        .map(topic -> topic.concat(".resulthandling"))
+        .map(topic -> topic.concat(".results"))
         .collect(Collectors.toSet());
   }
 
