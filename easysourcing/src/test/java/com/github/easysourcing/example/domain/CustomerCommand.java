@@ -1,7 +1,7 @@
 package com.github.easysourcing.example.domain;
 
-import com.github.easysourcing.messages.annotations.AggregateId;
-import com.github.easysourcing.messages.annotations.TopicInfo;
+import com.github.easysourcing.common.annotations.AggregateId;
+import com.github.easysourcing.common.annotations.TopicInfo;
 import lombok.Builder;
 import lombok.Value;
 
@@ -9,7 +9,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import java.time.Instant;
 
-@TopicInfo("commands.customer")
+@TopicInfo("commandhandling.customer")
 public interface CustomerCommand {
 
   @Value

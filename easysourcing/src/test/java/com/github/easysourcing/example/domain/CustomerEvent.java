@@ -1,13 +1,13 @@
 package com.github.easysourcing.example.domain;
 
-import com.github.easysourcing.messages.annotations.AggregateId;
-import com.github.easysourcing.messages.annotations.TopicInfo;
+import com.github.easysourcing.common.annotations.AggregateId;
+import com.github.easysourcing.common.annotations.TopicInfo;
 import lombok.Builder;
 import lombok.Value;
 
 import java.time.Instant;
 
-@TopicInfo("events.customer")
+@TopicInfo("eventhandling.customer")
 public interface CustomerEvent {
 
   @Value

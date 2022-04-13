@@ -6,8 +6,8 @@ import com.github.easysourcing.example.domain.CustomerEvent.CustomerCreated;
 import com.github.easysourcing.example.domain.CustomerEvent.CustomerDeleted;
 import com.github.easysourcing.example.domain.CustomerEvent.FirstNameChanged;
 import com.github.easysourcing.example.domain.CustomerEvent.LastNameChanged;
-import com.github.easysourcing.messages.Metadata;
-import com.github.easysourcing.messages.events.annotations.HandleEvent;
+import com.github.easysourcing.messaging.Metadata;
+import com.github.easysourcing.messaging.eventhandling.annotations.HandleEvent;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

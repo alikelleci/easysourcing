@@ -6,8 +6,8 @@ import com.github.easysourcing.example.domain.CustomerCommand.ChangeLastName;
 import com.github.easysourcing.example.domain.CustomerCommand.CreateCustomer;
 import com.github.easysourcing.example.domain.CustomerCommand.DeleteCustomer;
 import com.github.easysourcing.example.domain.CustomerCommand.IssueCredits;
-import com.github.easysourcing.messages.Metadata;
-import com.github.easysourcing.messages.results.annotations.HandleResult;
+import com.github.easysourcing.messaging.Metadata;
+import com.github.easysourcing.messaging.resulthandling.annotations.HandleResult;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

@@ -14,8 +14,8 @@ import com.github.easysourcing.example.domain.CustomerEvent.CustomerCreated;
 import com.github.easysourcing.example.domain.CustomerEvent.CustomerDeleted;
 import com.github.easysourcing.example.domain.CustomerEvent.FirstNameChanged;
 import com.github.easysourcing.example.domain.CustomerEvent.LastNameChanged;
-import com.github.easysourcing.messages.Metadata;
-import com.github.easysourcing.messages.commands.annotations.HandleCommand;
+import com.github.easysourcing.messaging.Metadata;
+import com.github.easysourcing.messaging.commandhandling.annotations.HandleCommand;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.ValidationException;

@@ -1,7 +1,7 @@
 package com.github.easysourcing.spring.starter;
 
-import com.github.easysourcing.EasySourcingBuilder;
-import com.github.easysourcing.messages.annotations.HandleMessage;
+import com.github.easysourcing.EasySourcing;
+import com.github.easysourcing.common.annotations.HandleMessage;
 import com.github.easysourcing.utils.HandlerUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -11,10 +11,10 @@ import java.util.List;
 
 public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
 
-  private final EasySourcingBuilder builder;
+  private final EasySourcing easySourcing;
 
-  public EasySourcingBeanPostProcessor(EasySourcingBuilder easySourcingBuilder) {
-    this.builder = easySourcingBuilder;
+  public EasySourcingBeanPostProcessor(EasySourcing easySourcing) {
+    this.easySourcing = easySourcing;
   }
 
   @Override
@@ -24,10 +24,7 @@ public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
 
   @Override
   public Object postProcessAfterInitialization(final Object bean, final String beanName) {
-    List<Method> methods = HandlerUtils.findMethodsWithAnnotation(bean.getClass(), HandleMessage.class);
-    if (CollectionUtils.isNotEmpty(methods)) {
-      builder.registerHandler(bean);
-    }
+    HandlerUtils.registerHandler(easySourcing, bean);
     return bean;
   }
 

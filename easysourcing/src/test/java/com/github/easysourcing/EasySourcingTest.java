@@ -8,10 +8,10 @@ import com.github.easysourcing.example.handlers.CustomerCommandHandler;
 import com.github.easysourcing.example.handlers.CustomerEventHandler;
 import com.github.easysourcing.example.handlers.CustomerEventSourcingHandler;
 import com.github.easysourcing.example.handlers.CustomerResultHandler;
-import com.github.easysourcing.messages.Metadata;
-import com.github.easysourcing.messages.annotations.TopicInfo;
-import com.github.easysourcing.messages.commands.Command;
-import com.github.easysourcing.messages.events.Event;
+import com.github.easysourcing.messaging.Metadata;
+import com.github.easysourcing.common.annotations.TopicInfo;
+import com.github.easysourcing.messaging.commandhandling.Command;
+import com.github.easysourcing.messaging.eventhandling.Event;
 import com.github.easysourcing.support.serializer.CustomSerdes;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -28,11 +28,11 @@ import java.time.Instant;
 import java.util.Properties;
 import java.util.UUID;
 
-import static com.github.easysourcing.messages.Metadata.CORRELATION_ID;
-import static com.github.easysourcing.messages.Metadata.FAILURE;
-import static com.github.easysourcing.messages.Metadata.ID;
-import static com.github.easysourcing.messages.Metadata.RESULT;
-import static com.github.easysourcing.messages.Metadata.TIMESTAMP;
+import static com.github.easysourcing.messaging.Metadata.CORRELATION_ID;
+import static com.github.easysourcing.messaging.Metadata.FAILURE;
+import static com.github.easysourcing.messaging.Metadata.ID;
+import static com.github.easysourcing.messaging.Metadata.RESULT;
+import static com.github.easysourcing.messaging.Metadata.TIMESTAMP;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -68,7 +68,7 @@ class EasySourcingTest {
     commands = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
         new StringSerializer(), CustomSerdes.Json(Command.class).serializer());
 
-    commandResults = testDriver.createOutputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value().concat(".results"),
+    commandResults = testDriver.createOutputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value().concat(".resulthandling"),
         new StringDeserializer(), CustomSerdes.Json(Command.class).deserializer());
 
     events = testDriver.createOutputTopic(CustomerEvent.class.getAnnotation(TopicInfo.class).value(),

@@ -1,7 +1,6 @@
 package com.github.easysourcing.spring.starter;
 
 import com.github.easysourcing.EasySourcing;
-import com.github.easysourcing.EasySourcingBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -14,7 +13,7 @@ import org.springframework.context.event.EventListener;
 
 @Slf4j
 @Configuration
-@ConditionalOnBean(EasySourcingBuilder.class)
+@ConditionalOnBean(EasySourcing.class)
 @EnableConfigurationProperties(EasySourcingProperties.class)
 public class EasySourcingAutoConfiguration {
 
@@ -22,16 +21,15 @@ public class EasySourcingAutoConfiguration {
   private ApplicationContext applicationContext;
 
   @Bean
-  public EasySourcingBeanPostProcessor easySourcingBeanPostProcessor(EasySourcingBuilder builder) {
-    return new EasySourcingBeanPostProcessor(builder);
+  public EasySourcingBeanPostProcessor easySourcingBeanPostProcessor(EasySourcing easySourcing) {
+    return new EasySourcingBeanPostProcessor(easySourcing);
   }
 
   @EventListener
   public void onApplicationEvent(ApplicationReadyEvent event) {
     if (event.getApplicationContext().equals(this.applicationContext)) {
-      EasySourcingBuilder builder = event.getApplicationContext().getBean(EasySourcingBuilder.class);
-      EasySourcing app = builder.build();
-      app.start();
+      EasySourcing easySourcing = event.getApplicationContext().getBean(EasySourcing.class);
+      easySourcing.start();
     }
   }
 }
