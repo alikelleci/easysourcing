@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.github.easysourcing.messaging.Metadata.CORRELATION_ID;
 import static com.github.easysourcing.messaging.Metadata.ID;
+import static com.github.easysourcing.messaging.Metadata.REPLY_TO;
 
 @Slf4j
 public class DefaultCommandGateway extends AbstractCommandResultListener implements CommandGateway {
@@ -63,6 +64,7 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
         .metadata(metadata.filter().toBuilder()
             .entry(ID, UUID.randomUUID().toString())
             .entry(CORRELATION_ID, UUID.randomUUID().toString())
+            .entry(REPLY_TO, getReplyTopic())
             .build())
         .build();
 
