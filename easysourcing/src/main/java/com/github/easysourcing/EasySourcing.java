@@ -122,7 +122,7 @@ public class EasySourcing {
       // Results --> Push
       commandResults
           .mapValues(CommandResult::getCommand)
-          .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".resulthandling"),
+          .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".results"),
               Produced.with(Serdes.String(), CustomSerdes.Json(Command.class)));
 
       // Events --> Push
