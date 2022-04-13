@@ -12,6 +12,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.beans.Transient;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -32,25 +33,21 @@ public class Message {
 
   @Transient
   public String getAggregateId() {
-    if (getPayload() == null) {
-      return null;
-    }
-
-    return FieldUtils.getFieldsListWithAnnotation(getPayload().getClass(), AggregateId.class).stream()
-        .filter(field -> field.getType() == String.class)
-        .findFirst()
-        .map(field -> {
-          field.setAccessible(true);
-          return (String) ReflectionUtils.getField(field, getPayload());
-        })
+    return Optional.ofNullable(getPayload())
+        .flatMap(p -> FieldUtils.getFieldsListWithAnnotation(p.getClass(), AggregateId.class).stream()
+            .filter(field -> field.getType() == String.class)
+            .findFirst()
+            .map(field -> {
+              field.setAccessible(true);
+              return (String) ReflectionUtils.getField(field, p);
+            }))
         .orElse(null);
   }
 
   @Transient
   public TopicInfo getTopicInfo() {
-    if (getPayload() == null) {
-      return null;
-    }
-    return AnnotationUtils.findAnnotation(getPayload().getClass(), TopicInfo.class);
+    return Optional.ofNullable(getPayload())
+        .map(p -> AnnotationUtils.findAnnotation(p.getClass(), TopicInfo.class))
+        .orElse(null);
   }
 }
