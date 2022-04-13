@@ -19,9 +19,7 @@ public class JacksonUtils {
   public static ObjectMapper enhancedObjectMapper() {
     if (objectMapper == null) {
       objectMapper = new ObjectMapper()
-          .registerModule(new ParameterNamesModule())
-          .registerModule(new Jdk8Module())
-          .registerModule(new JavaTimeModule())
+          .findAndRegisterModules()
           .setSerializationInclusion(JsonInclude.Include.NON_NULL)
           .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
