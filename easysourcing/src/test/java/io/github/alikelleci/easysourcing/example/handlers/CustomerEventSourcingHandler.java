@@ -22,7 +22,7 @@ public class CustomerEventSourcingHandler {
         .lastName(event.getLastName())
         .credits(event.getCredits())
         .birthday(event.getBirthday())
-//        .dateCreated(metadata.getTimestamp())
+        .dateCreated(metadata.getTimestamp())
         .build();
   }
 

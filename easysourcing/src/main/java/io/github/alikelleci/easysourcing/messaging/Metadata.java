@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,5 +53,15 @@ public class Metadata {
   @Transient
   public String get(String key) {
     return entries.get(key);
+  }
+
+  @Transient
+  public String getMessageId() {
+    return this.entries.get(ID);
+  }
+
+  @Transient
+  public Instant getTimestamp() {
+    return Instant.ofEpochMilli(Long.parseLong(this.entries.get(Metadata.TIMESTAMP)));
   }
 }
