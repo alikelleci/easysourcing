@@ -17,7 +17,7 @@
     <description>Spring Boot starter for EasySourcing library</description>
 
     <properties>
-        <spring-boot.version>2.5.0</spring-boot.version>
+        <spring-boot.version>2.6.0</spring-boot.version>
         <lombok.version>1.18.22</lombok.version>
     </properties>
 
