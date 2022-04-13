@@ -10,6 +10,7 @@ import java.beans.Transient;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 
 @Value
@@ -62,6 +63,9 @@ public class Metadata {
 
   @Transient
   public Instant getTimestamp() {
-    return Instant.ofEpochMilli(Long.parseLong(this.entries.get(Metadata.TIMESTAMP)));
+    return Optional.ofNullable(this.entries.get(Metadata.TIMESTAMP))
+        .map(Long::parseLong)
+        .map(Instant::ofEpochMilli)
+        .orElse(null);
   }
 }
