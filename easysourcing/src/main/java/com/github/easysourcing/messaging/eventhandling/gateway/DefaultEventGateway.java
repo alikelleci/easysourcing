@@ -37,6 +37,10 @@ public class DefaultEventGateway implements EventGateway {
       metadata = Metadata.builder().build();
     }
 
+    if (timestamp == null) {
+      timestamp = Instant.now();
+    }
+
     Event event = Event.builder()
         .payload(payload)
         .metadata(metadata.filter().toBuilder()

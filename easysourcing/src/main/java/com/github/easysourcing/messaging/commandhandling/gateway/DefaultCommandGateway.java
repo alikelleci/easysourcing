@@ -54,6 +54,10 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
       metadata = Metadata.builder().build();
     }
 
+    if (timestamp == null) {
+      timestamp = Instant.now();
+    }
+
     Command command = Command.builder()
         .payload(payload)
         .metadata(metadata.filter().toBuilder()

@@ -1,9 +1,11 @@
 package com.github.easysourcing;
 
 import com.github.easysourcing.common.annotations.TopicInfo;
+import com.github.easysourcing.messaging.Metadata;
 import com.github.easysourcing.messaging.commandhandling.Command;
 import com.github.easysourcing.messaging.commandhandling.CommandHandler;
 import com.github.easysourcing.messaging.commandhandling.CommandResult;
+import com.github.easysourcing.messaging.commandhandling.CommandResult.Success;
 import com.github.easysourcing.messaging.commandhandling.CommandTransformer;
 import com.github.easysourcing.messaging.eventhandling.Event;
 import com.github.easysourcing.messaging.eventhandling.EventHandler;
@@ -21,6 +23,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -96,22 +99,18 @@ public class EasySourcing {
       // --> Commands
       KStream<String, Command> commands = builder.stream(getCommandTopics(), Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
           .filter((key, command) -> key != null)
-          .filter((key, command) -> command != null)
-          .filter((key, command) -> command.getPayload() != null)
-          .filter((key, command) -> command.getTopicInfo() != null)
-          .filter((key, command) -> command.getAggregateId() != null);
+          .filter((key, command) -> command != null);
 
       // Commands --> Results
       KStream<String, CommandResult> commandResults = commands
           .transformValues(() -> new CommandTransformer(this), "snapshot-store")
-          .filter((key, result) -> result != null)
-          .filter((key, result) -> result.getCommand() != null);
+          .filter((key, result) -> result != null);
 
       // Results --> Events
       KStream<String, Event> events = commandResults
-          .filter((key, result) -> result instanceof CommandResult.Success)
-          .mapValues((key, result) -> (CommandResult.Success) result)
-          .flatMapValues(CommandResult.Success::getEvents)
+          .filter((key, result) -> result instanceof Success)
+          .mapValues((key, result) -> (Success) result)
+          .flatMapValues(Success::getEvents)
           .filter((key, event) -> event != null);
 
       // Events --> Snapshots
@@ -124,6 +123,14 @@ public class EasySourcing {
           .mapValues(CommandResult::getCommand)
           .to((key, command, recordContext) -> command.getTopicInfo().value().concat(".results"),
               Produced.with(Serdes.String(), CustomSerdes.Json(Command.class)));
+
+      // Results --> Push to reply topic
+      commandResults
+          .mapValues(CommandResult::getCommand)
+          .filter((key, command) -> StringUtils.isNotBlank(command.getMetadata().get(Metadata.REPLY_TO)))
+          .to((key, command, recordContext) -> command.getMetadata().get(Metadata.REPLY_TO),
+              Produced.with(Serdes.String(), CustomSerdes.Json(Command.class))
+                  .withStreamPartitioner((topic, key, value, numPartitions) -> 0));
 
       // Events --> Push
       events
@@ -146,10 +153,7 @@ public class EasySourcing {
       // --> Events
       KStream<String, Event> events = builder.stream(getEventTopics(), Consumed.with(Serdes.String(), CustomSerdes.Json(Event.class)))
           .filter((key, event) -> key != null)
-          .filter((key, event) -> event != null)
-          .filter((key, event) -> event.getPayload() != null)
-          .filter((key, event) -> event.getTopicInfo() != null)
-          .filter((key, event) -> event.getAggregateId() != null);
+          .filter((key, event) -> event != null);
 
       // Events --> Void
       events
@@ -166,10 +170,7 @@ public class EasySourcing {
       // --> Results
       KStream<String, Command> results = builder.stream(getResultTopics(), Consumed.with(Serdes.String(), CustomSerdes.Json(Command.class)))
           .filter((key, command) -> key != null)
-          .filter((key, command) -> command != null)
-          .filter((key, command) -> command.getPayload() != null)
-          .filter((key, command) -> command.getTopicInfo() != null)
-          .filter((key, command) -> command.getAggregateId() != null);
+          .filter((key, command) -> command != null);
 
       // Results --> Void
       results
@@ -186,10 +187,7 @@ public class EasySourcing {
       // --> Snapshots
       KStream<String, Aggregate> snapshots = builder.stream(getSnapshotTopics(), Consumed.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)))
           .filter((key, aggregate) -> key != null)
-          .filter((key, aggregate) -> aggregate != null)
-          .filter((key, aggregate) -> aggregate.getPayload() != null)
-          .filter((key, aggregate) -> aggregate.getTopicInfo() != null)
-          .filter((key, aggregate) -> aggregate.getAggregateId() != null);
+          .filter((key, aggregate) -> aggregate != null);
 
       // Snapshots --> Void
       snapshots

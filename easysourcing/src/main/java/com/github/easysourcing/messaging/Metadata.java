@@ -16,6 +16,7 @@ import java.util.Map;
 public class Metadata {
   public static final String ID = "$id";
   public static final String CORRELATION_ID = "$correlationId";
+  public static final String REPLY_TO = "$replyTo";
   public static final String RESULT = "$result";
   public static final String FAILURE = "$failure";
 
