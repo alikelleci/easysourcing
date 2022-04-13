@@ -33,7 +33,7 @@ public class HandlerUtils {
         .forEach(method -> addCommandHandler(easySourcing, handler, method));
 
     eventSourcingMethods
-        .forEach(method -> addAggregator(easySourcing, handler, method));
+        .forEach(method -> addEventSourcingHandler(easySourcing, handler, method));
 
     resultHandlerMethods
         .forEach(method -> addResultHandler(easySourcing, handler, method));
@@ -62,7 +62,7 @@ public class HandlerUtils {
     }
   }
 
-  private void addAggregator(EasySourcing easySourcing, Object listener, Method method) {
+  private void addEventSourcingHandler(EasySourcing easySourcing, Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();
       easySourcing.getEventSourcingHandlers().put(type, new EventSourcingHandler(listener, method));
