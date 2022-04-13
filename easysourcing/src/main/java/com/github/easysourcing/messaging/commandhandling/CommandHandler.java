@@ -15,6 +15,7 @@ import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -42,6 +43,8 @@ public class CommandHandler implements BiFunction<Command, Aggregate, CommandRes
   private final RetryPolicy<Object> retryPolicy;
 
   private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
+  private ProcessorContext context;
 
   public CommandHandler(Object target, Method method) {
     this.target = target;
@@ -78,7 +81,7 @@ public class CommandHandler implements BiFunction<Command, Aggregate, CommandRes
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata().inject(context));
     }
     return createCommandResult(command, result);
   }
@@ -134,5 +137,9 @@ public class CommandHandler implements BiFunction<Command, Aggregate, CommandRes
 
   public Method getMethod() {
     return method;
+  }
+
+  public void setContext(ProcessorContext context) {
+    this.context = context;
   }
 }

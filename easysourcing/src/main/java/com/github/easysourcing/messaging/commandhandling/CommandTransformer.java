@@ -30,14 +30,13 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     if (commandHandler == null) {
       return null;
     }
+    commandHandler.setContext(context);
 
     // 1. Load aggregate
     Aggregate aggregate = snapshotStore.get(command.getAggregateId());
 
     // 2. Validate command
-    return commandHandler.apply(command.toBuilder()
-        .metadata(command.getMetadata().inject(context))
-        .build(), aggregate);
+    return commandHandler.apply(command, aggregate);
   }
 
   @Override

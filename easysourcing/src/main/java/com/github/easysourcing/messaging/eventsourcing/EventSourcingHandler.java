@@ -13,6 +13,7 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,6 +28,8 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
   private final Object target;
   private final Method method;
   private final RetryPolicy<Object> retryPolicy;
+
+  private ProcessorContext context;
 
   public EventSourcingHandler(Object target, Method method) {
     this.target = target;
@@ -52,7 +55,7 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata());
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata().inject(context));
     }
     return createState(event, result);
   }
@@ -81,4 +84,7 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
     return aggregate;
   }
 
+  public void setContext(ProcessorContext context) {
+    this.context = context;
+  }
 }

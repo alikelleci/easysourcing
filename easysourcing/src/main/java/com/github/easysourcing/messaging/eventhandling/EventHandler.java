@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -20,6 +21,8 @@ public class EventHandler implements Function<Event, Void> {
   private final Object target;
   private final Method method;
   private final RetryPolicy<Object> retryPolicy;
+
+  private ProcessorContext context;
 
   public EventHandler(Object target, Method method) {
     this.target = target;
@@ -45,7 +48,7 @@ public class EventHandler implements Function<Event, Void> {
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, event.getPayload());
     } else {
-      result = method.invoke(target, event.getPayload(), event.getMetadata());
+      result = method.invoke(target, event.getPayload(), event.getMetadata().inject(context));
     }
     return null;
   }
@@ -58,5 +61,9 @@ public class EventHandler implements Function<Event, Void> {
     return Optional.ofNullable(method.getAnnotation(Priority.class))
         .map(Priority::value)
         .orElse(0);
+  }
+
+  public void setContext(ProcessorContext context) {
+    this.context = context;
   }
 }

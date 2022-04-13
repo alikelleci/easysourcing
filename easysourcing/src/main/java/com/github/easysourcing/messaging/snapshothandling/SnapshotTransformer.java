@@ -31,6 +31,7 @@ public class SnapshotTransformer implements ValueTransformerWithKey<String, Aggr
     if (CollectionUtils.isNotEmpty(handlers)) {
       handlers.stream()
           .sorted(Comparator.comparingInt(SnapshotHandler::getPriority).reversed())
+          .peek(handler -> handler.setContext(context))
           .forEach(handler ->
               handler.apply(snapshot.toBuilder()
                   .metadata(snapshot.getMetadata().inject(context))

@@ -37,6 +37,7 @@ public class ResultTransformer implements ValueTransformerWithKey<String, Comman
     if (CollectionUtils.isNotEmpty(handlers)) {
       handlers.stream()
           .sorted(Comparator.comparingInt(ResultHandler::getPriority).reversed())
+          .peek(handler -> handler.setContext(context))
           .forEach(handler -> {
             boolean handleAll = handler.getMethod().isAnnotationPresent(HandleResult.class);
             boolean handleSuccess = handler.getMethod().isAnnotationPresent(HandleSuccess.class);
@@ -46,9 +47,7 @@ public class ResultTransformer implements ValueTransformerWithKey<String, Comman
             if (handleAll ||
                 (handleSuccess && StringUtils.equals(result, "success")) ||
                 (handleFailure && StringUtils.equals(result, "failed"))) {
-              handler.apply(command.toBuilder()
-                  .metadata(command.getMetadata().inject(context))
-                  .build());
+              handler.apply(command);
             }
           });
     }

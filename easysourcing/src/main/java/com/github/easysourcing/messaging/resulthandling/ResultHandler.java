@@ -23,6 +23,8 @@ public class ResultHandler implements Function<Command, Void> {
   private final Method method;
   private final RetryPolicy<Object> retryPolicy;
 
+  private ProcessorContext context;
+
   public ResultHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
@@ -47,7 +49,7 @@ public class ResultHandler implements Function<Command, Void> {
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, command.getPayload());
     } else {
-      result = method.invoke(target, command.getPayload(), command.getMetadata());
+      result = method.invoke(target, command.getPayload(), command.getMetadata().inject(context));
     }
     return null;
   }
@@ -60,5 +62,9 @@ public class ResultHandler implements Function<Command, Void> {
     return Optional.ofNullable(method.getAnnotation(Priority.class))
         .map(Priority::value)
         .orElse(0);
+  }
+
+  public void setContext(ProcessorContext context) {
+    this.context = context;
   }
 }

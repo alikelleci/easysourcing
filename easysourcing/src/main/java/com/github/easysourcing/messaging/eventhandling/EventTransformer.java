@@ -26,14 +26,13 @@ public class EventTransformer implements ValueTransformerWithKey<String, Event, 
 
   @Override
   public Event transform(String key, Event event) {
-    Collection<EventHandler> handlers = easySourcing.getEventHandlers().get(event.getPayload().getClass());
-    if (CollectionUtils.isNotEmpty(handlers)) {
-      handlers.stream()
+    Collection<EventHandler> eventHandlers = easySourcing.getEventHandlers().get(event.getPayload().getClass());
+    if (CollectionUtils.isNotEmpty(eventHandlers)) {
+      eventHandlers.stream()
           .sorted(Comparator.comparingInt(EventHandler::getPriority).reversed())
+          .peek(handler -> handler.setContext(context))
           .forEach(handler ->
-              handler.apply(event.toBuilder()
-                  .metadata(event.getMetadata().inject(context))
-                  .build()));
+              handler.apply(event));
     }
 
     return event;
