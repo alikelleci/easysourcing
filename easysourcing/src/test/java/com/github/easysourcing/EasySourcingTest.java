@@ -56,14 +56,14 @@ class EasySourcingTest {
     properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG, StreamsConfig.OPTIMIZE);
 
-    EasySourcing easySourcing = new EasySourcingBuilder(properties)
+    EasySourcing easySourcing = EasySourcing.builder()
         .registerHandler(new CustomerCommandHandler())
         .registerHandler(new CustomerEventSourcingHandler())
         .registerHandler(new CustomerEventHandler())
         .registerHandler(new CustomerResultHandler())
         .build();
 
-    testDriver = new TopologyTestDriver(easySourcing.buildTopology(), properties);
+    testDriver = new TopologyTestDriver(easySourcing.topology(), properties);
 
     commands = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
         new StringSerializer(), CustomSerdes.Json(Command.class).serializer());
