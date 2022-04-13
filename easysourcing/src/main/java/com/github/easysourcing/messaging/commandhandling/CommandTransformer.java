@@ -35,7 +35,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     Aggregate aggregate = snapshotStore.get(command.getAggregateId());
 
     // 2. Validate command
-    return commandHandler.apply(command, aggregate);
+    return commandHandler.apply(command.toBuilder()
+        .metadata(command.getMetadata().inject(context))
+        .build(), aggregate);
   }
 
   @Override

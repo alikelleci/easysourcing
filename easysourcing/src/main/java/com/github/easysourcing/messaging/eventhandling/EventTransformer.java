@@ -31,7 +31,9 @@ public class EventTransformer implements ValueTransformerWithKey<String, Event, 
       handlers.stream()
           .sorted(Comparator.comparingInt(EventHandler::getPriority).reversed())
           .forEach(handler ->
-              handler.apply(event));
+              handler.apply(event.toBuilder()
+                  .metadata(event.getMetadata().inject(context))
+                  .build()));
     }
 
     return event;

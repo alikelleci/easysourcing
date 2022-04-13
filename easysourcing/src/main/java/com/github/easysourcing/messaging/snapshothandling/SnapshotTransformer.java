@@ -4,7 +4,6 @@ import com.github.easysourcing.EasySourcing;
 import com.github.easysourcing.messaging.eventsourcing.Aggregate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -33,7 +32,9 @@ public class SnapshotTransformer implements ValueTransformerWithKey<String, Aggr
       handlers.stream()
           .sorted(Comparator.comparingInt(SnapshotHandler::getPriority).reversed())
           .forEach(handler ->
-              handler.apply(snapshot));
+              handler.apply(snapshot.toBuilder()
+                  .metadata(snapshot.getMetadata().inject(context))
+                  .build()));
     }
 
     return snapshot;

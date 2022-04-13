@@ -32,7 +32,9 @@ public class EventSourcingTransformer implements ValueTransformer<Event, Aggrega
     }
 
     Aggregate aggregate = snapshotStore.get(event.getAggregateId());
-    aggregate = eventSourcingHandler.apply(event, aggregate);
+    aggregate = eventSourcingHandler.apply(event.toBuilder()
+        .metadata(event.getMetadata().inject(context))
+        .build(), aggregate);
 
     if (aggregate != null) {
       snapshotStore.put(event.getAggregateId(), aggregate);
