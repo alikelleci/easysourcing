@@ -68,7 +68,6 @@ public class EasySourcing {
 
   private KafkaStreams kafkaStreams;
 
-
   protected EasySourcing(Properties streamsConfig,
                          StateListener stateListener,
                          StreamsUncaughtExceptionHandler uncaughtExceptionHandler) {
