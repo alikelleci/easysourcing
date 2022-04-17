@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://alikelleci.github.io/easysourcing/sitemap.xml
