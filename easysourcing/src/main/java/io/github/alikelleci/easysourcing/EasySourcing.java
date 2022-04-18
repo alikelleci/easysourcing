@@ -236,7 +236,7 @@ public class EasySourcing {
 
     if (this.uncaughtExceptionHandler == null) {
       this.uncaughtExceptionHandler = (throwable) ->
-          StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
+          StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT;
     }
     kafkaStreams.setUncaughtExceptionHandler(this.uncaughtExceptionHandler);
 
