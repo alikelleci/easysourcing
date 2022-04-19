@@ -1,7 +1,7 @@
 package io.github.alikelleci.easysourcing.messaging.commandhandling.gateway;
 
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
-import io.github.alikelleci.easysourcing.serializer.JsonDeserializer;
+import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;

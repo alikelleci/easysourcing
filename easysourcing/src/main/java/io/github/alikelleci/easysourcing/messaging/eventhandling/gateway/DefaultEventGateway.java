@@ -6,7 +6,7 @@ import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingExcepti
 import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
 import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
-import io.github.alikelleci.easysourcing.serializer.JsonSerializer;
+import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;

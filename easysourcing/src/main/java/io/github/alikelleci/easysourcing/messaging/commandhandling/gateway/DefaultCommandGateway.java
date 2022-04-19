@@ -10,7 +10,7 @@ import io.github.alikelleci.easysourcing.messaging.Message;
 import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.exceptions.CommandExecutionException;
-import io.github.alikelleci.easysourcing.serializer.JsonSerializer;
+import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

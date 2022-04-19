@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.serializer;
+package io.github.alikelleci.easysourcing.support.serializer;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;

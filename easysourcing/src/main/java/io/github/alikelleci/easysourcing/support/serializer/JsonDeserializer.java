@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.serializer;
+package io.github.alikelleci.easysourcing.support.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.utils.JacksonUtils;

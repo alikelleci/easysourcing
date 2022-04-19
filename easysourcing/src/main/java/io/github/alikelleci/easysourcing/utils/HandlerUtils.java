@@ -1,12 +1,12 @@
 package io.github.alikelleci.easysourcing.utils;
 
 import io.github.alikelleci.easysourcing.EasySourcing;
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.annotations.ApplyEvent;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandHandler;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.annotations.HandleCommand;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.EventHandler;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.annotations.HandleEvent;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.annotations.ApplyEvent;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultHandler;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.annotations.HandleResult;
 import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotHandler;

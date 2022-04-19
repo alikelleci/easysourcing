@@ -1,12 +1,12 @@
 package io.github.alikelleci.easysourcing.messaging.commandhandling;
 
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
-import io.github.alikelleci.easysourcing.messaging.commandhandling.exceptions.CommandExecutionException;
-import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
+import io.github.alikelleci.easysourcing.messaging.commandhandling.exceptions.CommandExecutionException;
+import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;

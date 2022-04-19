@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.utils;
+package io.github.alikelleci.easysourcing.support;
 
 import org.apache.kafka.streams.state.RocksDBConfigSetter;
 import org.rocksdb.CompressionType;

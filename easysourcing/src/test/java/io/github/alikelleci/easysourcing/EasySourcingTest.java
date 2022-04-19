@@ -12,7 +12,7 @@ import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
-import io.github.alikelleci.easysourcing.serializer.CustomSerdes;
+import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -36,7 +36,6 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 
 class EasySourcingTest {
