@@ -1,11 +1,11 @@
 package io.github.alikelleci.easysourcing.messaging.eventsourcing;
 
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.exceptions.AggregateInvocationException;
-import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
+import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.exceptions.AggregateInvocationException;
 import io.github.alikelleci.easysourcing.retry.Retry;
 import io.github.alikelleci.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
+import static io.github.alikelleci.easysourcing.messaging.Metadata.EVENT_ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 
 @Slf4j
@@ -65,6 +66,7 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
         .payload(result)
         .metadata(event.getMetadata().toBuilder()
             .entry(ID, UUID.randomUUID().toString())
+            .entry(EVENT_ID, event.getMetadata().get(ID))
             .build())
         .build();
 

@@ -21,6 +21,7 @@ public class Metadata {
   public static final String REPLY_TO = "$replyTo";
   public static final String RESULT = "$result";
   public static final String FAILURE = "$failure";
+  public static final String EVENT_ID = "$eventId";
 
   public static final String TIMESTAMP = "$timestamp";
   public static final String TOPIC = "$topic";
