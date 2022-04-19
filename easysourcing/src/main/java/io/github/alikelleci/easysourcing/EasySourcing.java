@@ -18,12 +18,14 @@ import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultTransfor
 import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotHandler;
 import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotTransformer;
 import io.github.alikelleci.easysourcing.serializer.CustomSerdes;
+import io.github.alikelleci.easysourcing.utils.CustomRocksDbConfig;
 import io.github.alikelleci.easysourcing.utils.HandlerUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -320,6 +322,8 @@ public class EasySourcing {
       this.streamsConfig.putIfAbsent(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
       this.streamsConfig.putIfAbsent(StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG, StreamsConfig.OPTIMIZE);
       this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
+      this.streamsConfig.putIfAbsent(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDbConfig.class);
+      this.streamsConfig.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.COMPRESSION_TYPE_CONFIG), "zstd");
 
       return this;
     }

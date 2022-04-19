@@ -35,6 +35,7 @@ public interface EventGateway {
       this.producerConfig.putIfAbsent(ProducerConfig.ACKS_CONFIG, "all");
       this.producerConfig.putIfAbsent(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
       this.producerConfig.putIfAbsent(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+      this.producerConfig.putIfAbsent(ProducerConfig.COMPRESSION_TYPE_CONFIG, "zstd");
 
       return this;
     }
