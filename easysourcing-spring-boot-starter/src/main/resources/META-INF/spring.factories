@@ -1,3 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.github.easysourcing.spring.starter.EasySourcingAutoConfiguration,\
-com.github.easysourcing.spring.starter.GatewayAutoConfiguration
+io.github.alikelleci.easysourcing.spring.starter.EasySourcingAutoConfiguration
