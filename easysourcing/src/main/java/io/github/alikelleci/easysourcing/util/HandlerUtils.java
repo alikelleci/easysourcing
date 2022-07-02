@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.utils;
+package io.github.alikelleci.easysourcing.util;
 
 import io.github.alikelleci.easysourcing.EasySourcing;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandHandler;
