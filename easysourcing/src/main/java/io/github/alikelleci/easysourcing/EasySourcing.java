@@ -19,7 +19,7 @@ import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotHand
 import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotTransformer;
 import io.github.alikelleci.easysourcing.support.CustomRocksDbConfig;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
-import io.github.alikelleci.easysourcing.utils.HandlerUtils;
+import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;

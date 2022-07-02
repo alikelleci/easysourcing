@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.utils;
+package io.github.alikelleci.easysourcing.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
