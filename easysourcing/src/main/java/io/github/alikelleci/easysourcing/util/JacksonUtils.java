@@ -18,7 +18,7 @@ public class JacksonUtils {
       objectMapper = new ObjectMapper()
           .findAndRegisterModules()
           .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-          .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
+//          .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
           .configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false)
           .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
