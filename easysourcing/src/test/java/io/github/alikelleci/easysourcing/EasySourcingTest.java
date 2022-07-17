@@ -56,6 +56,7 @@ class EasySourcingTest {
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG, StreamsConfig.OPTIMIZE);
 
     EasySourcing easySourcing = EasySourcing.builder()
+        .streamsConfig(properties)
         .registerHandler(new CustomerCommandHandler())
         .registerHandler(new CustomerEventSourcingHandler())
         .registerHandler(new CustomerEventHandler())
