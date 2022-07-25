@@ -41,9 +41,9 @@ import static org.hamcrest.Matchers.notNullValue;
 class EasySourcingTest {
 
   private TopologyTestDriver testDriver;
-  private TestInputTopic<String, Command> commands;
-  private TestOutputTopic<String, Command> commandResults;
-  private TestOutputTopic<String, Event> events;
+  private TestInputTopic<String, Command> commandsTopic;
+  private TestOutputTopic<String, Command> commandResultsTopic;
+  private TestOutputTopic<String, Event> eventsTopic;
 
   @BeforeEach
   void setup() {
@@ -52,10 +52,11 @@ class EasySourcingTest {
     properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:1234");
     properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-    properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
+    properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
     properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG, StreamsConfig.OPTIMIZE);
 
     EasySourcing easySourcing = EasySourcing.builder()
+        .streamsConfig(properties)
         .registerHandler(new CustomerCommandHandler())
         .registerHandler(new CustomerEventSourcingHandler())
         .registerHandler(new CustomerEventHandler())
@@ -64,13 +65,13 @@ class EasySourcingTest {
 
     testDriver = new TopologyTestDriver(easySourcing.topology(), properties);
 
-    commands = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
+    commandsTopic = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
         new StringSerializer(), CustomSerdes.Json(Command.class).serializer());
 
-    commandResults = testDriver.createOutputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value().concat(".results"),
+    commandResultsTopic = testDriver.createOutputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value().concat(".results"),
         new StringDeserializer(), CustomSerdes.Json(Command.class).deserializer());
 
-    events = testDriver.createOutputTopic(CustomerEvent.class.getAnnotation(TopicInfo.class).value(),
+    eventsTopic = testDriver.createOutputTopic(CustomerEvent.class.getAnnotation(TopicInfo.class).value(),
         new StringDeserializer(), CustomSerdes.Json(Event.class).deserializer());
   }
 
@@ -101,14 +102,14 @@ class EasySourcingTest {
             .build())
         .build();
 
-    commands.pipeInput(command.getAggregateId(), command);
+    commandsTopic.pipeInput(command.getAggregateId(), command);
 
     // Assert Command Metadata
     assertThat(command.getMetadata().get(ID), is(notNullValue()));
     assertThat(command.getMetadata().get(TIMESTAMP), is(notNullValue()));
 
     // Assert Command Result
-    Command commandResult = commandResults.readValue();
+    Command commandResult = commandResultsTopic.readValue();
     assertThat(commandResult, is(notNullValue()));
     assertThat(commandResult.getAggregateId(), is(command.getAggregateId()));
     // Metadata
@@ -124,7 +125,7 @@ class EasySourcingTest {
     assertThat(commandResult.getPayload(), is(command.getPayload()));
 
     // Assert Event
-    Event event = events.readValue();
+    Event event = eventsTopic.readValue();
     assertThat(event, is(notNullValue()));
     assertThat(event.getAggregateId(), is(command.getAggregateId()));
     // Metadata
