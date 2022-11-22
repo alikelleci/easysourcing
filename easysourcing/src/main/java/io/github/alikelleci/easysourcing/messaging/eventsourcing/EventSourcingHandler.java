@@ -1,9 +1,5 @@
 package io.github.alikelleci.easysourcing.messaging.eventsourcing;
 
-import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchException;
-import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
-import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
-import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.exceptions.AggregateInvocationException;
 import io.github.alikelleci.easysourcing.retry.Retry;
@@ -11,7 +7,6 @@ import io.github.alikelleci.easysourcing.retry.RetryUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -45,13 +40,13 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
     log.debug("Applying event: {} ({})", event.getType(), event.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, aggregate));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Aggregate doInvoke(Aggregate aggregate, Event event) throws InvocationTargetException, IllegalAccessException {
+  private Aggregate doInvoke(Event event, Aggregate aggregate) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
@@ -62,28 +57,17 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
   }
 
   private Aggregate createState(Event event, Object result) {
-    Aggregate aggregate = Aggregate.builder()
+    if (result == null) {
+      return null;
+    }
+
+    return Aggregate.builder()
         .payload(result)
         .metadata(event.getMetadata().toBuilder()
             .entry(ID, UUID.randomUUID().toString())
             .entry(EVENT_ID, event.getMetadata().get(ID))
             .build())
         .build();
-
-    if (aggregate.getPayload() == null) {
-      throw new PayloadMissingException("You are trying to dispatch an aggregate without a payload.");
-    }
-    if (aggregate.getTopicInfo() == null) {
-      throw new TopicInfoMissingException("You are trying to dispatch an aggregate without any topic information. Please annotate your aggregate with @TopicInfo.");
-    }
-    if (aggregate.getAggregateId() == null) {
-      throw new AggregateIdMissingException("You are trying to dispatch an aggregate without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
-    }
-    if (!StringUtils.equals(aggregate.getAggregateId(), event.getAggregateId())) {
-      throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + event.getAggregateId() + ", but was " + aggregate.getAggregateId());
-    }
-
-    return aggregate;
   }
 
   public void setContext(ProcessorContext context) {
