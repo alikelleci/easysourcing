@@ -12,11 +12,8 @@ import io.github.alikelleci.easysourcing.messaging.eventhandling.EventHandler;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.EventTransformer;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingTransformer;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultHandler;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultTransformer;
-import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotHandler;
-import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotTransformer;
 import io.github.alikelleci.easysourcing.support.CustomRocksDbConfig;
 import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
@@ -62,7 +59,6 @@ public class EasySourcing {
   private final Map<Class<?>, EventSourcingHandler> eventSourcingHandlers = new HashMap<>();
   private final MultiValuedMap<Class<?>, ResultHandler> resultHandlers = new ArrayListValuedHashMap<>();
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
-  private final MultiValuedMap<Class<?>, SnapshotHandler> snapshotHandlers = new ArrayListValuedHashMap<>();
 
   private final Properties streamsConfig;
   private StateListener stateListener;
@@ -107,18 +103,6 @@ public class EasySourcing {
           .transformValues(() -> new CommandTransformer(this), "snapshot-store")
           .filter((key, result) -> result != null);
 
-      // Results --> Events
-      KStream<String, Event> events = commandResults
-          .filter((key, result) -> result instanceof Success)
-          .mapValues((key, result) -> (Success) result)
-          .flatMapValues(Success::getEvents)
-          .filter((key, event) -> event != null);
-
-      // Events --> Snapshots
-      KStream<String, Aggregate> snapshots = events
-          .transformValues(() -> new EventSourcingTransformer(this), "snapshot-store")
-          .filter((key, aggregate) -> aggregate != null);
-
       // Results --> Push
       commandResults
           .mapValues(CommandResult::getCommand)
@@ -134,14 +118,13 @@ public class EasySourcing {
                   .withStreamPartitioner((topic, key, value, numPartitions) -> 0));
 
       // Events --> Push
-      events
+      commandResults
+          .filter((key, result) -> result instanceof Success)
+          .mapValues((key, result) -> (Success) result)
+          .flatMapValues(Success::getEvents)
+          .filter((key, event) -> event != null)
           .to((key, event, recordContext) -> event.getTopicInfo().value(),
               Produced.with(Serdes.String(), CustomSerdes.Json(Event.class)));
-
-      // Snapshots --> Push
-      snapshots
-          .to((key, aggregate, recordContext) -> aggregate.getTopicInfo().value(),
-              Produced.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)));
     }
 
     /*
@@ -176,23 +159,6 @@ public class EasySourcing {
       // Results --> Void
       results
           .transformValues(() -> new ResultTransformer(this));
-    }
-
-    /*
-     * -------------------------------------------------------------
-     * SNAPSHOT HANDLING
-     * -------------------------------------------------------------
-     */
-
-    if (!getSnapshotTopics().isEmpty()) {
-      // --> Snapshots
-      KStream<String, Aggregate> snapshots = builder.stream(getSnapshotTopics(), Consumed.with(Serdes.String(), CustomSerdes.Json(Aggregate.class)))
-          .filter((key, aggregate) -> key != null)
-          .filter((key, aggregate) -> aggregate != null);
-
-      // Snapshots --> Void
-      snapshots
-          .transformValues(() -> new SnapshotTransformer(this));
     }
 
 
@@ -291,14 +257,6 @@ public class EasySourcing {
         .filter(Objects::nonNull)
         .map(TopicInfo::value)
         .map(topic -> topic.concat(".results"))
-        .collect(Collectors.toSet());
-  }
-
-  private Set<String> getSnapshotTopics() {
-    return snapshotHandlers.keySet().stream()
-        .map(aClass -> AnnotationUtils.findAnnotation(aClass, TopicInfo.class))
-        .filter(Objects::nonNull)
-        .map(TopicInfo::value)
         .collect(Collectors.toSet());
   }
 
