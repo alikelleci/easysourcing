@@ -5,6 +5,7 @@ import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandHandler;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult;
+import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandTransformer;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.EventHandler;
@@ -118,9 +119,9 @@ public class EasySourcing {
 
       // Events --> Push
       commandResults
-          .filter((key, result) -> result instanceof CommandResult.Success)
-          .mapValues((key, result) -> (CommandResult.Success) result)
-          .flatMapValues(CommandResult.Success::getEvents)
+          .filter((key, result) -> result instanceof Success)
+          .mapValues((key, result) -> (Success) result)
+          .flatMapValues(Success::getEvents)
           .filter((key, event) -> event != null)
           .to((key, event, recordContext) -> event.getTopicInfo().value(),
               Produced.with(Serdes.String(), CustomSerdes.Json(Event.class)));

@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing.messaging.commandhandling;
 
 import io.github.alikelleci.easysourcing.EasySourcing;
+import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
@@ -8,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
-
-import java.util.Optional;
 
 @Slf4j
 public class CommandTransformer implements ValueTransformerWithKey<String, Command, CommandResult> {
@@ -42,22 +41,18 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     // 2. Validate command against aggregate
     CommandResult result = commandHandler.apply(command, aggregate);
 
-    if (result instanceof CommandResult.Success) {
+    if (result instanceof Success) {
       // 3. Apply events
-      for (Event event : ((CommandResult.Success) result).getEvents()) {
+      for (Event event : ((Success) result).getEvents()) {
         aggregate = applyEvent(aggregate, event);
       }
 
       // 4. Save snapshot
-      Optional.ofNullable(aggregate)
-          .ifPresent(aggr -> {
-            log.debug("Creating snapshot: {}", aggr);
-            saveSnapshot(aggr);
-          });
-
-      if (aggregate == null) {
+      if (aggregate != null) {
+        log.debug("Creating snapshot: {}", aggregate);
+        saveSnapshot(aggregate);
+      } else
         deleteSnapshot(key);
-      }
     }
 
     return result;
