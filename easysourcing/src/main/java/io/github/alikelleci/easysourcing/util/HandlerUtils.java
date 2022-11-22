@@ -9,8 +9,6 @@ import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHa
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.annotations.ApplyEvent;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultHandler;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.annotations.HandleResult;
-import io.github.alikelleci.easysourcing.messaging.snapshothandling.SnapshotHandler;
-import io.github.alikelleci.easysourcing.messaging.snapshothandling.annotations.HandleSnapshot;
 import lombok.experimental.UtilityClass;
 import org.springframework.core.annotation.AnnotationUtils;
 
@@ -27,7 +25,6 @@ public class HandlerUtils {
     List<Method> eventSourcingMethods = findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
     List<Method> resultHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleResult.class);
     List<Method> eventHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
-    List<Method> snapshotHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleSnapshot.class);
 
     commandHandlerMethods
         .forEach(method -> addCommandHandler(easySourcing, handler, method));
@@ -40,9 +37,6 @@ public class HandlerUtils {
 
     eventHandlerMethods
         .forEach(method -> addEventHandler(easySourcing, handler, method));
-
-    snapshotHandlerMethods
-        .forEach(method -> addSnapshotHandler(easySourcing, handler, method));
   }
 
   private <A extends Annotation> List<Method> findMethodsWithAnnotation(Class<?> c, Class<A> annotation) {
@@ -80,13 +74,6 @@ public class HandlerUtils {
     if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
       Class<?> type = method.getParameters()[0].getType();
       easySourcing.getEventHandlers().put(type, new EventHandler(listener, method));
-    }
-  }
-
-  private void addSnapshotHandler(EasySourcing easySourcing, Object listener, Method method) {
-    if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
-      Class<?> type = method.getParameters()[0].getType();
-      easySourcing.getSnapshotHandlers().put(type, new SnapshotHandler(listener, method));
     }
   }
 }
