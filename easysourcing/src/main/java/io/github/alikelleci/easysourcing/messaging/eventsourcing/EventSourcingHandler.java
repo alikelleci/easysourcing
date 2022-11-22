@@ -40,13 +40,13 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
     log.debug("Applying event: {} ({})", event.getType(), event.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, aggregate));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Aggregate doInvoke(Aggregate aggregate, Event event) throws InvocationTargetException, IllegalAccessException {
+  private Aggregate doInvoke(Event event, Aggregate aggregate) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
