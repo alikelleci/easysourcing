@@ -83,6 +83,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   protected Aggregate applyEvent(Aggregate aggregate, Event event) {
     EventSourcingHandler eventSourcingHandler = easySourcing.getEventSourcingHandlers().get(event.getPayload().getClass());
     if (eventSourcingHandler != null) {
+      eventSourcingHandler.setContext(context);
       aggregate = eventSourcingHandler.apply(event, aggregate);
     }
     return aggregate;
