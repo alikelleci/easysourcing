@@ -25,7 +25,7 @@ import javax.validation.ValidationException;
 public class CustomerCommandHandler {
 
   @HandleCommand
-  public CustomerEvent handle(Customer state, CreateCustomer command, Metadata metadata) {
+  public CustomerEvent handle(Customer state, CreateCustomer command) {
     if (state != null) {
       throw new ValidationException("Customer already exists.");
     }

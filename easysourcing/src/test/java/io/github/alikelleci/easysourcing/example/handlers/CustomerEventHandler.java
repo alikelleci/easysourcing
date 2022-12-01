@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomerEventHandler {
 
   @HandleEvent
-  public void handle(CustomerCreated event, Metadata metadata) {
+  public void handle(CustomerCreated event) {
   }
 
   @HandleEvent
@@ -36,6 +36,5 @@ public class CustomerEventHandler {
   @HandleEvent
   public void handle(CustomerDeleted event) {
   }
-
 }
 
