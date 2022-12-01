@@ -37,7 +37,7 @@ import static io.github.alikelleci.easysourcing.messaging.commandhandling.Comman
 import static io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Success;
 
 @Slf4j
-public class CommandHandler implements BiFunction<Command, Aggregate, CommandResult> {
+public class CommandHandler implements BiFunction<Aggregate, Command, CommandResult> {
 
   private final Object target;
   private final Method method;
@@ -56,12 +56,12 @@ public class CommandHandler implements BiFunction<Command, Aggregate, CommandRes
   }
 
   @Override
-  public CommandResult apply(Command command, Aggregate aggregate) {
+  public CommandResult apply(Aggregate aggregate, Command command) {
     log.debug("Handling command: {} ({})", command.getType(), command.getAggregateId());
 
     try {
       validate(command);
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(command, aggregate));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
     } catch (Exception e) {
       Throwable throwable = ExceptionUtils.getRootCause(e);
       String message = ExceptionUtils.getRootCauseMessage(e);
@@ -77,7 +77,7 @@ public class CommandHandler implements BiFunction<Command, Aggregate, CommandRes
     }
   }
 
-  private CommandResult doInvoke(Command command, Aggregate aggregate) throws InvocationTargetException, IllegalAccessException {
+  private CommandResult doInvoke(Aggregate aggregate, Command command) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());

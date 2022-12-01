@@ -39,12 +39,12 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     Aggregate aggregate = loadAggregate(key);
 
     // 2. Validate command against aggregate
-    CommandResult result = commandHandler.apply(command, aggregate);
+    CommandResult result = commandHandler.apply(aggregate, command);
 
     if (result instanceof Success) {
       // 3. Apply events
       for (Event event : ((Success) result).getEvents()) {
-        aggregate = applyEvent(event, aggregate);
+        aggregate = applyEvent(aggregate, event);
       }
 
       // 4. Save snapshot
@@ -75,11 +75,11 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     return snapshotStore.get(aggregateId);
   }
 
-  protected Aggregate applyEvent(Event event, Aggregate aggregate) {
+  protected Aggregate applyEvent(Aggregate aggregate, Event event) {
     EventSourcingHandler eventSourcingHandler = easySourcing.getEventSourcingHandlers().get(event.getPayload().getClass());
     if (eventSourcingHandler != null) {
       eventSourcingHandler.setContext(context);
-      aggregate = eventSourcingHandler.apply(event, aggregate);
+      aggregate = eventSourcingHandler.apply(aggregate, event);
     }
     return aggregate;
   }

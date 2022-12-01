@@ -19,7 +19,7 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.EVENT_ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 
 @Slf4j
-public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggregate> {
+public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggregate> {
 
   private final Object target;
   private final Method method;
@@ -36,17 +36,17 @@ public class EventSourcingHandler implements BiFunction<Event, Aggregate, Aggreg
   }
 
   @Override
-  public Aggregate apply(Event event, Aggregate aggregate) {
+  public Aggregate apply(Aggregate aggregate, Event event) {
     log.debug("Applying event: {} ({})", event.getType(), event.getAggregateId());
 
     try {
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(event, aggregate));
+      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, event));
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Aggregate doInvoke(Event event, Aggregate aggregate) throws InvocationTargetException, IllegalAccessException {
+  private Aggregate doInvoke(Aggregate aggregate, Event event) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
