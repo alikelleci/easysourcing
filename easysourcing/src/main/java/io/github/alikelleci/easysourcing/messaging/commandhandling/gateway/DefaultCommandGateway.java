@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messaging.commandhandling.gateway;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
@@ -41,12 +42,12 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
   private final Producer<String, Command> producer;
 
-  protected DefaultCommandGateway(Properties producerConfig, Properties consumerConfig, String replyTopic) {
-    super(consumerConfig, replyTopic);
+  protected DefaultCommandGateway(Properties producerConfig, Properties consumerConfig, String replyTopic, ObjectMapper objectMapper) {
+    super(consumerConfig, replyTopic, objectMapper);
 
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>());
+        new JsonSerializer<>(Command.class, objectMapper));
   }
 
   @Override
