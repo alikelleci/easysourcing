@@ -1,6 +1,8 @@
 package io.github.alikelleci.easysourcing.messaging.eventhandling.gateway;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.messaging.Metadata;
+import io.github.alikelleci.easysourcing.util.JacksonUtils;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -27,6 +29,7 @@ public interface EventGateway {
   public static class EventGatewayBuilder {
 
     private Properties producerConfig;
+    private ObjectMapper objectMapper;
 
     public EventGatewayBuilder producerConfig(Properties producerConfig) {
       this.producerConfig = producerConfig;
@@ -41,7 +44,13 @@ public interface EventGateway {
     }
 
     public DefaultEventGateway build() {
-      return new DefaultEventGateway(this.producerConfig);
+      if (this.objectMapper == null) {
+        this.objectMapper = JacksonUtils.enhancedObjectMapper();
+      }
+
+      return new DefaultEventGateway(
+          this.producerConfig,
+          this.objectMapper);
     }
   }
 }

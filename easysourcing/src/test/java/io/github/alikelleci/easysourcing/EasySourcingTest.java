@@ -12,7 +12,8 @@ import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
-import io.github.alikelleci.easysourcing.support.serializer.CustomSerdes;
+import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
+import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -66,13 +67,13 @@ class EasySourcingTest {
     testDriver = new TopologyTestDriver(easySourcing.topology(), properties);
 
     commandsTopic = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
-        new StringSerializer(), CustomSerdes.Json(Command.class).serializer());
+        new StringSerializer(), new JsonSerializer<>(Command.class));
 
     commandResultsTopic = testDriver.createOutputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value().concat(".results"),
-        new StringDeserializer(), CustomSerdes.Json(Command.class).deserializer());
+        new StringDeserializer(), new JsonDeserializer<>(Command.class));
 
     eventsTopic = testDriver.createOutputTopic(CustomerEvent.class.getAnnotation(TopicInfo.class).value(),
-        new StringDeserializer(), CustomSerdes.Json(Event.class).deserializer());
+        new StringDeserializer(), new JsonDeserializer<>(Event.class));
   }
 
   @AfterEach
