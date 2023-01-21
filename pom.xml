@@ -7,7 +7,7 @@
     <groupId>io.github.alikelleci</groupId>
     <artifactId>easysourcing-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.3</version>
+    <version>2.0.4</version>
 
     <name>easysourcing</name>
     <description>A Java library for Event Sourcing using Kafka</description>
