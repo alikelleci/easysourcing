@@ -111,7 +111,8 @@ public class EasySourcing {
       // --> Commands
       KStream<String, Command> commands = builder.stream(getCommandTopics(), Consumed.with(Serdes.String(), commandSerde))
           .filter((key, command) -> key != null)
-          .filter((key, command) -> command != null);
+          .filter((key, command) -> command != null)
+          .filter((key, command) -> command.getPayload() != null);
 
       // Commands --> Results
       KStream<String, CommandResult> commandResults = commands
@@ -152,7 +153,8 @@ public class EasySourcing {
       // --> Events
       KStream<String, Event> events = builder.stream(getEventTopics(), Consumed.with(Serdes.String(), eventSerde))
           .filter((key, event) -> key != null)
-          .filter((key, event) -> event != null);
+          .filter((key, event) -> event != null)
+          .filter((key, event) -> event.getPayload() != null);
 
       // Events --> Void
       events
@@ -169,7 +171,8 @@ public class EasySourcing {
       // --> Results
       KStream<String, Command> results = builder.stream(getResultTopics(), Consumed.with(Serdes.String(), commandSerde))
           .filter((key, command) -> key != null)
-          .filter((key, command) -> command != null);
+          .filter((key, command) -> command != null)
+          .filter((key, command) -> command.getPayload() != null);
 
       // Results --> Void
       results
