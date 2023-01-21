@@ -37,14 +37,14 @@ public interface CommandResult {
   @Builder
   class Failure implements CommandResult {
     Command command;
-    String message;
+    String cause;
 
     @Override
     public Command getCommand() {
       return command.toBuilder()
           .metadata(command.getMetadata().toBuilder()
               .entry(RESULT, "failed")
-              .entry(FAILURE, message)
+              .entry(FAILURE, cause)
               .build())
           .build();
     }
