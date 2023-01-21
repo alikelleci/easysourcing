@@ -20,8 +20,8 @@ public class EventTransformer implements ValueTransformerWithKey<String, Event, 
   }
 
   @Override
-  public void init(ProcessorContext processorContext) {
-    this.context = processorContext;
+  public void init(ProcessorContext context) {
+    this.context = context;
   }
 
   @Override

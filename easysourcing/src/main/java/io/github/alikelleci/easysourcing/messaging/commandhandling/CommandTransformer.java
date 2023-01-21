@@ -1,14 +1,18 @@
 package io.github.alikelleci.easysourcing.messaging.commandhandling;
 
 import io.github.alikelleci.easysourcing.EasySourcing;
+import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
+
+import java.util.List;
 
 @Slf4j
 public class CommandTransformer implements ValueTransformerWithKey<String, Command, CommandResult> {
@@ -22,9 +26,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   }
 
   @Override
-  public void init(ProcessorContext processorContext) {
-    this.context = processorContext;
-    this.snapshotStore = context.getStateStore("snapshot-store");
+  public void init(ProcessorContext context) {
+    this.context = context;
+    this.snapshotStore = this.context.getStateStore("snapshot-store");
   }
 
   @Override
@@ -38,8 +42,8 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     // 1. Load aggregate state
     Aggregate aggregate = loadAggregate(key);
 
-    // 2. Validate command against aggregate
-    CommandResult result = commandHandler.apply(aggregate, command);
+    // 2. Execute command
+    CommandResult result = executeCommand(commandHandler, aggregate, command);
 
     if (result instanceof Success) {
       // 3. Apply events
@@ -61,6 +65,22 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   @Override
   public void close() {
 
+  }
+
+  protected CommandResult executeCommand(CommandHandler commandHandler, Aggregate aggregate, Command command) {
+    try {
+      List<Event> events = commandHandler.apply(aggregate, command);
+      return Success.builder()
+          .command(command)
+          .events(events)
+          .build();
+
+    } catch (Exception e) {
+      return Failure.builder()
+          .command(command)
+          .cause(ExceptionUtils.getRootCauseMessage(e))
+          .build();
+    }
   }
 
   protected Aggregate loadAggregate(String aggregateId) {
