@@ -4,12 +4,20 @@ import io.github.alikelleci.easysourcing.EasySourcing;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
 
-  private final EasySourcing easySourcing;
+  private final List<EasySourcing> apps;
 
-  public EasySourcingBeanPostProcessor(EasySourcing easySourcing) {
-    this.easySourcing = easySourcing;
+  public EasySourcingBeanPostProcessor(List<EasySourcing> apps) {
+    this.apps = apps.stream()
+        .filter(eventify -> eventify.getCommandHandlers().isEmpty())
+        .filter(eventify -> eventify.getEventSourcingHandlers().isEmpty())
+        .filter(eventify -> eventify.getResultHandlers().isEmpty())
+        .filter(eventify -> eventify.getEventHandlers().isEmpty())
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -19,7 +27,9 @@ public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
 
   @Override
   public Object postProcessAfterInitialization(final Object bean, final String beanName) {
-    HandlerUtils.registerHandler(easySourcing, bean);
+    apps.forEach(easySourcing ->
+        HandlerUtils.registerHandler(easySourcing, bean));
+
     return bean;
   }
 
