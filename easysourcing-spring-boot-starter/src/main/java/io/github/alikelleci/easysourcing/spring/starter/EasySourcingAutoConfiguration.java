@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 
+import java.util.List;
+import java.util.Map;
+
 @Slf4j
 @Configuration
 @ConditionalOnBean(EasySourcing.class)
@@ -21,15 +24,15 @@ public class EasySourcingAutoConfiguration {
   private ApplicationContext applicationContext;
 
   @Bean
-  public EasySourcingBeanPostProcessor easySourcingBeanPostProcessor(EasySourcing easySourcing) {
-    return new EasySourcingBeanPostProcessor(easySourcing);
+  public EasySourcingBeanPostProcessor easySourcingBeanPostProcessor(@Autowired List<EasySourcing> apps) {
+    return new EasySourcingBeanPostProcessor(apps);
   }
 
   @EventListener
   public void onApplicationEvent(ApplicationReadyEvent event) {
     if (event.getApplicationContext().equals(this.applicationContext)) {
-      EasySourcing easySourcing = event.getApplicationContext().getBean(EasySourcing.class);
-      easySourcing.start();
+      Map<String, EasySourcing> apps = event.getApplicationContext().getBeansOfType(EasySourcing.class);
+      apps.values().forEach(EasySourcing::start);
     }
   }
 }
