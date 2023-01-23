@@ -1,30 +1,23 @@
 package io.github.alikelleci.easysourcing.messaging.eventhandling;
 
 import io.github.alikelleci.easysourcing.messaging.Message;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import io.github.alikelleci.easysourcing.messaging.Metadata;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import lombok.Value;
 
-import java.util.Optional;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Value
 @ToString(callSuper = true)
-@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
 public class Event extends Message {
 
-  private String type;
+  protected Event() {
+  }
 
-  public String getType() {
-    return Optional.ofNullable(getPayload())
-        .map(Object::getClass)
-        .map(Class::getSimpleName)
-        .orElse(null);
+  @Builder
+  protected Event(Object payload, Metadata metadata) {
+    super(payload, metadata);
   }
 
 }

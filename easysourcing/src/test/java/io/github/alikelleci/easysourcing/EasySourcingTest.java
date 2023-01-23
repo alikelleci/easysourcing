@@ -90,12 +90,12 @@ class EasySourcingTest {
             .birthday(Instant.now())
             .build())
         .metadata(Metadata.builder()
-            .entry("custom-key", "custom-value")
-            .entry(CORRELATION_ID, UUID.randomUUID().toString())
-            .entry(ID, "should-be-overwritten-by-command-id")
-            .entry(TIMESTAMP, "should-be-overwritten-by-command-timestamp")
-            .entry(RESULT, "should-be-overwritten-by-command-result")
-            .entry(FAILURE, "should-be-overwritten-by-command-result")
+            .add("custom-key", "custom-value")
+            .add(CORRELATION_ID, UUID.randomUUID().toString())
+            .add(ID, "should-be-overwritten-by-command-id")
+            .add(TIMESTAMP, "should-be-overwritten-by-command-timestamp")
+            .add(RESULT, "should-be-overwritten-by-command-result")
+            .add(FAILURE, "should-be-overwritten-by-command-result")
             .build())
         .build();
 

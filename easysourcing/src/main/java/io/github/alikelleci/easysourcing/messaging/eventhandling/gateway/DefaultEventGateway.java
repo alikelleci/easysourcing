@@ -19,7 +19,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 @Slf4j
 public class DefaultEventGateway implements EventGateway {
@@ -44,9 +44,10 @@ public class DefaultEventGateway implements EventGateway {
 
     Event event = Event.builder()
         .payload(payload)
-        .metadata(metadata.filter().toBuilder()
-            .entry(ID, UUID.randomUUID().toString())
-            .entry(CORRELATION_ID, UUID.randomUUID().toString())
+        .metadata(Metadata.builder()
+            .addAll(metadata)
+            .add(CORRELATION_ID, UUID.randomUUID().toString())
+            .add(TIMESTAMP, String.valueOf(timestamp.toEpochMilli()))
             .build())
         .build();
 

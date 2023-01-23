@@ -4,6 +4,7 @@ import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchEx
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
+import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.exceptions.CommandExecutionException;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
@@ -27,11 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-
-import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 
 @Slf4j
 public class CommandHandler implements BiFunction<Aggregate, Command, List<Event>> {
@@ -89,8 +87,8 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
         .filter(Objects::nonNull)
         .map(payload -> Event.builder()
             .payload(payload)
-            .metadata(command.getMetadata().toBuilder()
-                .entry(ID, UUID.randomUUID().toString())
+            .metadata(Metadata.builder()
+                .addAll(command.getMetadata())
                 .build())
             .build())
         .collect(Collectors.toList());
