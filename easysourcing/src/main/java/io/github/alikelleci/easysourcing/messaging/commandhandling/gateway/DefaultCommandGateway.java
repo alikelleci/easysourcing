@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.REPLY_TO;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 @Slf4j
 public class DefaultCommandGateway extends AbstractCommandResultListener implements CommandGateway {
@@ -62,10 +63,11 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
     Command command = Command.builder()
         .payload(payload)
-        .metadata(metadata.filter().toBuilder()
-            .entry(ID, UUID.randomUUID().toString())
-            .entry(CORRELATION_ID, UUID.randomUUID().toString())
-            .entry(REPLY_TO, getReplyTopic())
+        .metadata(Metadata.builder()
+            .addAll(metadata)
+            .add(CORRELATION_ID, UUID.randomUUID().toString())
+            .add(REPLY_TO, getReplyTopic())
+            .add(TIMESTAMP, String.valueOf(timestamp.toEpochMilli()))
             .build())
         .build();
 

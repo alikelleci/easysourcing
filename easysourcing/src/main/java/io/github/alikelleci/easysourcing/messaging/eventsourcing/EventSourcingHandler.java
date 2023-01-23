@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messaging.eventsourcing;
 
+import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.exceptions.AggregateInvocationException;
 import io.github.alikelleci.easysourcing.retry.Retry;
@@ -63,9 +64,10 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
 
     return Aggregate.builder()
         .payload(result)
-        .metadata(event.getMetadata().toBuilder()
-            .entry(ID, UUID.randomUUID().toString())
-            .entry(EVENT_ID, event.getMetadata().get(ID))
+        .metadata(Metadata.builder()
+            .addAll(event.getMetadata())
+            .add(ID, UUID.randomUUID().toString())
+            .add(EVENT_ID, event.getMetadata().get(ID))
             .build())
         .build();
   }

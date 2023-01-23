@@ -1,9 +1,7 @@
 package io.github.alikelleci.easysourcing.messaging;
 
-import lombok.Builder;
-import lombok.Singular;
-import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
+import lombok.Getter;
+import lombok.ToString;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
@@ -12,44 +10,48 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-
-@Value
-@Builder(toBuilder = true)
+@Getter
+@ToString
 public class Metadata {
   public static final String ID = "$id";
+  public static final String TIMESTAMP = "$timestamp";
   public static final String CORRELATION_ID = "$correlationId";
   public static final String REPLY_TO = "$replyTo";
   public static final String RESULT = "$result";
   public static final String FAILURE = "$failure";
   public static final String EVENT_ID = "$eventId";
 
-  public static final String TIMESTAMP = "$timestamp";
-  public static final String TOPIC = "$topic";
-  public static final String PARTITION = "$partition";
-  public static final String OFFSET = "$offset";
+  private Map<String, String> entries;
 
-  @Singular
-  Map<String, String> entries;
+  protected Metadata() {
+    this.entries = new HashMap<>();
+  }
 
-  @Transient
-  public Metadata filter() {
-    Map<String, String> map = new HashMap<>(entries);
-    map.keySet().removeIf(key -> StringUtils.startsWithIgnoreCase(key, "$"));
+  protected Metadata(Map<String, String> entries) {
+    this.entries = entries;
+  }
 
-    return this.toBuilder()
-        .clearEntries()
-        .entries(map)
-        .build();
+  public Metadata addAll(Metadata metadata) {
+    if (metadata != null) {
+      this.entries.putAll(new HashMap<>(metadata.getEntries()));
+    }
+    return this;
+  }
+
+  public Metadata add(String key, String value) {
+    this.entries.put(key, value);
+    return this;
+  }
+
+  public Metadata remove(String key) {
+    this.entries.remove(key);
+    return this;
   }
 
   @Transient
   public Metadata inject(ProcessorContext context) {
-    return this.toBuilder()
-        .entry(TIMESTAMP, String.valueOf(context.timestamp()))
-        .entry(TOPIC, String.valueOf(context.topic()))
-        .entry(PARTITION, String.valueOf(context.partition()))
-        .entry(OFFSET, String.valueOf(context.offset()))
-        .build();
+    entries.put(TIMESTAMP, String.valueOf(context.timestamp()));
+    return this;
   }
 
   @Transient
@@ -64,9 +66,39 @@ public class Metadata {
 
   @Transient
   public Instant getTimestamp() {
-    return Optional.ofNullable(this.entries.get(Metadata.TIMESTAMP))
+    return Optional.ofNullable(this.entries.get(TIMESTAMP))
         .map(Long::parseLong)
         .map(Instant::ofEpochMilli)
         .orElse(null);
+  }
+
+  public static MetadataBuilder builder() {
+    return new MetadataBuilder();
+  }
+  
+  public static class MetadataBuilder {
+
+    private Map<String, String> entries = new HashMap<>();
+
+    public MetadataBuilder addAll(Metadata metadata) {
+      if (metadata != null) {
+        this.entries.putAll(new HashMap<>(metadata.getEntries()));
+      }
+      return this;
+    }
+
+    public MetadataBuilder add(String key, String value) {
+      this.entries.put(key, value);
+      return this;
+    }
+
+    public MetadataBuilder remove(String key) {
+      this.entries.remove(key);
+      return this;
+    }
+
+    public Metadata build() {
+      return new Metadata(this.entries);
+    }
   }
 }
