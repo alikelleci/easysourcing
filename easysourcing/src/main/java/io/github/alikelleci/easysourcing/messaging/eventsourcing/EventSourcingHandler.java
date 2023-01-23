@@ -66,7 +66,6 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
         .payload(result)
         .metadata(Metadata.builder()
             .addAll(event.getMetadata())
-            .add(ID, UUID.randomUUID().toString())
             .add(EVENT_ID, event.getMetadata().get(ID))
             .build())
         .build();
