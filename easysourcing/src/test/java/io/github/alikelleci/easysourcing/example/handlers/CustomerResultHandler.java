@@ -6,7 +6,6 @@ import io.github.alikelleci.easysourcing.example.domain.CustomerCommand.ChangeLa
 import io.github.alikelleci.easysourcing.example.domain.CustomerCommand.CreateCustomer;
 import io.github.alikelleci.easysourcing.example.domain.CustomerCommand.DeleteCustomer;
 import io.github.alikelleci.easysourcing.example.domain.CustomerCommand.IssueCredits;
-import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.annotations.HandleResult;
 import lombok.extern.slf4j.Slf4j;
 

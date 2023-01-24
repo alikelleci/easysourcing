@@ -6,7 +6,6 @@ import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.CustomerCr
 import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.CustomerDeleted;
 import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.FirstNameChanged;
 import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.LastNameChanged;
-import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.annotations.HandleEvent;
 import lombok.extern.slf4j.Slf4j;
 
