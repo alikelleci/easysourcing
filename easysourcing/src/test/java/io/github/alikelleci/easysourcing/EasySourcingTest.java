@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing;
 
+import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.example.domain.CustomerCommand;
 import io.github.alikelleci.easysourcing.example.domain.CustomerCommand.CreateCustomer;
 import io.github.alikelleci.easysourcing.example.domain.CustomerEvent;
@@ -9,12 +10,10 @@ import io.github.alikelleci.easysourcing.example.handlers.CustomerEventHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerEventSourcingHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerResultHandler;
 import io.github.alikelleci.easysourcing.messaging.Metadata;
-import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.support.serializer.JsonDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerializer;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;

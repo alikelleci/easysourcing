@@ -13,7 +13,6 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.UUID;
 import java.util.function.BiFunction;
 
 import static io.github.alikelleci.easysourcing.messaging.Metadata.EVENT_ID;
