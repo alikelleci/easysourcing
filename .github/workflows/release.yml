@@ -22,7 +22,7 @@ jobs:
         run: |
           mvn versions:set ${GITHUB_REF_NAME}
           mvn --batch-mode validate
-          echo "versionnn:" + ${GITHUB_REF_NAME}
+          echo ${GITHUB_REF_NAME}
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
