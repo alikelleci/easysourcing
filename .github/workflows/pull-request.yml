@@ -22,7 +22,7 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish package
         run: |
-          mvn versions:set -DnewVersion=${GITHUB_BASE_REF}-SNAPSHOT
+          mvn versions:set -DnewVersion=${GITHUB_REF_NAME}-SNAPSHOT
           mvn --batch-mode validate
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
