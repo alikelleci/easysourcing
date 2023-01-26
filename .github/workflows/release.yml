@@ -10,47 +10,47 @@ jobs:
       - uses: actions/checkout@v3
       - name: Fetch tags
         run: git fetch --tags --force origin
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9.7
+      - name: GitTools
+        uses: GitTools/actions@v0.9.15
         with:
           versionSpec: '5.x'
       - name: Determine Version
-        uses: gittools/actions/gitversion/execute@v0.9.7
-        id: gitversion
+        uses: GitTools/actions/execute@v0.9.15
+        id: GitTools
       - name: Display GitTools outputs
         run: |
-          echo "Major: ${{ steps.gitversion.outputs.major }}"
-          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
-          echo "Patch: ${{ steps.gitversion.outputs.patch }}"
-          echo "PreReleaseTag: ${{ steps.gitversion.outputs.preReleaseTag }}"
-          echo "PreReleaseTagWithDash: ${{ steps.gitversion.outputs.preReleaseTagWithDash }}"
-          echo "PreReleaseLabel: ${{ steps.gitversion.outputs.preReleaseLabel }}"
-          echo "PreReleaseNumber: ${{ steps.gitversion.outputs.preReleaseNumber }}"
-          echo "WeightedPreReleaseNumber: ${{ steps.gitversion.outputs.weightedPreReleaseNumber }}"
-          echo "BuildMetaData: ${{ steps.gitversion.outputs.buildMetaData }}"
-          echo "BuildMetaDataPadded: ${{ steps.gitversion.outputs.buildMetaDataPadded }}"
-          echo "FullBuildMetaData: ${{ steps.gitversion.outputs.fullBuildMetaData }}"
-          echo "MajorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}"
-          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-          echo "LegacySemVer: ${{ steps.gitversion.outputs.legacySemVer }}"
-          echo "LegacySemVerPadded: ${{ steps.gitversion.outputs.legacySemVerPadded }}"
-          echo "AssemblySemVer: ${{ steps.gitversion.outputs.assemblySemVer }}"
-          echo "AssemblySemFileVer: ${{ steps.gitversion.outputs.assemblySemFileVer }}"
-          echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
-          echo "InformationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}"
-          echo "BranchName: ${{ steps.gitversion.outputs.branchName }}"
-          echo "EscapedBranchName: ${{ steps.gitversion.outputs.escapedBranchName }}"
-          echo "Sha: ${{ steps.gitversion.outputs.sha }}"
-          echo "ShortSha: ${{ steps.gitversion.outputs.shortSha }}"
-          echo "NuGetVersionV2: ${{ steps.gitversion.outputs.nuGetVersionV2 }}"
-          echo "NuGetVersion: ${{ steps.gitversion.outputs.nuGetVersion }}"
-          echo "NuGetPreReleaseTagV2: ${{ steps.gitversion.outputs.nuGetPreReleaseTagV2 }}"
-          echo "NuGetPreReleaseTag: ${{ steps.gitversion.outputs.nuGetPreReleaseTag }}"
-          echo "VersionSourceSha: ${{ steps.gitversion.outputs.versionSourceSha }}"
-          echo "CommitsSinceVersionSource: ${{ steps.gitversion.outputs.commitsSinceVersionSource }}"
-          echo "CommitsSinceVersionSourcePadded: ${{ steps.gitversion.outputs.commitsSinceVersionSourcePadded }}"
-          echo "UncommittedChanges: ${{ steps.gitversion.outputs.uncommittedChanges }}"
-          echo "CommitDate: ${{ steps.gitversion.outputs.commitDate }}"
+          echo "Major: ${{ steps.GitTools.outputs.major }}"
+          echo "Minor: ${{ steps.GitTools.outputs.minor }}"
+          echo "Patch: ${{ steps.GitTools.outputs.patch }}"
+          echo "PreReleaseTag: ${{ steps.GitTools.outputs.preReleaseTag }}"
+          echo "PreReleaseTagWithDash: ${{ steps.GitTools.outputs.preReleaseTagWithDash }}"
+          echo "PreReleaseLabel: ${{ steps.GitTools.outputs.preReleaseLabel }}"
+          echo "PreReleaseNumber: ${{ steps.GitTools.outputs.preReleaseNumber }}"
+          echo "WeightedPreReleaseNumber: ${{ steps.GitTools.outputs.weightedPreReleaseNumber }}"
+          echo "BuildMetaData: ${{ steps.GitTools.outputs.buildMetaData }}"
+          echo "BuildMetaDataPadded: ${{ steps.GitTools.outputs.buildMetaDataPadded }}"
+          echo "FullBuildMetaData: ${{ steps.GitTools.outputs.fullBuildMetaData }}"
+          echo "MajorMinorPatch: ${{ steps.GitTools.outputs.majorMinorPatch }}"
+          echo "SemVer: ${{ steps.GitTools.outputs.semVer }}"
+          echo "LegacySemVer: ${{ steps.GitTools.outputs.legacySemVer }}"
+          echo "LegacySemVerPadded: ${{ steps.GitTools.outputs.legacySemVerPadded }}"
+          echo "AssemblySemVer: ${{ steps.GitTools.outputs.assemblySemVer }}"
+          echo "AssemblySemFileVer: ${{ steps.GitTools.outputs.assemblySemFileVer }}"
+          echo "FullSemVer: ${{ steps.GitTools.outputs.fullSemVer }}"
+          echo "InformationalVersion: ${{ steps.GitTools.outputs.informationalVersion }}"
+          echo "BranchName: ${{ steps.GitTools.outputs.branchName }}"
+          echo "EscapedBranchName: ${{ steps.GitTools.outputs.escapedBranchName }}"
+          echo "Sha: ${{ steps.GitTools.outputs.sha }}"
+          echo "ShortSha: ${{ steps.GitTools.outputs.shortSha }}"
+          echo "NuGetVersionV2: ${{ steps.GitTools.outputs.nuGetVersionV2 }}"
+          echo "NuGetVersion: ${{ steps.GitTools.outputs.nuGetVersion }}"
+          echo "NuGetPreReleaseTagV2: ${{ steps.GitTools.outputs.nuGetPreReleaseTagV2 }}"
+          echo "NuGetPreReleaseTag: ${{ steps.GitTools.outputs.nuGetPreReleaseTag }}"
+          echo "VersionSourceSha: ${{ steps.GitTools.outputs.versionSourceSha }}"
+          echo "CommitsSinceVersionSource: ${{ steps.GitTools.outputs.commitsSinceVersionSource }}"
+          echo "CommitsSinceVersionSourcePadded: ${{ steps.GitTools.outputs.commitsSinceVersionSourcePadded }}"
+          echo "UncommittedChanges: ${{ steps.GitTools.outputs.uncommittedChanges }}"
+          echo "CommitDate: ${{ steps.GitTools.outputs.commitDate }}"
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v3
         with:
