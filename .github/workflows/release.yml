@@ -11,7 +11,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch all tags
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+        run: git fetch --tags --force
       - name: Display outputs
         run: |
           echo "GITHUB_BASE_REF: ${GITHUB_BASE_REF}"
