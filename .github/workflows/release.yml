@@ -11,7 +11,7 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force origin
       - name: GitTools
-        uses: GitTools/actions@v0.9.15
+        uses: GitTools/actions/checkout@v0.9.15
         with:
           versionSpec: '5.x'
       - name: Determine Version
