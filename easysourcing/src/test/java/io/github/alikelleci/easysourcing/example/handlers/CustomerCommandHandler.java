@@ -15,9 +15,9 @@ import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.CustomerDe
 import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.FirstNameChanged;
 import io.github.alikelleci.easysourcing.example.domain.CustomerEvent.LastNameChanged;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.annotations.HandleCommand;
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.ValidationException;
 
 
 @Slf4j

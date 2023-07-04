@@ -2,11 +2,11 @@ package io.github.alikelleci.easysourcing.example.domain;
 
 import io.github.alikelleci.easysourcing.common.annotations.AggregateId;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Value;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.NotBlank;
 import java.time.Instant;
 
 @TopicInfo("commands.customer")

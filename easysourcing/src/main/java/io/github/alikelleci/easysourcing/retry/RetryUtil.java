@@ -4,6 +4,7 @@ import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMismatchEx
 import io.github.alikelleci.easysourcing.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.PayloadMissingException;
 import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingException;
+import jakarta.validation.ValidationException;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.RetryPolicy;
@@ -11,7 +12,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import javax.validation.ValidationException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
