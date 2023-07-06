@@ -40,8 +40,6 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
 
   private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-  private ProcessorContext context;
-
   public CommandHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
@@ -66,7 +64,7 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata().inject(context));
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata());
     }
     return createEvents(command, result);
   }
@@ -86,6 +84,7 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
     List<Event> events = list.stream()
         .filter(Objects::nonNull)
         .map(payload -> Event.builder()
+            .timestamp(command.getTimestamp())
             .payload(payload)
             .metadata(Metadata.builder()
                 .addAll(command.getMetadata())
@@ -120,9 +119,5 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
 
   public Method getMethod() {
     return method;
-  }
-
-  public void setContext(ProcessorContext context) {
-    this.context = context;
   }
 }

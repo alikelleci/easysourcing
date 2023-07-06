@@ -9,14 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.function.BiFunction;
-
-import static io.github.alikelleci.easysourcing.messaging.Metadata.EVENT_ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 
 @Slf4j
 public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggregate> {
@@ -24,8 +20,6 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
   private final Object target;
   private final Method method;
   private final RetryPolicy<Object> retryPolicy;
-
-  private ProcessorContext context;
 
   public EventSourcingHandler(Object target, Method method) {
     this.target = target;
@@ -51,7 +45,7 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
     if (method.getParameterCount() == 2) {
       result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata().inject(context));
+      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata());
     }
     return createState(event, result);
   }
@@ -62,15 +56,16 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
     }
 
     return Aggregate.builder()
+        .timestamp(event.getTimestamp())
         .payload(result)
         .metadata(Metadata.builder()
             .addAll(event.getMetadata())
-            .add(EVENT_ID, event.getMetadata().get(ID))
             .build())
+        .eventId(event.getId())
         .build();
   }
 
-  public void setContext(ProcessorContext context) {
-    this.context = context;
+  public Method getMethod() {
+    return method;
   }
 }

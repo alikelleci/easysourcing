@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @HandleResult
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HandleError {
+public @interface HandleFailure {
 
 }

@@ -22,8 +22,6 @@ public class EventHandler implements Function<Event, Void> {
   private final Method method;
   private final RetryPolicy<Object> retryPolicy;
 
-  private ProcessorContext context;
-
   public EventHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
@@ -48,7 +46,7 @@ public class EventHandler implements Function<Event, Void> {
     if (method.getParameterCount() == 1) {
       result = method.invoke(target, event.getPayload());
     } else {
-      result = method.invoke(target, event.getPayload(), event.getMetadata().inject(context));
+      result = method.invoke(target, event.getPayload(), event.getMetadata());
     }
     return null;
   }
@@ -61,9 +59,5 @@ public class EventHandler implements Function<Event, Void> {
     return Optional.ofNullable(method.getAnnotation(Priority.class))
         .map(Priority::value)
         .orElse(0);
-  }
-
-  public void setContext(ProcessorContext context) {
-    this.context = context;
   }
 }

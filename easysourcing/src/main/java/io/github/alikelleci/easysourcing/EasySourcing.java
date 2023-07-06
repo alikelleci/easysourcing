@@ -55,6 +55,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.github.alikelleci.easysourcing.messaging.Metadata.REPLY_TO;
+
 @Slf4j
 @Getter
 public class EasySourcing {
@@ -64,16 +66,16 @@ public class EasySourcing {
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
 
   private final Properties streamsConfig;
-  private StateListener stateListener;
-  private StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
+  private final StateListener stateListener;
+  private final StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
   private final ObjectMapper objectMapper;
 
   private KafkaStreams kafkaStreams;
 
   protected EasySourcing(Properties streamsConfig,
-                         StateListener stateListener,
-                         StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
-                         ObjectMapper objectMapper) {
+                     StateListener stateListener,
+                     StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
+                     ObjectMapper objectMapper) {
     this.streamsConfig = streamsConfig;
     this.stateListener = stateListener;
     this.uncaughtExceptionHandler = uncaughtExceptionHandler;
@@ -92,6 +94,7 @@ public class EasySourcing {
      * SERDES
      * -------------------------------------------------------------
      */
+
     Serde<Command> commandSerde = new JsonSerde<>(Command.class, objectMapper);
     Serde<Event> eventSerde = new JsonSerde<>(Event.class, objectMapper);
     Serde<Aggregate> snapshotSerde = new JsonSerde<>(Aggregate.class, objectMapper);
@@ -103,9 +106,9 @@ public class EasySourcing {
      */
 
     if (!getCommandTopics().isEmpty()) {
-      // Snapshot store
+      // Snapshot Store
       builder.addStateStore(Stores
-          .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshot-store"), Serdes.String(), snapshotSerde)
+          .timestampedKeyValueStoreBuilder(Stores.persistentTimestampedKeyValueStore("snapshot-store"), Serdes.String(), snapshotSerde)
           .withLoggingEnabled(Collections.emptyMap()));
 
       // --> Commands
@@ -128,8 +131,8 @@ public class EasySourcing {
       // Results --> Push to reply topic
       commandResults
           .mapValues(CommandResult::getCommand)
-          .filter((key, command) -> StringUtils.isNotBlank(command.getMetadata().get(Metadata.REPLY_TO)))
-          .to((key, command, recordContext) -> command.getMetadata().get(Metadata.REPLY_TO),
+          .filter((key, command) -> StringUtils.isNotBlank(command.getMetadata().get(REPLY_TO)))
+          .to((key, command, recordContext) -> command.getMetadata().get(REPLY_TO),
               Produced.with(Serdes.String(), commandSerde)
                   .withStreamPartitioner((topic, key, value, numPartitions) -> 0));
 
@@ -195,7 +198,7 @@ public class EasySourcing {
       return;
     }
 
-    kafkaStreams = new KafkaStreams(topology, this.streamsConfig);
+    kafkaStreams = new KafkaStreams(topology, streamsConfig);
     setUpListeners();
 
     log.info("EasySourcing is starting...");
@@ -269,6 +272,7 @@ public class EasySourcing {
         .collect(Collectors.toSet());
   }
 
+
   public static class EasySourcingBuilder {
     private List<Object> handlers = new ArrayList<>();
 
@@ -292,6 +296,11 @@ public class EasySourcing {
       this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class);
       this.streamsConfig.putIfAbsent(StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDbConfig.class);
       this.streamsConfig.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.COMPRESSION_TYPE_CONFIG), "zstd");
+
+//    ArrayList<String> interceptors = new ArrayList<>();
+//    interceptors.add(CommonProducerInterceptor.class.getName());
+//
+//    this.streamsConfig.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), interceptors);
 
       return this;
     }
@@ -339,4 +348,5 @@ public class EasySourcing {
     }
 
   }
+
 }

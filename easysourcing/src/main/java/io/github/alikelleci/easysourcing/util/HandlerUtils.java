@@ -25,7 +25,7 @@ public class HandlerUtils {
     List<Method> eventSourcingMethods = findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
     List<Method> resultHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleResult.class);
     List<Method> eventHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
-
+    
     commandHandlerMethods
         .forEach(method -> addCommandHandler(easySourcing, handler, method));
 
@@ -48,7 +48,7 @@ public class HandlerUtils {
     }
     return methods;
   }
-
+  
   private void addCommandHandler(EasySourcing easySourcing, Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
       Class<?> type = method.getParameters()[1].getType();

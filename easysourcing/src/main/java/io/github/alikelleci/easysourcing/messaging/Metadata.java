@@ -3,6 +3,8 @@ package io.github.alikelleci.easysourcing.messaging;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.experimental.Delegate;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
@@ -11,18 +13,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Getter
 @ToString
-@EqualsAndHashCode
-public class Metadata {
+public class Metadata implements Map<String, String> {
   public static final String ID = "$id";
   public static final String TIMESTAMP = "$timestamp";
   public static final String CORRELATION_ID = "$correlationId";
   public static final String REPLY_TO = "$replyTo";
+  public static final String REVISION = "$revision";
   public static final String RESULT = "$result";
-  public static final String FAILURE = "$failure";
-  public static final String EVENT_ID = "$eventId";
+  public static final String CAUSE = "$cause";
 
+  @Delegate
   private Map<String, String> entries;
 
   protected Metadata() {
@@ -35,7 +36,7 @@ public class Metadata {
 
   public Metadata addAll(Metadata metadata) {
     if (metadata != null) {
-      this.entries.putAll(new HashMap<>(metadata.getEntries()));
+      this.entries.putAll(new HashMap<>(metadata));
     }
     return this;
   }
@@ -51,14 +52,9 @@ public class Metadata {
   }
 
   @Transient
-  public Metadata inject(ProcessorContext context) {
-    entries.put(TIMESTAMP, String.valueOf(context.timestamp()));
+  protected Metadata filter() {
+    entries.keySet().removeIf(key -> StringUtils.startsWithIgnoreCase(key, "$"));
     return this;
-  }
-
-  @Transient
-  public String get(String key) {
-    return entries.get(key);
   }
 
   @Transient
@@ -68,23 +64,20 @@ public class Metadata {
 
   @Transient
   public Instant getTimestamp() {
-    return Optional.ofNullable(this.entries.get(TIMESTAMP))
-        .map(Long::parseLong)
-        .map(Instant::ofEpochMilli)
-        .orElse(null);
+    return Instant.parse(this.entries.get(TIMESTAMP));
   }
 
   public static MetadataBuilder builder() {
     return new MetadataBuilder();
   }
-  
+
   public static class MetadataBuilder {
 
     private Map<String, String> entries = new HashMap<>();
 
     public MetadataBuilder addAll(Metadata metadata) {
       if (metadata != null) {
-        this.entries.putAll(new HashMap<>(metadata.getEntries()));
+        this.entries.putAll(new HashMap<>(metadata));
       }
       return this;
     }
@@ -103,4 +96,5 @@ public class Metadata {
       return new Metadata(this.entries);
     }
   }
+
 }

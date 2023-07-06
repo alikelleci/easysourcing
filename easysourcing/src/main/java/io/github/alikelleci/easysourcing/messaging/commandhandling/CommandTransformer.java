@@ -10,16 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.TimestampedKeyValueStore;
+import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class CommandTransformer implements ValueTransformerWithKey<String, Command, CommandResult> {
 
   private final EasySourcing easySourcing;
-  private ProcessorContext context;
-  private KeyValueStore<String, Aggregate> snapshotStore;
+  private TimestampedKeyValueStore<String, Aggregate> snapshotStore;
 
   public CommandTransformer(EasySourcing easySourcing) {
     this.easySourcing = easySourcing;
@@ -27,8 +28,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   @Override
   public void init(ProcessorContext context) {
-    this.context = context;
-    this.snapshotStore = this.context.getStateStore("snapshot-store");
+    this.snapshotStore = context.getStateStore("snapshot-store");
   }
 
   @Override
@@ -37,7 +37,6 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     if (commandHandler == null) {
       return null;
     }
-    commandHandler.setContext(context);
 
     // 1. Load aggregate state
     Aggregate aggregate = loadAggregate(key);
@@ -55,8 +54,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
       if (aggregate != null) {
         log.debug("Creating snapshot: {}", aggregate);
         saveSnapshot(aggregate);
-      } else
+      } else {
         deleteSnapshot(key);
+      }
     }
 
     return result;
@@ -92,20 +92,21 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   }
 
   protected Aggregate loadFromSnapshot(String aggregateId) {
-    return snapshotStore.get(aggregateId);
+    return Optional.ofNullable(snapshotStore.get(aggregateId))
+        .map(ValueAndTimestamp::value)
+        .orElse(null);
   }
 
   protected Aggregate applyEvent(Aggregate aggregate, Event event) {
     EventSourcingHandler eventSourcingHandler = easySourcing.getEventSourcingHandlers().get(event.getPayload().getClass());
     if (eventSourcingHandler != null) {
-      eventSourcingHandler.setContext(context);
       aggregate = eventSourcingHandler.apply(aggregate, event);
     }
     return aggregate;
   }
 
   protected void saveSnapshot(Aggregate aggregate) {
-    snapshotStore.put(aggregate.getAggregateId(), aggregate);
+    snapshotStore.put(aggregate.getAggregateId(), ValueAndTimestamp.make(aggregate, aggregate.getTimestamp().toEpochMilli()));
   }
 
   private void deleteSnapshot(String key) {

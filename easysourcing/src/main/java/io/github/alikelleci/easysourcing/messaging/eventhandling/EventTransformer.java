@@ -13,7 +13,6 @@ import java.util.Comparator;
 public class EventTransformer implements ValueTransformerWithKey<String, Event, Event> {
 
   private final EasySourcing easySourcing;
-  private ProcessorContext context;
 
   public EventTransformer(EasySourcing easySourcing) {
     this.easySourcing = easySourcing;
@@ -21,7 +20,6 @@ public class EventTransformer implements ValueTransformerWithKey<String, Event, 
 
   @Override
   public void init(ProcessorContext context) {
-    this.context = context;
   }
 
   @Override
@@ -30,7 +28,6 @@ public class EventTransformer implements ValueTransformerWithKey<String, Event, 
     if (CollectionUtils.isNotEmpty(eventHandlers)) {
       eventHandlers.stream()
           .sorted(Comparator.comparingInt(EventHandler::getPriority).reversed())
-          .peek(handler -> handler.setContext(context))
           .forEach(handler ->
               handler.apply(event));
     }

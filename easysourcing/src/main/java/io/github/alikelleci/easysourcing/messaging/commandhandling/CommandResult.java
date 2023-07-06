@@ -7,7 +7,7 @@ import lombok.Value;
 
 import java.util.List;
 
-import static io.github.alikelleci.easysourcing.messaging.Metadata.FAILURE;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.CAUSE;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
 
 
@@ -18,9 +18,9 @@ public interface CommandResult {
   @Value
   @Builder
   class Success implements CommandResult {
-    Command command;
+    private Command command;
     @Singular
-    List<Event> events;
+    private List<Event> events;
 
     @Override
     public Command getCommand() {
@@ -31,20 +31,20 @@ public interface CommandResult {
     }
   }
 
-
   @Value
   @Builder
   class Failure implements CommandResult {
-    Command command;
-    String cause;
+    private Command command;
+    private String cause;
 
     @Override
     public Command getCommand() {
       command.getMetadata()
-          .add(RESULT, "failed")
-          .add(FAILURE, cause);
+          .add(RESULT, "failure")
+          .add(CAUSE, cause);
 
       return command;
     }
   }
+
 }

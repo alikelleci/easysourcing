@@ -53,32 +53,24 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
   @Override
   public <R> CompletableFuture<R> send(Object payload, Metadata metadata, Instant timestamp) {
-    if (metadata == null) {
-      metadata = Metadata.builder().build();
-    }
-
-    if (timestamp == null) {
-      timestamp = Instant.now();
-    }
-
     Command command = Command.builder()
+        .timestamp(timestamp)
         .payload(payload)
         .metadata(Metadata.builder()
             .addAll(metadata)
             .add(CORRELATION_ID, UUID.randomUUID().toString())
             .add(REPLY_TO, getReplyTopic())
-            .add(TIMESTAMP, String.valueOf(timestamp.toEpochMilli()))
             .build())
         .build();
 
     validate(command);
-    ProducerRecord<String, Command> record = new ProducerRecord<>(command.getTopicInfo().value(), null, timestamp.toEpochMilli(), command.getAggregateId(), command);
+    ProducerRecord<String, Command> record = new ProducerRecord<>(command.getTopicInfo().value(), null, command.getTimestamp().toEpochMilli(), command.getAggregateId(), command);
 
     log.debug("Sending command: {} ({})", command.getType(), command.getAggregateId());
     producer.send(record);
 
     CompletableFuture<Object> future = new CompletableFuture<>();
-    cache.put(command.getMetadata().get(ID), future);
+    cache.put(command.getId(), future);
 
     return (CompletableFuture<R>) future;
   }
@@ -86,10 +78,7 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
   @Override
   protected void onMessage(ConsumerRecords<String, Command> consumerRecords) {
     consumerRecords.forEach(record -> {
-      String messageId = Optional.ofNullable(record.value().getMetadata())
-          .map(metadata -> metadata.get(ID))
-          .orElse(null);
-
+      String messageId = record.value().getId();
       if (StringUtils.isBlank(messageId)) {
         return;
       }
@@ -127,8 +116,8 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
     Message message = record.value();
     Metadata metadata = message.getMetadata();
 
-    if (metadata.get(Metadata.RESULT).equals("failed")) {
-      return new CommandExecutionException(metadata.get(Metadata.FAILURE));
+    if (metadata.get(Metadata.RESULT).equals("failure")) {
+      return new CommandExecutionException(metadata.get(Metadata.CAUSE));
     }
 
     return null;
