@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messaging;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -12,6 +13,7 @@ import java.util.Optional;
 
 @Getter
 @ToString
+@EqualsAndHashCode
 public class Metadata {
   public static final String ID = "$id";
   public static final String TIMESTAMP = "$timestamp";
