@@ -1,5 +1,9 @@
 package io.github.alikelleci.easysourcing.example.domain;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.github.alikelleci.easysourcing.CustomDeserializer;
+import io.github.alikelleci.easysourcing.CustomSerializer;
 import io.github.alikelleci.easysourcing.common.annotations.AggregateId;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
 import jakarta.validation.constraints.Max;
@@ -23,6 +27,7 @@ public interface CustomerCommand {
     private String lastName;
     @Max(100)
     private int credits;
+    @JsonDeserialize(using = CustomDeserializer.class)
     private Instant birthday;
   }
 

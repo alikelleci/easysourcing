@@ -61,19 +61,14 @@ class UpcastTest {
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transformed));
 
     System.out.println("Java class:");
-    System.out.println(objectMapper.convertValue(transformed, Command.class));
+    Command command = objectMapper.convertValue(transformed, Command.class);
+    System.out.println(command);
+
+    System.out.println("Java to JSON:");
+    String commandJson = objectMapper.writeValueAsString(command);
+    System.out.println(commandJson);
 
 
-    System.out.println("aaaaaaaaaaaaaaa");
-    System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(Command.builder()
-        .payload(CustomerCommand.CreateCustomer.builder()
-            .id("customer-123")
-            .firstName("Peter")
-            .lastName("Bruin")
-            .credits(100)
-            .birthday(Instant.now())
-            .build())
-        .build()));
 
   }
 
