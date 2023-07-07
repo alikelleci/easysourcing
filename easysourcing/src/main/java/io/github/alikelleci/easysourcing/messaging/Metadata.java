@@ -1,17 +1,13 @@
 package io.github.alikelleci.easysourcing.messaging;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Delegate;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @ToString
 public class Metadata implements Map<String, String> {

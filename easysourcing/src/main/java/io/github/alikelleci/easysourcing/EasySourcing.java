@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
-import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandHandler;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult;

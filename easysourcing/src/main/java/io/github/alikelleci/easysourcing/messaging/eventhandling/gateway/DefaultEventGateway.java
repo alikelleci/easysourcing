@@ -19,7 +19,6 @@ import java.util.Properties;
 import java.util.UUID;
 
 import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 @Slf4j
 public class DefaultEventGateway implements EventGateway {

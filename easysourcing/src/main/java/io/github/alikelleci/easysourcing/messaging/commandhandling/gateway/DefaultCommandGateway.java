@@ -23,15 +23,12 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.REPLY_TO;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 @Slf4j
 public class DefaultCommandGateway extends AbstractCommandResultListener implements CommandGateway {

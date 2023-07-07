@@ -14,7 +14,6 @@ import org.springframework.util.ReflectionUtils;
 import java.beans.Transient;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
