@@ -13,10 +13,10 @@ public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
 
   public EasySourcingBeanPostProcessor(List<EasySourcing> apps) {
     this.apps = apps.stream()
-        .filter(eventify -> eventify.getCommandHandlers().isEmpty())
-        .filter(eventify -> eventify.getEventSourcingHandlers().isEmpty())
-        .filter(eventify -> eventify.getResultHandlers().isEmpty())
-        .filter(eventify -> eventify.getEventHandlers().isEmpty())
+        .filter(easySourcing -> easySourcing.getCommandHandlers().isEmpty())
+        .filter(easySourcing -> easySourcing.getEventSourcingHandlers().isEmpty())
+        .filter(easySourcing -> easySourcing.getResultHandlers().isEmpty())
+        .filter(easySourcing -> easySourcing.getEventHandlers().isEmpty())
         .collect(Collectors.toList());
   }
 
