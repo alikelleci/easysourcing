@@ -2,16 +2,27 @@ package io.github.alikelleci.easysourcing;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.alikelleci.easysourcing.example.domain.CustomerCommand;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerCommandHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerEventHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerEventSourcingHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerResultHandler;
 import io.github.alikelleci.easysourcing.messaging.MessageUpcaster;
+import io.github.alikelleci.easysourcing.messaging.Metadata;
+import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.MockProcessorContext;
 
 import java.time.Instant;
 import java.util.Properties;
+import java.util.UUID;
+
+import static io.github.alikelleci.easysourcing.messaging.Metadata.CAUSE;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 class UpcastTest {
 
@@ -29,6 +40,7 @@ class UpcastTest {
         .registerHandler(new CustomerResultHandler())
         .build();
 
+    ObjectMapper objectMapper = easySourcing.getObjectMapper();
 
     MockProcessorContext mockProcessorContext = new MockProcessorContext();
     mockProcessorContext.setRecordTimestamp(Instant.now().toEpochMilli());
@@ -38,29 +50,39 @@ class UpcastTest {
 
 
     String json = "{\n" +
-        "\t\"@class\": \"some.package.Command\",\n" +
-        "\t\"type\": \"CreateCustomer\",\n" +
-        "\t\"payload\": {\n" +
-        "\t\t\"@class\": \"some.package.Customer\",\n" +
-        "\t\t\"name\": \"John Doe\"\n" +
-        "\t},\n" +
-        "\t\"metadata\": {\n" +
-        "\t\t\"entries\": {\n" +
-        "\t\t\t\"$id\": \"some-message-id\",\n" +
-        "\t\t\t\"$result\": \"failed\",\n" +
-        "\t\t\t\"$failure\": \"some-root-cause\",\n" +
-        "\t\t\t\"$correlationId\": \"some-correlation-id\",\n" +
-        "\t\t\t\"$replyTo\": \"some-reply-to-address\",\n" +
-        "\t\t\t\"issuer\": \"Henk\",\n" +
-        "\t\t\t\"organisation\": \"MEARSK\"\n" +
-        "\t\t}\n" +
-        "\t}\n" +
+        "  \"@class\": \"io.github.alikelleci.easysourcing.messaging.commandhandling.Command\",\n" +
+        "  \"type\": \"CreateCustomer\",\n" +
+        "  \"payload\": {\n" +
+        "    \"@class\": \"io.github.alikelleci.easysourcing.example.domain.CustomerCommand$CreateCustomer\",\n" +
+        "    \"id\": \"customer-123\",\n" +
+        "    \"firstName\": \"Peter\",\n" +
+        "    \"lastName\": \"Bruin\",\n" +
+        "    \"credits\": 100,\n" +
+        "    \"birthday\": 1688690660.185468200\n" +
+        "  },\n" +
+        "  \"metadata\": {\n" +
+        "    \"entries\": {\n" +
+        "      \"$id\": \"some-message-id\",\n" +
+        "      \"$result\": \"failed\",\n" +
+        "      \"$failure\": \"some-root-cause\",\n" +
+        "      \"$correlationId\": \"some-correlation-id\",\n" +
+        "      \"$replyTo\": \"some-reply-to-address\",\n" +
+        "      \"issuer\": \"Henk\",\n" +
+        "      \"organisation\": \"MEARSK\"\n" +
+        "    }\n" +
+        "  }\n" +
         "}";
-    JsonNode root = easySourcing.getObjectMapper().readValue(json, JsonNode.class);
 
+    System.out.println("Original result:");
+    System.out.println(json);
 
+    JsonNode root = objectMapper.readValue(json, JsonNode.class);
     JsonNode transformed = messageUpcaster.transform("some-key", root);
-    System.out.println(easySourcing.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(root));
+    System.out.println("Transformed result:");
+    System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+
+    System.out.printf("Java class:");
+    System.out.println(objectMapper.convertValue(transformed, Command.class));
   }
 
 
