@@ -52,11 +52,11 @@ class UpcastTest {
     messageUpcaster.init(mockProcessorContext);
 
     JsonNode json = objectMapper.readValue(Paths.get("C:\\Projects\\private\\easysourcing\\easysourcing\\src\\test\\java\\io\\github\\alikelleci\\easysourcing\\customer.json").toFile(), JsonNode.class);
+    JsonNode transformed = messageUpcaster.transform("some-key", json);
 
     System.out.println("Original result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
 
-    JsonNode transformed = messageUpcaster.transform("some-key", json);
     System.out.println("Transformed result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transformed));
 
