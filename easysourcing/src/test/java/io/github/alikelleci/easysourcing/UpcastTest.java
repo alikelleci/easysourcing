@@ -1,15 +1,12 @@
 package io.github.alikelleci.easysourcing;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.alikelleci.easysourcing.example.domain.CustomerCommand;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerCommandHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerEventHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerEventSourcingHandler;
 import io.github.alikelleci.easysourcing.example.handlers.CustomerResultHandler;
-import io.github.alikelleci.easysourcing.messaging.MessageUpcaster;
-import io.github.alikelleci.easysourcing.messaging.Metadata;
+import io.github.alikelleci.easysourcing.support.LegacyMessageTransformer;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.MockProcessorContext;
@@ -17,15 +14,7 @@ import org.apache.kafka.streams.processor.MockProcessorContext;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.Properties;
-import java.util.UUID;
-
-import static io.github.alikelleci.easysourcing.messaging.Metadata.CAUSE;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 class UpcastTest {
 
@@ -48,15 +37,15 @@ class UpcastTest {
     MockProcessorContext mockProcessorContext = new MockProcessorContext();
     mockProcessorContext.setRecordTimestamp(1684189825000L);
 
-    MessageUpcaster messageUpcaster = new MessageUpcaster(easySourcing);
-    messageUpcaster.init(mockProcessorContext);
+    LegacyMessageTransformer legacyMessageTransformer = new LegacyMessageTransformer(easySourcing);
+    legacyMessageTransformer.init(mockProcessorContext);
 
     JsonNode json = objectMapper.readValue(Paths.get("C:\\Projects\\private\\easysourcing\\easysourcing\\src\\test\\java\\io\\github\\alikelleci\\easysourcing\\customer.json").toFile(), JsonNode.class);
 
     System.out.println("Original result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
 
-    JsonNode transformed = messageUpcaster.transform("some-key", json);
+    JsonNode transformed = legacyMessageTransformer.transform("some-key", json);
 
     System.out.println("Transformed result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transformed));

@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.messaging;
+package io.github.alikelleci.easysourcing.support;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,12 +15,12 @@ import java.util.Optional;
 
 
 @Slf4j
-public class MessageUpcaster implements ValueTransformerWithKey<String, JsonNode, JsonNode> {
+public class LegacyMessageTransformer implements ValueTransformerWithKey<String, JsonNode, JsonNode> {
 
   private final EasySourcing easySourcing;
   private ProcessorContext context;
 
-  public MessageUpcaster(EasySourcing easySourcing) {
+  public LegacyMessageTransformer(EasySourcing easySourcing) {
     this.easySourcing = easySourcing;
   }
 
