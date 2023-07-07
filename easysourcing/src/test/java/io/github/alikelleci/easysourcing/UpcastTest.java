@@ -14,6 +14,9 @@ import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.MockProcessorContext;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Properties;
 import java.util.UUID;
@@ -27,7 +30,7 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 class UpcastTest {
 
 
-  public static void main(String[] args) throws JsonProcessingException {
+  public static void main(String[] args) throws IOException, URISyntaxException {
     Properties properties = new Properties();
     properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "example-app");
     properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:1234");
@@ -48,36 +51,12 @@ class UpcastTest {
     MessageUpcaster messageUpcaster = new MessageUpcaster(easySourcing);
     messageUpcaster.init(mockProcessorContext);
 
-
-    String json = "{\n" +
-        "  \"@class\": \"io.github.alikelleci.easysourcing.messaging.commandhandling.Command\",\n" +
-        "  \"type\": \"CreateCustomer\",\n" +
-        "  \"payload\": {\n" +
-        "    \"@class\": \"io.github.alikelleci.easysourcing.example.domain.CustomerCommand$CreateCustomer\",\n" +
-        "    \"id\": \"customer-123\",\n" +
-        "    \"firstName\": \"Peter\",\n" +
-        "    \"lastName\": \"Bruin\",\n" +
-        "    \"credits\": 100,\n" +
-        "    \"birthday\": 1684189825000\n" +
-        "  },\n" +
-        "  \"metadata\": {\n" +
-        "    \"entries\": {\n" +
-        "      \"$id\": \"some-message-id\",\n" +
-        "      \"$result\": \"failed\",\n" +
-        "      \"$failure\": \"some-root-cause\",\n" +
-        "      \"$correlationId\": \"some-correlation-id\",\n" +
-        "      \"$replyTo\": \"some-reply-to-address\",\n" +
-        "      \"issuer\": \"Henk\",\n" +
-        "      \"organisation\": \"MEARSK\"\n" +
-        "    }\n" +
-        "  }\n" +
-        "}";
+    JsonNode json = objectMapper.readValue(Paths.get("C:\\Projects\\private\\easysourcing\\easysourcing\\src\\test\\java\\io\\github\\alikelleci\\easysourcing\\customer.json").toFile(), JsonNode.class);
 
     System.out.println("Original result:");
-    System.out.println(json);
+    System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
 
-    JsonNode root = objectMapper.readValue(json, JsonNode.class);
-    JsonNode transformed = messageUpcaster.transform("some-key", root);
+    JsonNode transformed = messageUpcaster.transform("some-key", json);
     System.out.println("Transformed result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transformed));
 
