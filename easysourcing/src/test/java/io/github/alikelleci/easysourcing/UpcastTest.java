@@ -43,7 +43,7 @@ class UpcastTest {
     ObjectMapper objectMapper = easySourcing.getObjectMapper();
 
     MockProcessorContext mockProcessorContext = new MockProcessorContext();
-    mockProcessorContext.setRecordTimestamp(Instant.now().toEpochMilli());
+    mockProcessorContext.setRecordTimestamp(1684189825000L);
 
     MessageUpcaster messageUpcaster = new MessageUpcaster(easySourcing);
     messageUpcaster.init(mockProcessorContext);
@@ -58,7 +58,7 @@ class UpcastTest {
         "    \"firstName\": \"Peter\",\n" +
         "    \"lastName\": \"Bruin\",\n" +
         "    \"credits\": 100,\n" +
-        "    \"birthday\": 1688690660.185468200\n" +
+        "    \"birthday\": 1684189825000\n" +
         "  },\n" +
         "  \"metadata\": {\n" +
         "    \"entries\": {\n" +
@@ -83,6 +83,19 @@ class UpcastTest {
 
     System.out.printf("Java class:");
     System.out.println(objectMapper.convertValue(transformed, Command.class));
+
+
+    System.out.println("aaaaaaaaaaaaaaa");
+    System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(Command.builder()
+        .payload(CustomerCommand.CreateCustomer.builder()
+            .id("customer-123")
+            .firstName("Peter")
+            .lastName("Bruin")
+            .credits(100)
+            .birthday(Instant.now())
+            .build())
+        .build()));
+
   }
 
 
