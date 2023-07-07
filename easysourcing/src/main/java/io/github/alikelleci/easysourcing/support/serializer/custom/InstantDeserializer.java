@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing;
+package io.github.alikelleci.easysourcing.support.serializer.custom;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -9,13 +9,13 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 import java.time.Instant;
 
-public class CustomDeserializer extends StdDeserializer<Instant> {
+public class InstantDeserializer extends StdDeserializer<Instant> {
 
-  public CustomDeserializer() {
+  public InstantDeserializer() {
     this(null);
   }
 
-  protected CustomDeserializer(Class<?> vc) {
+  protected InstantDeserializer(Class<?> vc) {
     super(vc);
   }
 
@@ -28,7 +28,7 @@ public class CustomDeserializer extends StdDeserializer<Instant> {
     }
 
     if (node.isNumber()) {
-      return Instant.ofEpochMilli(millis(node.asLong()));
+      return Instant.ofEpochMilli(toMillis(node.asLong()));
     }
 
     if (node.isTextual()) {
@@ -39,7 +39,7 @@ public class CustomDeserializer extends StdDeserializer<Instant> {
   }
 
 
-  private long millis(long timestamp) {
+  private long toMillis(long timestamp) {
 
     // nanoseconds
     if (timestamp >= 1E16 || timestamp <= -1E16) {

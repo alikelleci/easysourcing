@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.github.alikelleci.easysourcing.support.serializer.custom.InstantDeserializer;
+
+import java.time.Instant;
 
 public class JacksonUtils {
 
@@ -14,8 +18,12 @@ public class JacksonUtils {
 
   public static ObjectMapper enhancedObjectMapper() {
     if (objectMapper == null) {
+      SimpleModule customModule = new SimpleModule();
+      customModule.addDeserializer(Instant.class, new InstantDeserializer());
+
       objectMapper = new ObjectMapper()
           .findAndRegisterModules()
+          .registerModules(customModule)
           .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 //          .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
