@@ -55,8 +55,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
       if (aggregate != null) {
         log.debug("Creating snapshot: {}", aggregate);
         saveSnapshot(aggregate);
-      } else
+      } else {
         deleteSnapshot(key);
+      }
     }
 
     return result;
