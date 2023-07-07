@@ -81,7 +81,7 @@ class UpcastTest {
     System.out.println("Transformed result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
-    System.out.printf("Java class:");
+    System.out.println("Java class:");
     System.out.println(objectMapper.convertValue(transformed, Command.class));
 
 
