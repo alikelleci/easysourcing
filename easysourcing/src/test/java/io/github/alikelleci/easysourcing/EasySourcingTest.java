@@ -28,8 +28,8 @@ import java.time.Instant;
 import java.util.Properties;
 import java.util.UUID;
 
+import static io.github.alikelleci.easysourcing.messaging.Metadata.CAUSE;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.FAILURE;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
@@ -94,7 +94,7 @@ class EasySourcingTest {
             .add(ID, "should-be-overwritten-by-command-id")
             .add(TIMESTAMP, "should-be-overwritten-by-command-timestamp")
             .add(RESULT, "should-be-overwritten-by-command-result")
-            .add(FAILURE, "should-be-overwritten-by-command-result")
+            .add(CAUSE, "should-be-overwritten-by-command-result")
             .build())
         .build();
 
