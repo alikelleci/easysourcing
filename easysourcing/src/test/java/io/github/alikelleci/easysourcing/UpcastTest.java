@@ -12,6 +12,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.MockProcessorContext;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -40,7 +41,7 @@ class UpcastTest {
     LegacyMessageTransformer legacyMessageTransformer = new LegacyMessageTransformer(easySourcing);
     legacyMessageTransformer.init(mockProcessorContext);
 
-    JsonNode json = objectMapper.readValue(Paths.get("C:\\Projects\\private\\easysourcing\\easysourcing\\src\\test\\java\\io\\github\\alikelleci\\easysourcing\\customer.json").toFile(), JsonNode.class);
+    JsonNode json = objectMapper.readValue(UpcastTest.class.getClassLoader().getResourceAsStream("customer.json"), JsonNode.class);
 
     System.out.println("Original result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
