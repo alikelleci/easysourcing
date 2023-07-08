@@ -15,6 +15,8 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import java.util.Collection;
 import java.util.Comparator;
 
+import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
+
 @Slf4j
 public class ResultTransformer implements ValueTransformerWithKey<String, Command, Command> {
 
@@ -39,7 +41,7 @@ public class ResultTransformer implements ValueTransformerWithKey<String, Comman
             boolean handleSuccess = handler.getMethod().isAnnotationPresent(HandleSuccess.class);
             boolean handleFailure = handler.getMethod().isAnnotationPresent(HandleFailure.class);
 
-            String result = command.getMetadata().get(Metadata.RESULT);
+            String result = command.getMetadata().get(RESULT);
             if (handleAll ||
                 (handleSuccess && StringUtils.equals(result, "success")) ||
                 (handleFailure && StringUtils.equals(result, "failure"))) {
