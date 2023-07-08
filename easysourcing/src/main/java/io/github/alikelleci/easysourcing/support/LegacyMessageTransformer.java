@@ -31,13 +31,7 @@ public class LegacyMessageTransformer implements ValueTransformerWithKey<String,
 
   @Override
   public JsonNode transform(String key, JsonNode root) {
-
-    String messageType = Optional.ofNullable(root.get("@class"))
-        .map(JsonNode::textValue)
-        .orElse(null);
-
-
-    if (StringUtils.isNotBlank(messageType)) {
+    if (shouldUpcast(root)) {
       // Remove message type info
       ((ObjectNode) root).remove("@class");
 
@@ -120,6 +114,14 @@ public class LegacyMessageTransformer implements ValueTransformerWithKey<String,
   @Override
   public void close() {
 
+  }
+
+  private boolean shouldUpcast(JsonNode root) {
+    JsonNode entries = Optional.ofNullable(root.get("metadata"))
+        .map(s -> s.get("entries"))
+        .orElse(null);
+
+    return entries != null;
   }
 
 
