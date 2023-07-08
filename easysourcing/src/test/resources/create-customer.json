@@ -3,11 +3,11 @@
   "type": "CreateCustomer",
   "payload": {
     "@class": "io.github.alikelleci.easysourcing.example.domain.CustomerCommand$CreateCustomer",
-    "id": "customer-123",
-    "firstName": "Peter",
-    "lastName": "Bruin",
+    "id": "cust-1",
+    "firstName": "Sabrina",
+    "lastName": "Lehner",
     "credits": 100,
-    "birthday": 1684189825000
+    "birthday": 1688776890579
   },
   "metadata": {
     "entries": {
