@@ -46,7 +46,7 @@ class UpcastTest {
     System.out.println("Original result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
 
-    JsonNode transformed = legacyMessageTransformer.transform("some-key", json);
+    JsonNode transformed = legacyMessageTransformer.transform("some-aggregate-id", json);
 
     System.out.println("Transformed result:");
     System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transformed));
