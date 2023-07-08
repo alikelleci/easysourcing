@@ -45,7 +45,7 @@ public class LegacyMessageTransformer implements ValueTransformerWithKey<String,
       ObjectNode oldMetadata = ((ObjectNode) root.get("metadata"));
       ObjectNode newMetadata = easySourcing.getObjectMapper().createObjectNode();
 
-      // $id
+      // id & $id
       Optional.ofNullable(oldMetadata.get("entries"))
           .map(node -> node.get("$id"))
           .map(JsonNode::textValue)
@@ -55,7 +55,11 @@ public class LegacyMessageTransformer implements ValueTransformerWithKey<String,
             ((ObjectNode) oldMetadata.get("entries")).remove("$id");
           });
 
-      // $timestamp
+      // aggregateId & $aggregateId
+      ((ObjectNode) root).put("aggregateId", key);
+      newMetadata.put("$aggregateId", key);
+
+      // timestamp & $timestamp
       ((ObjectNode) root).put("timestamp", Instant.ofEpochMilli(context.timestamp()).toString());
       newMetadata.put("$timestamp", Instant.ofEpochMilli(context.timestamp()).toString());
 
