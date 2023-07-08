@@ -27,8 +27,10 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static io.github.alikelleci.easysourcing.messaging.Metadata.CAUSE;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.CORRELATION_ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.REPLY_TO;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
 
 @Slf4j
 public class DefaultCommandGateway extends AbstractCommandResultListener implements CommandGateway {
@@ -113,8 +115,8 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
     Message message = record.value();
     Metadata metadata = message.getMetadata();
 
-    if (metadata.get(Metadata.RESULT).equals("failure")) {
-      return new CommandExecutionException(metadata.get(Metadata.CAUSE));
+    if (metadata.get(RESULT).equals("failure")) {
+      return new CommandExecutionException(metadata.get(CAUSE));
     }
 
     return null;
