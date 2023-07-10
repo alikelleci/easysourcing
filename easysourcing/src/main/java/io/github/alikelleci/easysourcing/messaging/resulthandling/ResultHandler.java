@@ -29,8 +29,8 @@ public class ResultHandler implements Function<Command, Void> {
     this.target = target;
     this.method = method;
     this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
-        .onRetry(e -> log.warn("Handling result failed, retrying... ({})", e.getAttemptCount()))
-        .onRetriesExceeded(e -> log.error("Handling result failed after {} attempts.", e.getAttemptCount()));
+        .onRetry(e -> log.warn("Handling command result failed, retrying... ({})", e.getAttemptCount()))
+        .onRetriesExceeded(e -> log.error("Handling command result failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override

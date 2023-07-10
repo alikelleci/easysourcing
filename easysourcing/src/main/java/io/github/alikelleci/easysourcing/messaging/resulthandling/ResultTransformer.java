@@ -33,9 +33,9 @@ public class ResultTransformer implements ValueTransformerWithKey<String, Comman
 
   @Override
   public Command transform(String key, Command command) {
-    Collection<ResultHandler> handlers = easySourcing.getResultHandlers().get(command.getPayload().getClass());
-    if (CollectionUtils.isNotEmpty(handlers)) {
-      handlers.stream()
+    Collection<ResultHandler> resultHandlers = easySourcing.getResultHandlers().get(command.getPayload().getClass());
+    if (CollectionUtils.isNotEmpty(resultHandlers)) {
+      resultHandlers.stream()
           .sorted(Comparator.comparingInt(ResultHandler::getPriority).reversed())
           .peek(handler -> handler.setContext(context))
           .forEach(handler -> {

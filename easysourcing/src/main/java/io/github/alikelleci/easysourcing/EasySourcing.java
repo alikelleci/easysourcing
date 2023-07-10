@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
-import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandHandler;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult;
@@ -66,16 +65,16 @@ public class EasySourcing {
   private final MultiValuedMap<Class<?>, EventHandler> eventHandlers = new ArrayListValuedHashMap<>();
 
   private final Properties streamsConfig;
-  private StateListener stateListener;
-  private StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
+  private final StateListener stateListener;
+  private final StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
   private final ObjectMapper objectMapper;
 
   private KafkaStreams kafkaStreams;
 
   protected EasySourcing(Properties streamsConfig,
-                         StateListener stateListener,
-                         StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
-                         ObjectMapper objectMapper) {
+                     StateListener stateListener,
+                     StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
+                     ObjectMapper objectMapper) {
     this.streamsConfig = streamsConfig;
     this.stateListener = stateListener;
     this.uncaughtExceptionHandler = uncaughtExceptionHandler;
@@ -94,6 +93,7 @@ public class EasySourcing {
      * SERDES
      * -------------------------------------------------------------
      */
+
     Serde<Command> commandSerde = new JsonSerde<>(Command.class, objectMapper);
     Serde<Event> eventSerde = new JsonSerde<>(Event.class, objectMapper);
     Serde<Aggregate> snapshotSerde = new JsonSerde<>(Aggregate.class, objectMapper);
@@ -105,7 +105,7 @@ public class EasySourcing {
      */
 
     if (!getCommandTopics().isEmpty()) {
-      // Snapshot store
+      // Snapshot Store
       builder.addStateStore(Stores
           .keyValueStoreBuilder(Stores.persistentKeyValueStore("snapshot-store"), Serdes.String(), snapshotSerde)
           .withLoggingEnabled(Collections.emptyMap()));
@@ -197,7 +197,7 @@ public class EasySourcing {
       return;
     }
 
-    kafkaStreams = new KafkaStreams(topology, this.streamsConfig);
+    kafkaStreams = new KafkaStreams(topology, streamsConfig);
     setUpListeners();
 
     log.info("EasySourcing is starting...");
@@ -271,6 +271,7 @@ public class EasySourcing {
         .collect(Collectors.toSet());
   }
 
+
   public static class EasySourcingBuilder {
     private List<Object> handlers = new ArrayList<>();
 
@@ -341,4 +342,5 @@ public class EasySourcing {
     }
 
   }
+
 }
