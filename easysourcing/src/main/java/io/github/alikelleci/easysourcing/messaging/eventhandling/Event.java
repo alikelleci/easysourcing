@@ -19,5 +19,4 @@ public class Event extends Message {
   protected Event(Object payload, Metadata metadata) {
     super(payload, metadata);
   }
-
 }

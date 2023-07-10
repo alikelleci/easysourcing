@@ -18,9 +18,9 @@ public interface CommandResult {
   @Value
   @Builder
   class Success implements CommandResult {
-    Command command;
+    private Command command;
     @Singular
-    List<Event> events;
+    private List<Event> events;
 
     @Override
     public Command getCommand() {
@@ -31,12 +31,11 @@ public interface CommandResult {
     }
   }
 
-
   @Value
   @Builder
   class Failure implements CommandResult {
-    Command command;
-    String cause;
+    private Command command;
+    private String cause;
 
     @Override
     public Command getCommand() {
@@ -47,4 +46,5 @@ public interface CommandResult {
       return command;
     }
   }
+
 }

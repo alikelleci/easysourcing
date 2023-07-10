@@ -19,5 +19,4 @@ public class Command extends Message {
   protected Command(Object payload, Metadata metadata) {
     super(payload, metadata);
   }
-
 }

@@ -70,6 +70,10 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
         .build();
   }
 
+  public Method getMethod() {
+    return method;
+  }
+
   public void setContext(ProcessorContext context) {
     this.context = context;
   }

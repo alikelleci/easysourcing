@@ -20,7 +20,6 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 @ToString
 @EqualsAndHashCode
 public class Message {
-
   private String type;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private Object payload;
@@ -62,4 +61,5 @@ public class Message {
         .map(p -> AnnotationUtils.findAnnotation(p.getClass(), TopicInfo.class))
         .orElse(null);
   }
+
 }

@@ -77,7 +77,7 @@ public class Metadata {
   public static MetadataBuilder builder() {
     return new MetadataBuilder();
   }
-  
+
   public static class MetadataBuilder {
 
     private Map<String, String> entries = new HashMap<>();
@@ -103,4 +103,5 @@ public class Metadata {
       return new Metadata(this.entries);
     }
   }
+
 }
