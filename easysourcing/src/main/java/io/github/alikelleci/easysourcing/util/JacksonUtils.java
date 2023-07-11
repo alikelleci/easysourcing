@@ -18,8 +18,8 @@ public class JacksonUtils {
 
   public static ObjectMapper enhancedObjectMapper() {
     if (objectMapper == null) {
-      SimpleModule customModule = new SimpleModule();
-      customModule.addDeserializer(Instant.class, new InstantDeserializer());
+      SimpleModule customModule = new SimpleModule()
+          .addDeserializer(Instant.class, new InstantDeserializer());
 
       objectMapper = new ObjectMapper()
           .findAndRegisterModules()
