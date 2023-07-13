@@ -1,5 +1,6 @@
 package io.github.alikelleci.easysourcing.messaging;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,8 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Getter
-@ToString
+@ToString(includeFieldNames = false)
 @EqualsAndHashCode
 public class Metadata {
   public static final String ID = "$id";
@@ -50,15 +50,12 @@ public class Metadata {
     return this;
   }
 
-  @Transient
-  public Metadata inject(ProcessorContext context) {
-    entries.put(TIMESTAMP, String.valueOf(context.timestamp()));
-    return this;
-  }
-
-  @Transient
   public String get(String key) {
     return entries.get(key);
+  }
+  @JsonAnyGetter
+  private Map<String, String> getEntries() {
+    return entries;
   }
 
   @Transient
@@ -72,6 +69,11 @@ public class Metadata {
         .map(Long::parseLong)
         .map(Instant::ofEpochMilli)
         .orElse(null);
+  }
+
+  public Metadata inject(ProcessorContext context) {
+    entries.put(TIMESTAMP, String.valueOf(context.timestamp()));
+    return this;
   }
 
   public static MetadataBuilder builder() {
