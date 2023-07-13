@@ -1,0 +1,23 @@
+{
+  "@class": "io.github.alikelleci.easysourcing.messaging.commandhandling.Command",
+  "type": "CreateCustomer",
+  "payload": {
+    "@class": "io.github.alikelleci.easysourcing.example.domain.CustomerCommand$CreateCustomer",
+    "id": "cust-1",
+    "firstName": "Sabrina",
+    "lastName": "Lehner",
+    "credits": 100,
+    "birthday": 1688776890579
+  },
+  "metadata": {
+    "entries": {
+      "$id": "some-message-id",
+      "$result": "failed",
+      "$failure": "some-root-cause",
+      "$correlationId": "some-correlation-id",
+      "$replyTo": "some-reply-to-address",
+      "issuer": "Henk",
+      "organisation": "MEARSK"
+    }
+  }
+}
