@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @EqualsAndHashCode
 public class Metadata {
@@ -50,6 +51,10 @@ public class Metadata {
 
   public String get(String key) {
     return entries.get(key);
+  }
+
+  public Set<Map.Entry<String, String>> entrySet() {
+    return entries.entrySet();
   }
 
   @JsonAnyGetter
