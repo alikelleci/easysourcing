@@ -91,7 +91,7 @@ public class Metadata {
 
   public static class MetadataBuilder {
 
-    private Map<String, String> entries = new HashMap<>();
+    private final Map<String, String> entries = new HashMap<>();
 
     public MetadataBuilder addAll(Metadata metadata) {
       if (metadata != null) {
