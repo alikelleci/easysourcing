@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.support.serializer.custom.InstantDeserializer;
+import io.github.alikelleci.easysourcing.support.serializer.custom.LegacyMetadataDeserializer;
 
 import java.time.Instant;
 
@@ -19,7 +21,8 @@ public class JacksonUtils {
   public static ObjectMapper enhancedObjectMapper() {
     if (objectMapper == null) {
       SimpleModule customModule = new SimpleModule()
-          .addDeserializer(Instant.class, new InstantDeserializer());
+          .addDeserializer(Instant.class, new InstantDeserializer())
+          .addDeserializer(Metadata.class, new LegacyMetadataDeserializer());
 
       objectMapper = new ObjectMapper()
           .findAndRegisterModules()
