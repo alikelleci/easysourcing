@@ -30,7 +30,8 @@ public class JacksonUtils {
           .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
           .configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
           .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true)
-          .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+          .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+          .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
     }
     return objectMapper;
   }
