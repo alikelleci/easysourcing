@@ -33,7 +33,6 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.FAILURE;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.REPLY_TO;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
-import static io.github.alikelleci.easysourcing.messaging.Metadata.TIMESTAMP;
 
 @Slf4j
 public class DefaultCommandGateway extends AbstractCommandResultListener implements CommandGateway {

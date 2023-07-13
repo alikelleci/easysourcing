@@ -65,11 +65,6 @@ public interface CommandGateway {
       return this;
     }
 
-//    public CommandGatewayBuilder consumerConfig(Properties consumerConfig) {
-//      this.consumerConfig = consumerConfig;
-//      return this;
-//    }
-
     public CommandGatewayBuilder replyTopic(String replyTopic) {
       this.replyTopic = replyTopic;
       return this;
