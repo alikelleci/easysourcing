@@ -1,8 +1,10 @@
 package io.github.alikelleci.easysourcing.messaging;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.github.alikelleci.easysourcing.common.annotations.AggregateId;
 import io.github.alikelleci.easysourcing.common.annotations.TopicInfo;
+import io.github.alikelleci.easysourcing.support.serializer.custom.MetadataDeserializer;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -23,6 +25,7 @@ public class Message {
   private String type;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private Object payload;
+  @JsonDeserialize(using = MetadataDeserializer.class)
   private Metadata metadata;
 
   protected Message() {

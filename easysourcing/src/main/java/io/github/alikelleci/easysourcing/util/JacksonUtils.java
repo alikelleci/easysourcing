@@ -22,7 +22,7 @@ public class JacksonUtils {
 
       objectMapper = new ObjectMapper()
           .findAndRegisterModules()
-          .registerModules(customModule)
+//          .registerModules(customModule)
           .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 //          .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
