@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @EqualsAndHashCode
-@ToString(includeFieldNames = false)
 public class Metadata {
   public static final String ID = "$id";
   public static final String TIMESTAMP = "$timestamp";
@@ -69,6 +68,11 @@ public class Metadata {
         .map(Long::parseLong)
         .map(Instant::ofEpochMilli)
         .orElse(null);
+  }
+
+  @Override
+  public String toString() {
+    return entries.toString();
   }
 
   public Metadata inject(ProcessorContext context) {
