@@ -41,6 +41,7 @@ public class LegacyMetadataDeserializer extends StdDeserializer<Metadata> {
 
       String key = entry.getKey();
       String value = Optional.ofNullable(entry.getValue())
+          .filter(JsonNode::isTextual)
           .map(JsonNode::textValue)
           .orElse(null);
 
