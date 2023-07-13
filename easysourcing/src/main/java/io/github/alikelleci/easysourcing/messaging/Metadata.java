@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing.messaging;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
@@ -12,8 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@ToString(includeFieldNames = false)
 @EqualsAndHashCode
+@ToString(includeFieldNames = false)
 public class Metadata {
   public static final String ID = "$id";
   public static final String TIMESTAMP = "$timestamp";
@@ -23,7 +22,7 @@ public class Metadata {
   public static final String FAILURE = "$failure";
   public static final String EVENT_ID = "$eventId";
 
-  private Map<String, String> entries;
+  private final Map<String, String> entries;
 
   protected Metadata() {
     this.entries = new HashMap<>();
@@ -53,6 +52,7 @@ public class Metadata {
   public String get(String key) {
     return entries.get(key);
   }
+
   @JsonAnyGetter
   private Map<String, String> getEntries() {
     return entries;
