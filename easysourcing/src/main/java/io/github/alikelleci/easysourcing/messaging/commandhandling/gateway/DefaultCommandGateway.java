@@ -69,7 +69,6 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
             .addAll(metadata)
             .add(CORRELATION_ID, UUID.randomUUID().toString())
             .add(REPLY_TO, getReplyTopic())
-            .add(TIMESTAMP, String.valueOf(timestamp.toEpochMilli()))
             .build())
         .build();
 

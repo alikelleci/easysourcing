@@ -47,7 +47,6 @@ public class DefaultEventGateway implements EventGateway {
         .metadata(Metadata.builder()
             .addAll(metadata)
             .add(CORRELATION_ID, UUID.randomUUID().toString())
-            .add(TIMESTAMP, String.valueOf(timestamp.toEpochMilli()))
             .build())
         .build();
 
