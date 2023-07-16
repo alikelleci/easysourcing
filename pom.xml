@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>easysourcing</name>
+    <name>easysourcing-parent</name>
     <description>A Java library for Event Sourcing using Kafka</description>
     <url>https://github.com/alikelleci/easysourcing</url>
 

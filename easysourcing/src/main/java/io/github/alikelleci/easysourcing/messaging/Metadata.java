@@ -2,7 +2,6 @@ package io.github.alikelleci.easysourcing.messaging;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.beans.Transient;
