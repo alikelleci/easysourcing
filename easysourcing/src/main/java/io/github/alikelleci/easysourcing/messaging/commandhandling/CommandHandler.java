@@ -8,15 +8,12 @@ import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.exceptions.CommandExecutionException;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
-import io.github.alikelleci.easysourcing.retry.Retry;
-import io.github.alikelleci.easysourcing.retry.RetryUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
+import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -36,7 +33,6 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
 
   private final Object target;
   private final Method method;
-  private final RetryPolicy<Object> retryPolicy;
 
   private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
@@ -45,9 +41,6 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
   public CommandHandler(Object target, Method method) {
     this.target = target;
     this.method = method;
-    this.retryPolicy = RetryUtil.buildRetryPolicyFromAnnotation(method.getAnnotation(Retry.class))
-        .onRetry(e -> log.warn("Handling command failed, retrying... ({})", e.getAttemptCount()))
-        .onRetriesExceeded(e -> log.error("Handling command failed after {} attempts.", e.getAttemptCount()));
   }
 
   @Override
@@ -55,9 +48,17 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
     log.debug("Handling command: {} ({})", command.getType(), command.getAggregateId());
     try {
       validate(command.getPayload());
-      return Failsafe.with(retryPolicy).get(() -> doInvoke(aggregate, command));
+      return doInvoke(aggregate, command);
+
     } catch (Exception e) {
-      throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
+      Throwable throwable = ExceptionUtils.getRootCause(e);
+      String message = ExceptionUtils.getRootCauseMessage(e);
+      if (throwable instanceof ValidationException) {
+        log.debug("Handling command failed: ", throwable);
+      } else {
+        log.error("Handling command failed: ", throwable);
+      }
+      throw new CommandExecutionException(message, throwable);
     }
   }
 
