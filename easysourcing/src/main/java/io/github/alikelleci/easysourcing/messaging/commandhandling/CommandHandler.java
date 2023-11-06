@@ -96,13 +96,13 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
 
     events.forEach(event -> {
       if (event.getPayload() == null) {
-        throw new PayloadMissingException("You are trying to dispatch an event without a payload.");
+        throw new PayloadMissingException("You are trying to publish an event without a payload.");
       }
       if (event.getTopicInfo() == null) {
-        throw new TopicInfoMissingException("You are trying to dispatch an event without any topic information. Please annotate your event with @TopicInfo.");
+        throw new TopicInfoMissingException("You are trying to publish an event without any topic information. Please annotate your event with @TopicInfo.");
       }
       if (event.getAggregateId() == null) {
-        throw new AggregateIdMissingException("You are trying to dispatch an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
+        throw new AggregateIdMissingException("You are trying to publish an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
       }
       if (!StringUtils.equals(event.getAggregateId(), command.getAggregateId())) {
         throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + command.getAggregateId() + ", but was " + event.getAggregateId());

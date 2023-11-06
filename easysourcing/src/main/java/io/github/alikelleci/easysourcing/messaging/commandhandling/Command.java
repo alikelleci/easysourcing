@@ -12,11 +12,11 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = true)
 public class Command extends Message {
 
-  protected Command() {
+  private Command() {
   }
 
   @Builder
-  protected Command(Object payload, Metadata metadata) {
+  private Command(Object payload, Metadata metadata) {
     super(payload, metadata);
   }
 }

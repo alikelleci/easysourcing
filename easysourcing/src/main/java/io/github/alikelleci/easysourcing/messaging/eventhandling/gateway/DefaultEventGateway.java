@@ -50,25 +50,25 @@ public class DefaultEventGateway implements EventGateway {
         .build();
 
     validate(event);
-    ProducerRecord<String, Event> record = new ProducerRecord<>(event.getTopicInfo().value(), null, timestamp.toEpochMilli(), event.getAggregateId(), event);
+    ProducerRecord<String, Event> producerRecord = new ProducerRecord<>(event.getTopicInfo().value(), null, timestamp.toEpochMilli(), event.getAggregateId(), event);
 
     log.debug("Publishing event: {} ({})", event.getType(), event.getAggregateId());
-    producer.send(record);
+    producer.send(producerRecord);
   }
 
-  private void validate(Event message) {
-    if (message.getPayload() == null) {
-      throw new PayloadMissingException("You are trying to dispatch a message without a payload.");
+  private void validate(Event event) {
+    if (event.getPayload() == null) {
+      throw new PayloadMissingException("You are trying to publish an event without a payload.");
     }
 
-    TopicInfo topicInfo = message.getTopicInfo();
+    TopicInfo topicInfo = event.getTopicInfo();
     if (topicInfo == null) {
-      throw new TopicInfoMissingException("You are trying to dispatch a message without any topic information. Please annotate your message with @TopicInfo.");
+      throw new TopicInfoMissingException("You are trying to publish an event without any topic information. Please annotate your event with @TopicInfo.");
     }
 
-    String aggregateId = message.getAggregateId();
+    String aggregateId = event.getAggregateId();
     if (aggregateId == null) {
-      throw new AggregateIdMissingException("You are trying to dispatch a message without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
+      throw new AggregateIdMissingException("You are trying to publish an event without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
     }
   }
 }

@@ -72,10 +72,10 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
         .build();
 
     validate(command);
-    ProducerRecord<String, Command> record = new ProducerRecord<>(command.getTopicInfo().value(), null, timestamp.toEpochMilli(), command.getAggregateId(), command);
+    ProducerRecord<String, Command> producerRecord = new ProducerRecord<>(command.getTopicInfo().value(), null, timestamp.toEpochMilli(), command.getAggregateId(), command);
 
     log.debug("Sending command: {} ({})", command.getType(), command.getAggregateId());
-    producer.send(record);
+    producer.send(producerRecord);
 
     CompletableFuture<Object> future = new CompletableFuture<>();
     cache.put(command.getMetadata().get(ID), future);
@@ -85,8 +85,8 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
   @Override
   protected void onMessage(ConsumerRecords<String, Command> consumerRecords) {
-    consumerRecords.forEach(record -> {
-      String messageId = Optional.ofNullable(record.value().getMetadata())
+    consumerRecords.forEach(consumerRecord -> {
+      String messageId = Optional.ofNullable(consumerRecord.value().getMetadata())
           .map(metadata -> metadata.get(ID))
           .orElse(null);
 
@@ -96,9 +96,9 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
       // CompletableFuture<Object> future = futures.remove(messageId);
       CompletableFuture<Object> future = cache.getIfPresent(messageId);
       if (future != null) {
-        Exception exception = checkForErrors(record);
+        Exception exception = checkForErrors(consumerRecord);
         if (exception == null) {
-          future.complete(record.value().getPayload());
+          future.complete(consumerRecord.value().getPayload());
         } else {
           future.completeExceptionally(exception);
         }
@@ -107,24 +107,24 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
     });
   }
 
-  private void validate(Command message) {
-    if (message.getPayload() == null) {
-      throw new PayloadMissingException("You are trying to dispatch a message without a payload.");
+  private void validate(Command command) {
+    if (command.getPayload() == null) {
+      throw new PayloadMissingException("You are trying to send a command without a payload.");
     }
 
-    TopicInfo topicInfo = message.getTopicInfo();
+    TopicInfo topicInfo = command.getTopicInfo();
     if (topicInfo == null) {
-      throw new TopicInfoMissingException("You are trying to dispatch a message without any topic information. Please annotate your message with @TopicInfo.");
+      throw new TopicInfoMissingException("You are trying to send a command without any topic information. Please annotate your command with @TopicInfo.");
     }
 
-    String aggregateId = message.getAggregateId();
+    String aggregateId = command.getAggregateId();
     if (aggregateId == null) {
-      throw new AggregateIdMissingException("You are trying to dispatch a message without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
+      throw new AggregateIdMissingException("You are trying to send a command without a proper identifier. Please annotate your field containing the identifier with @AggregateId.");
     }
   }
 
-  private Exception checkForErrors(ConsumerRecord<String, Command> record) {
-    Message message = record.value();
+  private Exception checkForErrors(ConsumerRecord<String, Command> consumerRecord) {
+    Message message = consumerRecord.value();
     Metadata metadata = message.getMetadata();
 
     if (metadata.get(RESULT).equals("failed")) {
