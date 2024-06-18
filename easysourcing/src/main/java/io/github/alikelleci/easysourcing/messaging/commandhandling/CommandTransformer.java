@@ -6,6 +6,7 @@ import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -67,6 +68,9 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
           .build();
 
     } catch (Exception e) {
+      // Log failure
+      logFailure(e);
+
       // Return failure
       return Failure.builder()
           .command(command)
@@ -117,5 +121,14 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   private void deleteSnapshot(String key) {
     snapshotStore.delete(key);
+  }
+
+  private void logFailure(Exception e) {
+    Throwable throwable = ExceptionUtils.getRootCause(e);
+    if (throwable instanceof ValidationException) {
+      log.debug("Handling command failed: ", throwable);
+    } else {
+      log.error("Handling command failed: ", throwable);
+    }
   }
 }
