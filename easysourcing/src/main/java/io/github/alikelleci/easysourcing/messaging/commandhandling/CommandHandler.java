@@ -11,7 +11,6 @@ import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
-import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -51,14 +50,7 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
       return doInvoke(aggregate, command);
 
     } catch (Exception e) {
-      Throwable throwable = ExceptionUtils.getRootCause(e);
-      String message = ExceptionUtils.getRootCauseMessage(e);
-      if (throwable instanceof ValidationException) {
-        log.debug("Handling command failed: ", throwable);
-      } else {
-        log.error("Handling command failed: ", throwable);
-      }
-      throw new CommandExecutionException(message, throwable);
+      throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
