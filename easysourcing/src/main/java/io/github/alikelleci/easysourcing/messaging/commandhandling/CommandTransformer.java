@@ -7,11 +7,13 @@ import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -33,34 +35,44 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   @Override
   public CommandResult transform(String key, Command command) {
-    CommandHandler commandHandler = easySourcing.getCommandHandlers().get(command.getPayload().getClass());
-    if (commandHandler == null) {
-      return null;
-    }
-    commandHandler.setContext(context);
+    try {
+      // Load aggregate state
+      Aggregate aggregate = loadAggregate(key);
 
-    // 1. Load aggregate state
-    Aggregate aggregate = loadAggregate(key);
+      // Execute command
+      List<Event> events = executeCommand(aggregate, command);
 
-    // 2. Execute command
-    CommandResult result = executeCommand(commandHandler, aggregate, command);
+      // Return if no events
+      if (CollectionUtils.isEmpty(events)) {
+        return null;
+      }
 
-    if (result instanceof Success) {
-      // 3. Apply events
-      for (Event event : ((Success) result).getEvents()) {
+      // Apply events
+      for (Event event : events) {
         aggregate = applyEvent(aggregate, event);
       }
 
-      // 4. Save snapshot
+      // Save snapshot
       if (aggregate != null) {
         log.debug("Creating snapshot: {}", aggregate);
         saveSnapshot(aggregate);
       } else {
         deleteSnapshot(key);
       }
-    }
 
-    return result;
+      // Return success
+      return Success.builder()
+          .command(command)
+          .events(events)
+          .build();
+
+    } catch (Exception e) {
+      // Return failure
+      return Failure.builder()
+          .command(command)
+          .cause(ExceptionUtils.getRootCauseMessage(e))
+          .build();
+    }
   }
 
   @Override
@@ -68,20 +80,14 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   }
 
-  protected CommandResult executeCommand(CommandHandler commandHandler, Aggregate aggregate, Command command) {
-    try {
-      List<Event> events = commandHandler.apply(aggregate, command);
-      return Success.builder()
-          .command(command)
-          .events(events)
-          .build();
-
-    } catch (Exception e) {
-      return Failure.builder()
-          .command(command)
-          .cause(ExceptionUtils.getRootCauseMessage(e))
-          .build();
+  protected List<Event> executeCommand(Aggregate aggregate, Command command) {
+    CommandHandler commandHandler = easySourcing.getCommandHandlers().get(command.getPayload().getClass());
+    if (commandHandler == null) {
+      return new ArrayList<>();
     }
+
+    commandHandler.setContext(context);
+    return commandHandler.apply(aggregate, command);
   }
 
   protected Aggregate loadAggregate(String aggregateId) {
