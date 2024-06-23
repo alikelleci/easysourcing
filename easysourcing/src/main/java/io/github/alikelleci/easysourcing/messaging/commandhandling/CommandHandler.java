@@ -98,7 +98,7 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
         throw new AggregateIdMissingException("You are trying to publish an event without a proper aggregate identifier. Please annotate your field containing the aggregate identifier with @AggregateId.");
       }
       if (!StringUtils.equals(event.getAggregateId(), command.getAggregateId())) {
-        throw new AggregateIdMismatchException("Aggregate identifier does not match. Expected " + command.getAggregateId() + ", but was " + event.getAggregateId());
+        throw new AggregateIdMismatchException("Aggregate identifier does not match for event " + event.getType() +". Expected " + command.getAggregateId() + ", but was " + event.getAggregateId());
       }
     });
 
