@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class JsonSerializer<T> implements Serializer<T> {
 
-  private Class<T> targetType;
+  private final Class<T> targetType;
   private final ObjectMapper objectMapper;
 
   public JsonSerializer() {
@@ -33,7 +33,7 @@ public class JsonSerializer<T> implements Serializer<T> {
   @Override
   public byte[] serialize(String topic, T object) {
     if (object == null) {
-      return null;
+      return new byte[0];
     }
 
     try {
