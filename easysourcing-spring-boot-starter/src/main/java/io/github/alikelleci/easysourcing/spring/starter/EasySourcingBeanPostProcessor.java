@@ -17,7 +17,7 @@ public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
         .filter(easySourcing -> easySourcing.getEventSourcingHandlers().isEmpty())
         .filter(easySourcing -> easySourcing.getResultHandlers().isEmpty())
         .filter(easySourcing -> easySourcing.getEventHandlers().isEmpty())
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override
