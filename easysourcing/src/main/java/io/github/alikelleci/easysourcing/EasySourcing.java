@@ -273,7 +273,7 @@ public class EasySourcing {
 
 
   public static class EasySourcingBuilder {
-    private List<Object> handlers = new ArrayList<>();
+    private final List<Object> handlers = new ArrayList<>();
 
     private Properties streamsConfig;
     private StateListener stateListener;
