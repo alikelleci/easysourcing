@@ -25,7 +25,8 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       command.getMetadata()
-          .add(RESULT, "success");
+          .add(RESULT, "success")
+          .remove(FAILURE);
 
       return command;
     }

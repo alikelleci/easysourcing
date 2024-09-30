@@ -27,6 +27,9 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import static io.github.alikelleci.easysourcing.messaging.Metadata.FAILURE;
+import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
+
 @Slf4j
 public class CommandHandler implements BiFunction<Aggregate, Command, List<Event>> {
 
@@ -83,9 +86,11 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
             .payload(payload)
             .metadata(Metadata.builder()
                 .addAll(command.getMetadata())
+                .remove(RESULT)
+                .remove(FAILURE)
                 .build())
             .build())
-        .collect(Collectors.toList());
+        .toList();
 
     events.forEach(event -> {
       if (event.getPayload() == null) {
