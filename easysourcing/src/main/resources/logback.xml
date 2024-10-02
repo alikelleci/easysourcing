@@ -10,17 +10,18 @@
     </appender>
 
     <!-- File Appender -->
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <!-- File to write logs to -->
-        <file>library.log</file>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+<!--    <appender name="FILE" class="ch.qos.logback.core.FileAppender">-->
+<!--        &lt;!&ndash; File to write logs to &ndash;&gt;-->
+<!--        <file>library.log</file>-->
+<!--        <encoder>-->
+<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
 
     <!-- Root logger level and appender -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
+<!--        <appender-ref ref="FILE" />-->
     </root>
 
     <!-- Logger for a specific package (optional) -->
