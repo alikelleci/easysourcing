@@ -25,7 +25,7 @@
     </root>
 
     <!-- Logger for a specific package (optional) -->
-    <logger name="io.github.alikelleci" level="INFO" additivity="false">
+    <logger name="io.github.alikelleci" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE" />
     </logger>
     <logger name="org.apache.kafka" level="WARN" additivity="false">
