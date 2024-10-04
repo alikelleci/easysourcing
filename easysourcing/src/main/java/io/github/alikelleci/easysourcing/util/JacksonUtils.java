@@ -6,7 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.github.alikelleci.easysourcing.messaging.Metadata;
+import io.github.alikelleci.easysourcing.support.serializer.custom.InstantDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.custom.MetadataDeserializer;
+import io.github.alikelleci.easysourcing.support.serializer.custom.MultiValuedMapDeserializer;
+import org.apache.commons.collections4.MultiValuedMap;
+
+import java.time.Instant;
 
 public class JacksonUtils {
 
@@ -18,7 +23,9 @@ public class JacksonUtils {
   public static ObjectMapper enhancedObjectMapper() {
     if (objectMapper == null) {
       SimpleModule customModule = new SimpleModule()
-          .addDeserializer(Metadata.class, new MetadataDeserializer());
+          .addDeserializer(Metadata.class, new MetadataDeserializer())
+          .addDeserializer(Instant.class, new InstantDeserializer())
+          .addDeserializer(MultiValuedMap.class, new MultiValuedMapDeserializer());
 
       objectMapper = new ObjectMapper()
           .findAndRegisterModules()
