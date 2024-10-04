@@ -7,18 +7,18 @@ import org.apache.commons.collections4.MultiValuedMap;
 
 import java.io.IOException;
 
-public class MultiValuedMapSerializer extends StdSerializer<MultiValuedMap<String, ?>> {
+public class MultiValuedMapSerializer extends StdSerializer<MultiValuedMap> {
 
   public MultiValuedMapSerializer() {
     this(null);
   }
 
-  protected MultiValuedMapSerializer(Class<MultiValuedMap<String, ?>> t) {
+  protected MultiValuedMapSerializer(Class<MultiValuedMap> t) {
     super(t);
   }
 
   @Override
-  public void serialize(MultiValuedMap<String, ?> value, JsonGenerator generator, SerializerProvider serializerProvider) throws IOException {
+  public void serialize(MultiValuedMap value, JsonGenerator generator, SerializerProvider serializerProvider) throws IOException {
     if (value == null) {
       generator.writeNull();
       return;
