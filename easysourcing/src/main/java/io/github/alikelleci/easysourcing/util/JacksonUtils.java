@@ -9,6 +9,7 @@ import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.support.serializer.custom.InstantDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.custom.MetadataDeserializer;
 import io.github.alikelleci.easysourcing.support.serializer.custom.MultiValuedMapDeserializer;
+import io.github.alikelleci.easysourcing.support.serializer.custom.MultiValuedMapSerializer;
 import org.apache.commons.collections4.MultiValuedMap;
 
 import java.time.Instant;
@@ -25,6 +26,7 @@ public class JacksonUtils {
       SimpleModule customModule = new SimpleModule()
           .addDeserializer(Metadata.class, new MetadataDeserializer())
           .addDeserializer(Instant.class, new InstantDeserializer())
+          .addSerializer(MultiValuedMap.class, new MultiValuedMapSerializer())
           .addDeserializer(MultiValuedMap.class, new MultiValuedMapDeserializer());
 
       objectMapper = new ObjectMapper()

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.type.TypeBindings;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -17,15 +18,16 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-public class MultiValuedMapDeserializer extends JsonDeserializer<MultiValuedMap<String, ?>> implements ContextualDeserializer {
+public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<String, ?>> implements ContextualDeserializer {
 
   private Class<?> valueClass;
 
   public MultiValuedMapDeserializer() {
+    this(null);
   }
 
-  public MultiValuedMapDeserializer(Class<?> valueClass) {
-    this.valueClass = valueClass;
+  protected MultiValuedMapDeserializer(Class<?> vc) {
+    super(vc);
   }
 
   @Override
@@ -56,12 +58,9 @@ public class MultiValuedMapDeserializer extends JsonDeserializer<MultiValuedMap<
 
   @Override
   public JsonDeserializer<?> createContextual(DeserializationContext context, BeanProperty property) {
-    if (property == null) {
-      return this;
-    }
-
     TypeBindings bindings = property.getType().getBindings();
-    Class<?> valueType = bindings.getBoundType(1).getRawClass();
-    return new MultiValuedMapDeserializer(valueType);
+    this.valueClass = bindings.getBoundType(1).getRawClass();
+
+    return this;
   }
 }

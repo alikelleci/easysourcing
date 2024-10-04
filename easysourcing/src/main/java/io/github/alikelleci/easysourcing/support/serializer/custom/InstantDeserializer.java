@@ -1,21 +1,25 @@
 package io.github.alikelleci.easysourcing.support.serializer.custom;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import java.io.IOException;
 import java.time.Instant;
 
-public class InstantDeserializer extends JsonDeserializer<Instant> {
+public class InstantDeserializer extends StdDeserializer<Instant> {
 
   public InstantDeserializer() {
+    this(null);
+  }
+
+  protected InstantDeserializer(Class<?> vc) {
+    super(vc);
   }
 
   @Override
-  public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+  public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
     JsonNode node = jsonParser.getCodec().readTree(jsonParser);
 
     if (node == null) {
@@ -32,6 +36,7 @@ public class InstantDeserializer extends JsonDeserializer<Instant> {
 
     return null;
   }
+
 
   private long toMillis(long timestamp) {
 
