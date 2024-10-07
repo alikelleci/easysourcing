@@ -15,6 +15,7 @@ import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHa
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultHandler;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultTransformer;
 import io.github.alikelleci.easysourcing.support.CustomRocksDbConfig;
+import io.github.alikelleci.easysourcing.support.LoggingStateRestoreListener;
 import io.github.alikelleci.easysourcing.support.serializer.JsonSerde;
 import io.github.alikelleci.easysourcing.util.HandlerUtils;
 import io.github.alikelleci.easysourcing.util.JacksonUtils;
@@ -24,7 +25,6 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -66,17 +66,20 @@ public class EasySourcing {
 
   private final Properties streamsConfig;
   private final StateListener stateListener;
+  private final StateRestoreListener stateRestoreListener;
   private final StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
   private final ObjectMapper objectMapper;
 
   private KafkaStreams kafkaStreams;
 
   protected EasySourcing(Properties streamsConfig,
-                     StateListener stateListener,
-                     StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
-                     ObjectMapper objectMapper) {
+                         StateListener stateListener,
+                         StateRestoreListener stateRestoreListener,
+                         StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
+                         ObjectMapper objectMapper) {
     this.streamsConfig = streamsConfig;
     this.stateListener = stateListener;
+    this.stateRestoreListener = stateRestoreListener;
     this.uncaughtExceptionHandler = uncaughtExceptionHandler;
     this.objectMapper = objectMapper;
   }
@@ -186,11 +189,6 @@ public class EasySourcing {
   }
 
   public void start() {
-    if (kafkaStreams != null) {
-      log.info("EasySourcing already started.");
-      return;
-    }
-
     Topology topology = topology();
     if (topology.describe().subtopologies().isEmpty()) {
       log.info("EasySourcing is not started: consumer is not subscribed to any topics or assigned any partitions");
@@ -205,36 +203,14 @@ public class EasySourcing {
   }
 
   public void stop() {
-    if (kafkaStreams == null) {
-      log.info("EasySourcing already stopped.");
-      return;
-    }
-
     log.info("EasySourcing is shutting down...");
     kafkaStreams.close(Duration.ofMillis(5000));
-    kafkaStreams = null;
   }
 
   private void setUpListeners() {
     kafkaStreams.setStateListener(this.stateListener);
+    kafkaStreams.setGlobalStateRestoreListener(this.stateRestoreListener);
     kafkaStreams.setUncaughtExceptionHandler(this.uncaughtExceptionHandler);
-
-    kafkaStreams.setGlobalStateRestoreListener(new StateRestoreListener() {
-      @Override
-      public void onRestoreStart(TopicPartition topicPartition, String storeName, long startingOffset, long endingOffset) {
-        log.debug("State restoration started: topic={}, partition={}, store={}, endingOffset={}", topicPartition.topic(), topicPartition.partition(), storeName, endingOffset);
-      }
-
-      @Override
-      public void onBatchRestored(TopicPartition topicPartition, String storeName, long batchEndOffset, long numRestored) {
-        log.debug("State restoration in progress: topic={}, partition={}, store={}, numRestored={}", topicPartition.topic(), topicPartition.partition(), storeName, numRestored);
-      }
-
-      @Override
-      public void onRestoreEnd(TopicPartition topicPartition, String storeName, long totalRestored) {
-        log.debug("State restoration ended: topic={}, partition={}, store={}, totalRestored={}", topicPartition.topic(), topicPartition.partition(), storeName, totalRestored);
-      }
-    });
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       log.info("EasySourcing is shutting down...");
@@ -277,6 +253,7 @@ public class EasySourcing {
 
     private Properties streamsConfig;
     private StateListener stateListener;
+    private StateRestoreListener stateRestoreListener;
     private StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
     private ObjectMapper objectMapper;
 
@@ -304,6 +281,11 @@ public class EasySourcing {
       return this;
     }
 
+    public EasySourcingBuilder stateRestoreListener(StateRestoreListener stateRestoreListener) {
+      this.stateRestoreListener = stateRestoreListener;
+      return this;
+    }
+
     public EasySourcingBuilder uncaughtExceptionHandler(StreamsUncaughtExceptionHandler uncaughtExceptionHandler) {
       this.uncaughtExceptionHandler = uncaughtExceptionHandler;
       return this;
@@ -317,11 +299,15 @@ public class EasySourcing {
     public EasySourcing build() {
       if (this.stateListener == null) {
         this.stateListener = (newState, oldState) ->
-            log.warn("State changed from {} to {}", oldState, newState);
+            log.info("State changed from {} to {}", oldState, newState);
+      }
+
+      if (this.stateRestoreListener == null) {
+        this.stateRestoreListener = new LoggingStateRestoreListener();
       }
 
       if (this.uncaughtExceptionHandler == null) {
-        this.uncaughtExceptionHandler = (throwable) ->
+        this.uncaughtExceptionHandler = throwable ->
             StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT;
       }
 
@@ -332,6 +318,7 @@ public class EasySourcing {
       EasySourcing easySourcing = new EasySourcing(
           this.streamsConfig,
           this.stateListener,
+          this.stateRestoreListener,
           this.uncaughtExceptionHandler,
           this.objectMapper);
 

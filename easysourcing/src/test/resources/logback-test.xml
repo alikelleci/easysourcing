@@ -4,7 +4,7 @@
     <!-- Console Appender -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%15.15thread] %highlight(%-5level) %cyan(%36.36logger{36}) - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
@@ -15,7 +15,7 @@
     </root>
 
     <!-- Logger for a specific package (optional) -->
-    <logger name="io.github.alikelleci" level="DEBUG" additivity="false">
+    <logger name="io.github.alikelleci" level="INFO" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 
