@@ -27,7 +27,7 @@ public class ResultHandler implements Function<Command, Void> {
 
   @Override
   public Void apply(Command command) {
-    log.debug("Handling command result: {} ({})", command.getType(), command.getAggregateId());
+    log.trace("Handling command result: {} ({})", command.getType(), command.getAggregateId());
 
     try {
       return doInvoke(command);
