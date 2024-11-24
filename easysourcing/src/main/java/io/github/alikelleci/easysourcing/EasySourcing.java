@@ -204,7 +204,8 @@ public class EasySourcing {
 
   public void stop() {
     log.info("EasySourcing is shutting down...");
-    kafkaStreams.close(Duration.ofMillis(5000));
+    kafkaStreams.close(Duration.ofSeconds(60));
+    log.info("EasySourcing shut down complete.");
   }
 
   private void setUpListeners() {
