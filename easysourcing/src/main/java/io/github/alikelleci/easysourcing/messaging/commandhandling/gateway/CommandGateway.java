@@ -42,18 +42,18 @@ public interface CommandGateway {
     return sendAndWait(payload, null, null);
   }
 
-  public static Builder builder() {
-    return new Builder();
+  public static CommandGatewayBuilder builder() {
+    return new CommandGatewayBuilder();
   }
 
-  public static class Builder {
+  public static class CommandGatewayBuilder {
 
     private Properties producerConfig;
     private Properties consumerConfig;
     private String replyTopic;
     private ObjectMapper objectMapper;
 
-    public Builder producerConfig(Properties producerConfig) {
+    public CommandGatewayBuilder producerConfig(Properties producerConfig) {
       this.producerConfig = producerConfig;
       this.producerConfig.putIfAbsent(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
       this.producerConfig.putIfAbsent(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -65,12 +65,12 @@ public interface CommandGateway {
       return this;
     }
 
-    public Builder replyTopic(String replyTopic) {
+    public CommandGatewayBuilder replyTopic(String replyTopic) {
       this.replyTopic = replyTopic;
       return this;
     }
 
-    public Builder objectMapper(ObjectMapper objectMapper) {
+    public CommandGatewayBuilder objectMapper(ObjectMapper objectMapper) {
       this.objectMapper = objectMapper;
       return this;
     }

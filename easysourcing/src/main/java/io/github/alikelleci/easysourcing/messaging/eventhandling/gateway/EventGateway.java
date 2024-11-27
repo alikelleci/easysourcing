@@ -22,16 +22,16 @@ public interface EventGateway {
     publish(payload, null, null);
   }
 
-  public static Builder builder() {
-    return new Builder();
+  public static EventGatewayBuilder builder() {
+    return new EventGatewayBuilder();
   }
 
-  public static class Builder {
+  public static class EventGatewayBuilder {
 
     private Properties producerConfig;
     private ObjectMapper objectMapper;
 
-    public Builder producerConfig(Properties producerConfig) {
+    public EventGatewayBuilder producerConfig(Properties producerConfig) {
       this.producerConfig = producerConfig;
       this.producerConfig.putIfAbsent(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
       this.producerConfig.putIfAbsent(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -43,7 +43,7 @@ public interface EventGateway {
       return this;
     }
 
-    public Builder objectMapper(ObjectMapper objectMapper) {
+    public EventGatewayBuilder objectMapper(ObjectMapper objectMapper) {
       this.objectMapper = objectMapper;
       return this;
     }
