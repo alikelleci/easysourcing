@@ -84,8 +84,8 @@ public class EasySourcing {
     this.objectMapper = objectMapper;
   }
 
-  public static EasySourcingBuilder builder() {
-    return new EasySourcingBuilder();
+  public static Builder builder() {
+    return new Builder();
   }
 
   public Topology topology() {
@@ -249,7 +249,7 @@ public class EasySourcing {
   }
 
 
-  public static class EasySourcingBuilder {
+  public static class Builder {
     private final List<Object> handlers = new ArrayList<>();
 
     private Properties streamsConfig;
@@ -258,13 +258,13 @@ public class EasySourcing {
     private StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
     private ObjectMapper objectMapper;
 
-    public EasySourcingBuilder registerHandler(Object handler) {
+    public Builder registerHandler(Object handler) {
       handlers.add(handler);
 
       return this;
     }
 
-    public EasySourcingBuilder streamsConfig(Properties streamsConfig) {
+    public Builder streamsConfig(Properties streamsConfig) {
       this.streamsConfig = streamsConfig;
       this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
       this.streamsConfig.putIfAbsent(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -277,22 +277,22 @@ public class EasySourcing {
       return this;
     }
 
-    public EasySourcingBuilder stateListener(StateListener stateListener) {
+    public Builder stateListener(StateListener stateListener) {
       this.stateListener = stateListener;
       return this;
     }
 
-    public EasySourcingBuilder stateRestoreListener(StateRestoreListener stateRestoreListener) {
+    public Builder stateRestoreListener(StateRestoreListener stateRestoreListener) {
       this.stateRestoreListener = stateRestoreListener;
       return this;
     }
 
-    public EasySourcingBuilder uncaughtExceptionHandler(StreamsUncaughtExceptionHandler uncaughtExceptionHandler) {
+    public Builder uncaughtExceptionHandler(StreamsUncaughtExceptionHandler uncaughtExceptionHandler) {
       this.uncaughtExceptionHandler = uncaughtExceptionHandler;
       return this;
     }
 
-    public EasySourcingBuilder objectMapper(ObjectMapper objectMapper) {
+    public Builder objectMapper(ObjectMapper objectMapper) {
       this.objectMapper = objectMapper;
       return this;
     }

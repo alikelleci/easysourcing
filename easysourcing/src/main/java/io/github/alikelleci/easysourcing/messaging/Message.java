@@ -21,7 +21,7 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 @Getter
 @ToString
 @EqualsAndHashCode
-public class Message {
+public abstract class Message {
   private String type;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
   private Object payload;

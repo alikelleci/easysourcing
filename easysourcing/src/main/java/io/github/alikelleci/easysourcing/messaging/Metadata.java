@@ -84,27 +84,27 @@ public class Metadata {
     return this;
   }
 
-  public static MetadataBuilder builder() {
-    return new MetadataBuilder();
+  public static Builder builder() {
+    return new Builder();
   }
 
-  public static class MetadataBuilder {
+  public static class Builder {
 
     private final Map<String, String> entries = new HashMap<>();
 
-    public MetadataBuilder addAll(Metadata metadata) {
+    public Builder addAll(Metadata metadata) {
       if (metadata != null) {
         this.entries.putAll(new HashMap<>(metadata.getEntries()));
       }
       return this;
     }
 
-    public MetadataBuilder add(String key, String value) {
+    public Builder add(String key, String value) {
       this.entries.put(key, value);
       return this;
     }
 
-    public MetadataBuilder remove(String key) {
+    public Builder remove(String key) {
       this.entries.remove(key);
       return this;
     }
