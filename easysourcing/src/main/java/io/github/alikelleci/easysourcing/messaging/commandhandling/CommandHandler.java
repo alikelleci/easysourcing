@@ -7,7 +7,7 @@ import io.github.alikelleci.easysourcing.common.exceptions.TopicInfoMissingExcep
 import io.github.alikelleci.easysourcing.messaging.Metadata;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.exceptions.CommandExecutionException;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.AggregateState;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
@@ -25,13 +25,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import static io.github.alikelleci.easysourcing.messaging.Metadata.FAILURE;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.RESULT;
 
 @Slf4j
-public class CommandHandler implements BiFunction<Aggregate, Command, List<Event>> {
+public class CommandHandler implements BiFunction<AggregateState, Command, List<Event>> {
 
   private final Object target;
   private final Method method;
@@ -46,24 +45,24 @@ public class CommandHandler implements BiFunction<Aggregate, Command, List<Event
   }
 
   @Override
-  public List<Event> apply(Aggregate aggregate, Command command) {
+  public List<Event> apply(AggregateState state, Command command) {
     log.debug("Handling command: {} ({})", command.getType(), command.getAggregateId());
 
     try {
       validate(command.getPayload());
-      return doInvoke(aggregate, command);
+      return doInvoke(state, command);
 
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Event> doInvoke(Aggregate aggregate, Command command) throws InvocationTargetException, IllegalAccessException {
+  private List<Event> doInvoke(AggregateState state, Command command) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload());
+      result = method.invoke(target, state != null ? state.getPayload() : null, command.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, command.getPayload(), command.getMetadata().inject(context));
+      result = method.invoke(target, state != null ? state.getPayload() : null, command.getPayload(), command.getMetadata().inject(context));
     }
     return createEvents(command, result);
   }

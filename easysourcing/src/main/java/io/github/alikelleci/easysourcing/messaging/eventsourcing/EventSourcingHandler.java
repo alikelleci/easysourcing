@@ -15,7 +15,7 @@ import static io.github.alikelleci.easysourcing.messaging.Metadata.EVENT_ID;
 import static io.github.alikelleci.easysourcing.messaging.Metadata.ID;
 
 @Slf4j
-public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggregate> {
+public class EventSourcingHandler implements BiFunction<AggregateState, Event, AggregateState> {
 
   private final Object target;
   private final Method method;
@@ -28,32 +28,32 @@ public class EventSourcingHandler implements BiFunction<Aggregate, Event, Aggreg
   }
 
   @Override
-  public Aggregate apply(Aggregate aggregate, Event event) {
+  public AggregateState apply(AggregateState state, Event event) {
     log.debug("Applying event: {} ({})", event.getType(), event.getAggregateId());
 
     try {
-      return doInvoke(aggregate, event);
+      return doInvoke(state, event);
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Aggregate doInvoke(Aggregate aggregate, Event event) throws InvocationTargetException, IllegalAccessException {
+  private AggregateState doInvoke(AggregateState state, Event event) throws InvocationTargetException, IllegalAccessException {
     Object result;
     if (method.getParameterCount() == 2) {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload());
+      result = method.invoke(target, state != null ? state.getPayload() : null, event.getPayload());
     } else {
-      result = method.invoke(target, aggregate != null ? aggregate.getPayload() : null, event.getPayload(), event.getMetadata().inject(context));
+      result = method.invoke(target, state != null ? state.getPayload() : null, event.getPayload(), event.getMetadata().inject(context));
     }
     return createState(event, result);
   }
 
-  private Aggregate createState(Event event, Object result) {
+  private AggregateState createState(Event event, Object result) {
     if (result == null) {
       return null;
     }
 
-    return Aggregate.builder()
+    return AggregateState.builder()
         .payload(result)
         .metadata(Metadata.builder()
             .addAll(event.getMetadata())

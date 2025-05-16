@@ -10,7 +10,7 @@ import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandTransf
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.EventHandler;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.EventTransformer;
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.AggregateState;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultHandler;
 import io.github.alikelleci.easysourcing.messaging.resulthandling.ResultTransformer;
@@ -99,7 +99,7 @@ public class EasySourcing {
 
     Serde<Command> commandSerde = new JsonSerde<>(Command.class, objectMapper);
     Serde<Event> eventSerde = new JsonSerde<>(Event.class, objectMapper);
-    Serde<Aggregate> snapshotSerde = new JsonSerde<>(Aggregate.class, objectMapper);
+    Serde<AggregateState> snapshotSerde = new JsonSerde<>(AggregateState.class, objectMapper);
 
     /*
      * -------------------------------------------------------------

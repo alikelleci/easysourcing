@@ -4,7 +4,7 @@ import io.github.alikelleci.easysourcing.EasySourcing;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.messaging.commandhandling.CommandResult.Success;
 import io.github.alikelleci.easysourcing.messaging.eventhandling.Event;
-import io.github.alikelleci.easysourcing.messaging.eventsourcing.Aggregate;
+import io.github.alikelleci.easysourcing.messaging.eventsourcing.AggregateState;
 import io.github.alikelleci.easysourcing.messaging.eventsourcing.EventSourcingHandler;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   private final EasySourcing easySourcing;
   private ProcessorContext context;
-  private KeyValueStore<String, Aggregate> snapshotStore;
+  private KeyValueStore<String, AggregateState> snapshotStore;
 
   public CommandTransformer(EasySourcing easySourcing) {
     this.easySourcing = easySourcing;
@@ -38,10 +38,10 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   public CommandResult transform(String key, Command command) {
     try {
       // Load aggregate state
-      Aggregate aggregate = loadAggregate(key);
+      AggregateState state = loadAggregate(key);
 
       // Execute command
-      List<Event> events = executeCommand(aggregate, command);
+      List<Event> events = executeCommand(state, command);
 
       // Return if no events
       if (CollectionUtils.isEmpty(events)) {
@@ -50,13 +50,13 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
       // Apply events
       for (Event event : events) {
-        aggregate = applyEvent(aggregate, event);
+        state = applyEvent(state, event);
       }
 
       // Save snapshot
-      if (aggregate != null) {
-        log.debug("Creating snapshot: {}", aggregate);
-        saveSnapshot(aggregate);
+      if (state != null) {
+        log.debug("Creating snapshot: {}", state);
+        saveSnapshot(state);
       } else {
         deleteSnapshot(key);
       }
@@ -84,7 +84,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   }
 
-  protected List<Event> executeCommand(Aggregate aggregate, Command command) {
+  protected List<Event> executeCommand(AggregateState state, Command command) {
     CommandHandler commandHandler = easySourcing.getCommandHandlers().get(command.getPayload().getClass());
     if (commandHandler == null) {
       log.debug("No Command Handler found for command: {} ({})", command.getType(), command.getAggregateId());
@@ -92,32 +92,32 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     }
 
     commandHandler.setContext(context);
-    return commandHandler.apply(aggregate, command);
+    return commandHandler.apply(state, command);
   }
 
-  protected Aggregate loadAggregate(String aggregateId) {
+  protected AggregateState loadAggregate(String aggregateId) {
     log.debug("Loading aggregate state...");
-    Aggregate aggregate = loadFromSnapshot(aggregateId);
+    AggregateState state = loadFromSnapshot(aggregateId);
 
-    log.debug("Current aggregate state: {}", aggregate);
-    return aggregate;
+    log.debug("Current aggregate state: {}", state);
+    return state;
   }
 
-  protected Aggregate loadFromSnapshot(String aggregateId) {
+  protected AggregateState loadFromSnapshot(String aggregateId) {
     return snapshotStore.get(aggregateId);
   }
 
-  protected Aggregate applyEvent(Aggregate aggregate, Event event) {
+  protected AggregateState applyEvent(AggregateState state, Event event) {
     EventSourcingHandler eventSourcingHandler = easySourcing.getEventSourcingHandlers().get(event.getPayload().getClass());
     if (eventSourcingHandler != null) {
       eventSourcingHandler.setContext(context);
-      aggregate = eventSourcingHandler.apply(aggregate, event);
+      state = eventSourcingHandler.apply(state, event);
     }
-    return aggregate;
+    return state;
   }
 
-  protected void saveSnapshot(Aggregate aggregate) {
-    snapshotStore.put(aggregate.getAggregateId(), aggregate);
+  protected void saveSnapshot(AggregateState state) {
+    snapshotStore.put(state.getAggregateId(), state);
   }
 
   private void deleteSnapshot(String key) {

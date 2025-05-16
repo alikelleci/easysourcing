@@ -10,13 +10,13 @@ import lombok.Value;
 @Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class Aggregate extends Message {
+public class AggregateState extends Message {
 
-  private Aggregate() {
+  private AggregateState() {
   }
 
   @Builder
-  private Aggregate(Object payload, Metadata metadata) {
+  private AggregateState(Object payload, Metadata metadata) {
     super(payload, metadata);
   }
 
