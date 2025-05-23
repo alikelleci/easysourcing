@@ -37,28 +37,12 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   @Override
   public CommandResult transform(String key, Command command) {
     try {
-      // Load aggregate state
-      AggregateState state = loadAggregate(key);
-
       // Execute command
-      List<Event> events = executeCommand(state, command);
+      List<Event> events = executeCommand(key, command);
 
       // Return if no events
       if (CollectionUtils.isEmpty(events)) {
         return null;
-      }
-
-      // Apply events
-      for (Event event : events) {
-        state = applyEvent(state, event);
-      }
-
-      // Save snapshot
-      if (state != null) {
-        log.debug("Creating snapshot: {}", state);
-        saveSnapshot(state);
-      } else {
-        deleteSnapshot(key);
       }
 
       // Return success
@@ -84,7 +68,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
 
   }
 
-  protected List<Event> executeCommand(AggregateState state, Command command) {
+  protected List<Event> executeCommand(String aggregateId, Command command) {
     CommandHandler commandHandler = easySourcing.getCommandHandlers().get(command.getPayload().getClass());
     if (commandHandler == null) {
       log.debug("No Command Handler found for command: {} ({})", command.getType(), command.getAggregateId());
@@ -92,8 +76,24 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
     }
 
     log.debug("Handling command: {} ({})", command.getType(), command.getAggregateId());
+    AggregateState state = loadAggregate(aggregateId);
     commandHandler.setContext(context);
-    return commandHandler.apply(state, command);
+    List<Event> events = commandHandler.apply(state, command);
+
+    // Apply events
+    for (Event event : events) {
+      state = applyEvent(state, event);
+    }
+
+    // Save snapshot
+    if (state != null) {
+      log.debug("Creating snapshot: {}", state);
+      saveSnapshot(state);
+    } else {
+      deleteSnapshot(aggregateId);
+    }
+
+    return events;
   }
 
   protected AggregateState loadAggregate(String aggregateId) {
