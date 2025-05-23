@@ -47,6 +47,7 @@ public class ResultTransformer implements ValueTransformerWithKey<String, Comman
             if (handleAll ||
                 (handleSuccess && StringUtils.equals(result, "success")) ||
                 (handleFailure && StringUtils.equals(result, "failed"))) {
+              log.debug("Handling command result: {} ({})", command.getType(), command.getAggregateId());
               handler.apply(command);
             }
           });

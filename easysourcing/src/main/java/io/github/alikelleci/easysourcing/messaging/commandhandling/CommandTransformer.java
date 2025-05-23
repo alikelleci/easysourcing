@@ -91,6 +91,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
       return new ArrayList<>();
     }
 
+    log.debug("Handling command: {} ({})", command.getType(), command.getAggregateId());
     commandHandler.setContext(context);
     return commandHandler.apply(state, command);
   }
@@ -110,6 +111,7 @@ public class CommandTransformer implements ValueTransformerWithKey<String, Comma
   protected AggregateState applyEvent(AggregateState state, Event event) {
     EventSourcingHandler eventSourcingHandler = easySourcing.getEventSourcingHandlers().get(event.getPayload().getClass());
     if (eventSourcingHandler != null) {
+      log.debug("Applying event: {} ({})", event.getType(), event.getAggregateId());
       eventSourcingHandler.setContext(context);
       state = eventSourcingHandler.apply(state, event);
     }

@@ -26,8 +26,6 @@ public class EventHandler implements Function<Event, Void> {
 
   @Override
   public Void apply(Event event) {
-    log.debug("Handling event: {} ({})", event.getType(), event.getAggregateId());
-
     try {
       return doInvoke(event);
     } catch (Exception e) {
