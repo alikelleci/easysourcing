@@ -12,11 +12,11 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = true)
 public class Event extends Message {
 
-  protected Event() {
+  private Event() {
   }
 
   @Builder
-  protected Event(Object payload, Metadata metadata) {
+  private Event(Object payload, Metadata metadata) {
     super(payload, metadata);
   }
 

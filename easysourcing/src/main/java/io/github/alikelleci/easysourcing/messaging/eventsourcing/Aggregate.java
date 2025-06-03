@@ -12,11 +12,11 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = true)
 public class Aggregate extends Message {
 
-  protected Aggregate() {
+  private Aggregate() {
   }
 
   @Builder
-  protected Aggregate(Object payload, Metadata metadata) {
+  private Aggregate(Object payload, Metadata metadata) {
     super(payload, metadata);
   }
 

@@ -25,11 +25,11 @@ public class Metadata {
 
   private Map<String, String> entries;
 
-  protected Metadata() {
+  private Metadata() {
     this.entries = new HashMap<>();
   }
 
-  protected Metadata(Map<String, String> entries) {
+  private Metadata(Map<String, String> entries) {
     this.entries = entries;
   }
 
