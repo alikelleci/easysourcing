@@ -1,6 +1,6 @@
 package io.github.alikelleci.easysourcing.spring.starter;
 
-import io.github.alikelleci.easysourcing.EasySourcing;
+import io.github.alikelleci.easysourcing.core.EasySourcing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;

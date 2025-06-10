@@ -1,11 +1,10 @@
 package io.github.alikelleci.easysourcing.spring.starter;
 
-import io.github.alikelleci.easysourcing.EasySourcing;
-import io.github.alikelleci.easysourcing.util.HandlerUtils;
+import io.github.alikelleci.easysourcing.core.EasySourcing;
+import io.github.alikelleci.easysourcing.core.util.HandlerUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
 

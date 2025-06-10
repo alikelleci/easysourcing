@@ -24,7 +24,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.alikelleci</groupId>
-            <artifactId>easysourcing</artifactId>
+            <artifactId>easysourcing-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

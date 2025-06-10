@@ -14,7 +14,7 @@
     <url>https://github.com/alikelleci/easysourcing</url>
 
     <modules>
-        <module>easysourcing</module>
+        <module>easysourcing-core</module>
         <module>easysourcing-spring-boot-starter</module>
     </modules>
 
