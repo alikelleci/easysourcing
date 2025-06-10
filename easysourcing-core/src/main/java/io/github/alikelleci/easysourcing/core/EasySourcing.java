@@ -215,7 +215,8 @@ public class EasySourcing {
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       log.info("EasySourcing is shutting down...");
-      kafkaStreams.close(Duration.ofMillis(5000));
+      kafkaStreams.close(Duration.ofSeconds(60));
+      log.info("EasySourcing shut down complete.");
     }));
   }
 
