@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.alikelleci</groupId>
-    <artifactId>easysourcing-parent</artifactId>
+    <artifactId>easysourcing</artifactId>
     <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>easysourcing-parent</name>
+    <name>easysourcing</name>
     <description>A Java library for Event Sourcing using Kafka</description>
     <url>https://github.com/alikelleci/easysourcing</url>
 
