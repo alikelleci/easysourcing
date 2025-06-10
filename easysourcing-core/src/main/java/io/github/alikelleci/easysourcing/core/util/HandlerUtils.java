@@ -11,42 +11,25 @@ import io.github.alikelleci.easysourcing.core.messaging.resulthandling.ResultHan
 import io.github.alikelleci.easysourcing.core.messaging.resulthandling.annotations.HandleResult;
 import lombok.experimental.UtilityClass;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 @UtilityClass
 public class HandlerUtils {
 
   public void registerHandler(EasySourcing easySourcing, Object handler) {
-    List<Method> commandHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleCommand.class);
-    List<Method> eventSourcingMethods = findMethodsWithAnnotation(handler.getClass(), ApplyEvent.class);
-    List<Method> resultHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleResult.class);
-    List<Method> eventHandlerMethods = findMethodsWithAnnotation(handler.getClass(), HandleEvent.class);
-
-    commandHandlerMethods
+    AnnotationUtils.findAnnotatedMethods(handler.getClass(), HandleCommand.class)
         .forEach(method -> addCommandHandler(easySourcing, handler, method));
 
-    eventSourcingMethods
+    AnnotationUtils.findAnnotatedMethods(handler.getClass(), ApplyEvent.class)
         .forEach(method -> addEventSourcingHandler(easySourcing, handler, method));
 
-    resultHandlerMethods
+    AnnotationUtils.findAnnotatedMethods(handler.getClass(), HandleResult.class)
         .forEach(method -> addResultHandler(easySourcing, handler, method));
 
-    eventHandlerMethods
+    AnnotationUtils.findAnnotatedMethods(handler.getClass(), HandleEvent.class)
         .forEach(method -> addEventHandler(easySourcing, handler, method));
   }
 
-  private <A extends Annotation> List<Method> findMethodsWithAnnotation(Class<?> c, Class<A> annotation) {
-    List<Method> methods = new ArrayList<>();
-    for (Method method : c.getDeclaredMethods()) {
-      if (AnnotationUtils.findAnnotation(method, annotation) != null) {
-        methods.add(method);
-      }
-    }
-    return methods;
-  }
 
   private void addCommandHandler(EasySourcing easySourcing, Object listener, Method method) {
     if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
