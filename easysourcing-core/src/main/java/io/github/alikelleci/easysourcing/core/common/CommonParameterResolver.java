@@ -6,12 +6,13 @@ import io.github.alikelleci.easysourcing.core.common.annotations.Timestamp;
 import io.github.alikelleci.easysourcing.core.messaging.Message;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
 import java.lang.reflect.Parameter;
 
 public interface CommonParameterResolver {
 
-  default Object resolve(Parameter parameter, Message message, ProcessorContext context) {
+  default Object resolve(Parameter parameter, Message message, FixedKeyProcessorContext<?, ?> context) {
     if (parameter.getType().isAssignableFrom(Metadata.class)) {
       return message.getMetadata().inject(context);
     } else if (parameter.isAnnotationPresent(Timestamp.class)) {

@@ -9,29 +9,32 @@ import io.github.alikelleci.easysourcing.core.messaging.resulthandling.annotatio
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessor;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyRecord;
 
 import java.util.Collection;
 import java.util.Comparator;
 
 @Slf4j
-public class ResultTransformer implements ValueTransformerWithKey<String, Command, Command> {
+public class ResultProcessor implements FixedKeyProcessor<String, Command, Command> {
 
   private final EasySourcing easySourcing;
-  private ProcessorContext context;
+  private FixedKeyProcessorContext<String, Command> context;
 
-  public ResultTransformer(EasySourcing easySourcing) {
+  public ResultProcessor(EasySourcing easySourcing) {
     this.easySourcing = easySourcing;
   }
 
   @Override
-  public void init(ProcessorContext context) {
+  public void init(FixedKeyProcessorContext<String, Command> context) {
     this.context = context;
   }
 
   @Override
-  public Command transform(String key, Command command) {
+  public void process(FixedKeyRecord<String, Command> fixedKeyRecord) {
+    Command command = fixedKeyRecord.value();
+
     Collection<ResultHandler> resultHandlers = easySourcing.getResultHandlers().get(command.getPayload().getClass());
     if (CollectionUtils.isNotEmpty(resultHandlers)) {
       resultHandlers.stream()
@@ -52,7 +55,7 @@ public class ResultTransformer implements ValueTransformerWithKey<String, Comman
           });
     }
 
-    return command;
+    context.forward(fixedKeyRecord);
   }
 
   @Override

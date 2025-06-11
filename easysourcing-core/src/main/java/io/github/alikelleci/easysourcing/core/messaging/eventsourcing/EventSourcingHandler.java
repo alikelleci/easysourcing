@@ -8,7 +8,7 @@ import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.exceptions
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,7 +22,7 @@ public class EventSourcingHandler implements BiFunction<AggregateState, Event, A
   private final Object handler;
   private final Method method;
 
-  private ProcessorContext context;
+  private FixedKeyProcessorContext<?, ?> context;
 
   public EventSourcingHandler(Object handler, Method method) {
     this.handler = handler;
@@ -72,7 +72,7 @@ public class EventSourcingHandler implements BiFunction<AggregateState, Event, A
         .build();
   }
 
-  public void setContext(ProcessorContext context) {
+  public void setContext(FixedKeyProcessorContext<?, ?> context) {
     this.context = context;
   }
 }

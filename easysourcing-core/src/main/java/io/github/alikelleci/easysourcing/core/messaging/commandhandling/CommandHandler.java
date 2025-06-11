@@ -7,8 +7,8 @@ import io.github.alikelleci.easysourcing.core.common.exceptions.AggregateIdMissi
 import io.github.alikelleci.easysourcing.core.common.exceptions.PayloadMissingException;
 import io.github.alikelleci.easysourcing.core.common.exceptions.TopicInfoMissingException;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
-import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.exceptions.CommandExecutionException;
+import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.AggregateState;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,7 +39,7 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
 
   private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-  private ProcessorContext context;
+  private FixedKeyProcessorContext<?, ?> context;
 
   public CommandHandler(Object handler, Method method) {
     this.handler = handler;
@@ -125,7 +125,7 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
     }
   }
 
-  public void setContext(ProcessorContext context) {
+  public void setContext(FixedKeyProcessorContext context) {
     this.context = context;
   }
 }

@@ -2,7 +2,7 @@ package io.github.alikelleci.easysourcing.core.messaging;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import lombok.EqualsAndHashCode;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
 import java.beans.Transient;
 import java.time.Instant;
@@ -79,8 +79,8 @@ public class Metadata {
     return entries.toString();
   }
 
-  public Metadata inject(ProcessorContext context) {
-    entries.put(TIMESTAMP, String.valueOf(context.timestamp()));
+  public Metadata inject(FixedKeyProcessorContext<?, ?> context) {
+    entries.put(TIMESTAMP, String.valueOf(context.currentStreamTimeMs()));
     return this;
   }
 

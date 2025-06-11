@@ -7,7 +7,7 @@ import io.github.alikelleci.easysourcing.core.messaging.resulthandling.exception
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,7 +22,7 @@ public class ResultHandler implements Function<Command, Void>, CommonParameterRe
   private final Object handler;
   private final Method method;
 
-  private ProcessorContext context;
+  private FixedKeyProcessorContext<?, ?> context;
 
   public ResultHandler(Object handler, Method method) {
     this.handler = handler;
@@ -62,7 +62,7 @@ public class ResultHandler implements Function<Command, Void>, CommonParameterRe
         .orElse(0);
   }
 
-  public void setContext(ProcessorContext context) {
+  public void setContext(FixedKeyProcessorContext<?, ?> context) {
     this.context = context;
   }
 }

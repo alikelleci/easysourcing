@@ -1,65 +1,70 @@
 package io.github.alikelleci.easysourcing.core.messaging.commandhandling;
 
 import io.github.alikelleci.easysourcing.core.EasySourcing;
-import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandResult.Failure;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandResult.Success;
+import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.AggregateState;
 import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.EventSourcingHandler;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessor;
+import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
+import org.apache.kafka.streams.processor.api.FixedKeyRecord;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public class CommandTransformer implements ValueTransformerWithKey<String, Command, CommandResult> {
+public class CommandProcessor implements FixedKeyProcessor<String, Command, CommandResult> {
 
   private final EasySourcing easySourcing;
-  private ProcessorContext context;
+  private FixedKeyProcessorContext<String, CommandResult> context;
   private KeyValueStore<String, AggregateState> snapshotStore;
 
-  public CommandTransformer(EasySourcing easySourcing) {
+  public CommandProcessor(EasySourcing easySourcing) {
     this.easySourcing = easySourcing;
   }
 
   @Override
-  public void init(ProcessorContext context) {
+  public void init(FixedKeyProcessorContext<String, CommandResult> context) {
     this.context = context;
     this.snapshotStore = this.context.getStateStore("snapshot-store");
   }
 
   @Override
-  public CommandResult transform(String key, Command command) {
+  public void process(FixedKeyRecord<String, Command> fixedKeyRecord) {
+    String key = fixedKeyRecord.key();
+    Command command = fixedKeyRecord.value();
+
     try {
       // Execute command
       List<Event> events = executeCommand(key, command);
 
       // Return if no events
       if (CollectionUtils.isEmpty(events)) {
-        return null;
+        return;
       }
 
       // Return success
-      return Success.builder()
+      // Forward success
+      context.forward(fixedKeyRecord.withValue(Success.builder()
           .command(command)
           .events(events)
-          .build();
+          .build()));
 
     } catch (Exception e) {
       // Log failure
       logFailure(e);
 
-      // Return failure
-      return Failure.builder()
+      // Forward failure
+      context.forward(fixedKeyRecord.withValue(Failure.builder()
           .command(command)
           .cause(ExceptionUtils.getRootCauseMessage(e))
-          .build();
+          .build()));
     }
   }
 

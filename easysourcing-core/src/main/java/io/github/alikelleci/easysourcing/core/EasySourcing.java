@@ -6,14 +6,14 @@ import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandHandler;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandResult;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandResult.Success;
-import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandTransformer;
+import io.github.alikelleci.easysourcing.core.messaging.commandhandling.CommandProcessor;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.EventHandler;
-import io.github.alikelleci.easysourcing.core.messaging.eventhandling.EventTransformer;
+import io.github.alikelleci.easysourcing.core.messaging.eventhandling.EventProcessor;
 import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.AggregateState;
 import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.EventSourcingHandler;
 import io.github.alikelleci.easysourcing.core.messaging.resulthandling.ResultHandler;
-import io.github.alikelleci.easysourcing.core.messaging.resulthandling.ResultTransformer;
+import io.github.alikelleci.easysourcing.core.messaging.resulthandling.ResultProcessor;
 import io.github.alikelleci.easysourcing.core.support.CustomRocksDbConfig;
 import io.github.alikelleci.easysourcing.core.support.LoggingStateRestoreListener;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.JsonSerde;
@@ -121,7 +121,7 @@ public class EasySourcing {
 
       // Commands --> Results
       KStream<String, CommandResult> commandResults = commands
-          .transformValues(() -> new CommandTransformer(this), "snapshot-store")
+          .processValues(() -> new CommandProcessor(this), "snapshot-store")
           .filter((key, result) -> result != null);
 
       // Results --> Push
@@ -163,7 +163,7 @@ public class EasySourcing {
 
       // Events --> Void
       events
-          .transformValues(() -> new EventTransformer(this));
+          .processValues(() -> new EventProcessor(this));
     }
 
     /*
@@ -181,7 +181,7 @@ public class EasySourcing {
 
       // Results --> Void
       results
-          .transformValues(() -> new ResultTransformer(this));
+          .processValues(() -> new ResultProcessor(this));
     }
 
 
