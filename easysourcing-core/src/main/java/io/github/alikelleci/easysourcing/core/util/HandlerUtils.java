@@ -32,28 +32,28 @@ public class HandlerUtils {
 
 
   private void addCommandHandler(EasySourcing easySourcing, Object listener, Method method) {
-    if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
-      Class<?> type = method.getParameters()[1].getType();
+    if (method.getParameterCount() >= 1) {
+      Class<?> type = method.getParameters()[0].getType();
       easySourcing.getCommandHandlers().put(type, new CommandHandler(listener, method));
     }
   }
 
   private void addEventSourcingHandler(EasySourcing easySourcing, Object listener, Method method) {
-    if (method.getParameterCount() == 2 || method.getParameterCount() == 3) {
-      Class<?> type = method.getParameters()[1].getType();
+    if (method.getParameterCount() >= 1) {
+      Class<?> type = method.getParameters()[0].getType();
       easySourcing.getEventSourcingHandlers().put(type, new EventSourcingHandler(listener, method));
     }
   }
 
   private void addResultHandler(EasySourcing easySourcing, Object listener, Method method) {
-    if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
+    if (method.getParameterCount() >= 1) {
       Class<?> type = method.getParameters()[0].getType();
       easySourcing.getResultHandlers().put(type, new ResultHandler(listener, method));
     }
   }
 
   private void addEventHandler(EasySourcing easySourcing, Object listener, Method method) {
-    if (method.getParameterCount() == 1 || method.getParameterCount() == 2) {
+    if (method.getParameterCount() >= 1) {
       Class<?> type = method.getParameters()[0].getType();
       easySourcing.getEventHandlers().put(type, new EventHandler(listener, method));
     }

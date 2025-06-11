@@ -1,5 +1,7 @@
 package io.github.alikelleci.easysourcing.core.messaging.commandhandling;
 
+import io.github.alikelleci.easysourcing.core.common.CommonParameterResolver;
+import io.github.alikelleci.easysourcing.core.common.annotations.AggregateRoot;
 import io.github.alikelleci.easysourcing.core.common.exceptions.AggregateIdMismatchException;
 import io.github.alikelleci.easysourcing.core.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.core.common.exceptions.PayloadMissingException;
@@ -12,6 +14,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +23,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,17 +31,18 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 @Slf4j
-public class CommandHandler implements BiFunction<AggregateState, Command, List<Event>> {
+@Getter
+public class CommandHandler implements BiFunction<AggregateState, Command, List<Event>>, CommonParameterResolver {
 
-  private final Object target;
+  private final Object handler;
   private final Method method;
 
   private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
   private ProcessorContext context;
 
-  public CommandHandler(Object target, Method method) {
-    this.target = target;
+  public CommandHandler(Object handler, Method method) {
+    this.handler = handler;
     this.method = method;
   }
 
@@ -45,21 +50,30 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
   public List<Event> apply(AggregateState state, Command command) {
     try {
       validate(command.getPayload());
-      return doInvoke(state, command);
-
+      Object result = invokeHandler(handler, state, command);
+      return createEvents(command, result);
     } catch (Exception e) {
       throw new CommandExecutionException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private List<Event> doInvoke(AggregateState state, Command command) throws InvocationTargetException, IllegalAccessException {
-    Object result;
-    if (method.getParameterCount() == 2) {
-      result = method.invoke(target, state != null ? state.getPayload() : null, command.getPayload());
-    } else {
-      result = method.invoke(target, state != null ? state.getPayload() : null, command.getPayload(), command.getMetadata().inject(context));
+  private Object invokeHandler(Object handler, AggregateState state, Command command) throws InvocationTargetException, IllegalAccessException {
+    Object[] args = new Object[method.getParameterCount()];
+    Parameter[] parameters = method.getParameters();
+
+    for (int i = 0; i < parameters.length; i++) {
+      Parameter parameter = parameters[i];
+      if (i == 0) {
+        args[i] = command.getPayload();
+      } else if (parameter.getType().isAnnotationPresent(AggregateRoot.class)) {
+        args[i] = state != null ? state.getPayload() : null;
+      } else {
+        args[i] = resolve(parameter, command, context);
+      }
     }
-    return createEvents(command, result);
+
+    // Invoke the method
+    return method.invoke(handler, args);
   }
 
   private List<Event> createEvents(Command command, Object result) {
@@ -109,10 +123,6 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
     if (!CollectionUtils.isEmpty(violations)) {
       throw new ConstraintViolationException(violations);
     }
-  }
-
-  public Method getMethod() {
-    return method;
   }
 
   public void setContext(ProcessorContext context) {

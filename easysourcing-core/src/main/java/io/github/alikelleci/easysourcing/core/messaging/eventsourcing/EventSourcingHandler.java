@@ -1,46 +1,61 @@
 package io.github.alikelleci.easysourcing.core.messaging.eventsourcing;
 
+import io.github.alikelleci.easysourcing.core.common.CommonParameterResolver;
+import io.github.alikelleci.easysourcing.core.common.annotations.AggregateRoot;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import io.github.alikelleci.easysourcing.core.messaging.eventsourcing.exceptions.AggregateInvocationException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.function.BiFunction;
 
 @Slf4j
-public class EventSourcingHandler implements BiFunction<AggregateState, Event, AggregateState> {
+@Getter
+public class EventSourcingHandler implements BiFunction<AggregateState, Event, AggregateState>, CommonParameterResolver {
 
-  private final Object target;
+  private final Object handler;
   private final Method method;
 
   private ProcessorContext context;
 
-  public EventSourcingHandler(Object target, Method method) {
-    this.target = target;
+  public EventSourcingHandler(Object handler, Method method) {
+    this.handler = handler;
     this.method = method;
   }
 
   @Override
   public AggregateState apply(AggregateState state, Event event) {
     try {
-      return doInvoke(state, event);
+      Object result = invokeHandler(handler, state, event);
+      return createState(event, result);
     } catch (Exception e) {
       throw new AggregateInvocationException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private AggregateState doInvoke(AggregateState state, Event event) throws InvocationTargetException, IllegalAccessException {
-    Object result;
-    if (method.getParameterCount() == 2) {
-      result = method.invoke(target, state != null ? state.getPayload() : null, event.getPayload());
-    } else {
-      result = method.invoke(target, state != null ? state.getPayload() : null, event.getPayload(), event.getMetadata().inject(context));
+  private Object invokeHandler(Object handler, AggregateState state, Event event) throws InvocationTargetException, IllegalAccessException {
+    Object[] args = new Object[method.getParameterCount()];
+    Parameter[] parameters = method.getParameters();
+
+    for (int i = 0; i < parameters.length; i++) {
+      Parameter parameter = parameters[i];
+      if (i == 0) {
+        args[i] = event.getPayload();
+      } else if (parameter.getType().isAnnotationPresent(AggregateRoot.class)) {
+        args[i] = state != null ? state.getPayload() : null;
+      } else {
+        args[i] = resolve(parameter, event, context);
+      }
     }
-    return createState(event, result);
+
+    // Invoke the method
+    return method.invoke(handler, args);
   }
 
   private AggregateState createState(Event event, Object result) {
@@ -55,10 +70,6 @@ public class EventSourcingHandler implements BiFunction<AggregateState, Event, A
             .add(Metadata.EVENT_ID, event.getMetadata().get(Metadata.ID))
             .build())
         .build();
-  }
-
-  public Method getMethod() {
-    return method;
   }
 
   public void setContext(ProcessorContext context) {

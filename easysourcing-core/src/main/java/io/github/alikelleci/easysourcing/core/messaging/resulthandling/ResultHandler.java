@@ -1,51 +1,59 @@
 package io.github.alikelleci.easysourcing.core.messaging.resulthandling;
 
+import io.github.alikelleci.easysourcing.core.common.CommonParameterResolver;
 import io.github.alikelleci.easysourcing.core.common.annotations.Priority;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.messaging.resulthandling.exceptions.ResultProcessingException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Optional;
 import java.util.function.Function;
 
 @Slf4j
-public class ResultHandler implements Function<Command, Void> {
+@Getter
+public class ResultHandler implements Function<Command, Void>, CommonParameterResolver {
 
-  private final Object target;
+  private final Object handler;
   private final Method method;
 
   private ProcessorContext context;
 
-  public ResultHandler(Object target, Method method) {
-    this.target = target;
+  public ResultHandler(Object handler, Method method) {
+    this.handler = handler;
     this.method = method;
 }
 
   @Override
   public Void apply(Command command) {
     try {
-      return doInvoke(command);
+      Object result = invokeHandler(handler, command);
+      return null;
     } catch (Exception e) {
       throw new ResultProcessingException(ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getRootCause(e));
     }
   }
 
-  private Void doInvoke(Command command) throws InvocationTargetException, IllegalAccessException {
-    Object result;
-    if (method.getParameterCount() == 1) {
-      result = method.invoke(target, command.getPayload());
-    } else {
-      result = method.invoke(target, command.getPayload(), command.getMetadata().inject(context));
-    }
-    return null;
-  }
+  private Object invokeHandler(Object handler, Command command) throws InvocationTargetException, IllegalAccessException {
+    Object[] args = new Object[method.getParameterCount()];
+    Parameter[] parameters = method.getParameters();
 
-  public Method getMethod() {
-    return method;
+    for (int i = 0; i < parameters.length; i++) {
+      Parameter parameter = parameters[i];
+      if (i == 0) {
+        args[i] = command.getPayload();
+      } else {
+        args[i] = resolve(parameter, command, context);
+      }
+    }
+
+    // Invoke the method
+    return method.invoke(handler, args);
   }
 
   public int getPriority() {
