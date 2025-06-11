@@ -18,6 +18,8 @@ import java.time.Instant;
 import java.util.Properties;
 import java.util.UUID;
 
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.CORRELATION_ID;
+
 @Slf4j
 public class DefaultEventGateway implements EventGateway {
 
@@ -26,7 +28,7 @@ public class DefaultEventGateway implements EventGateway {
   protected DefaultEventGateway(Properties producerConfig, ObjectMapper objectMapper) {
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>(Event.class, objectMapper));
+        new JsonSerializer<>(objectMapper));
   }
 
   @Override
@@ -43,7 +45,7 @@ public class DefaultEventGateway implements EventGateway {
         .payload(payload)
         .metadata(Metadata.builder()
             .addAll(metadata)
-            .add(Metadata.CORRELATION_ID, UUID.randomUUID().toString())
+            .add(CORRELATION_ID, UUID.randomUUID().toString())
             .build())
         .build();
 

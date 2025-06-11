@@ -30,6 +30,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.FAILURE;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.RESULT;
+
 @Slf4j
 @Getter
 public class CommandHandler implements BiFunction<AggregateState, Command, List<Event>>, CommonParameterResolver {
@@ -94,8 +97,8 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
             .payload(payload)
             .metadata(Metadata.builder()
                 .addAll(command.getMetadata())
-                .remove(Metadata.RESULT)
-                .remove(Metadata.FAILURE)
+                .remove(RESULT)
+                .remove(FAILURE)
                 .build())
             .build())
         .toList();

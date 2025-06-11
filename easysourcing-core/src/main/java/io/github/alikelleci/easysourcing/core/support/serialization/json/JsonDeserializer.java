@@ -20,7 +20,6 @@ public class JsonDeserializer<T> implements Deserializer<T> {
 
   public JsonDeserializer(Class<T> targetType) {
     this(targetType, JacksonUtils.enhancedObjectMapper());
-
   }
 
   public JsonDeserializer(Class<T> targetType, ObjectMapper objectMapper) {

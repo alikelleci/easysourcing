@@ -17,8 +17,18 @@ public class JsonSerde<T> implements Serde<T> {
   }
 
   public JsonSerde(Class<T> targetType, ObjectMapper objectMapper) {
-    this.jsonSerializer = new JsonSerializer<>(targetType, objectMapper);
+    this.jsonSerializer = new JsonSerializer<>(objectMapper);
     this.jsonDeserializer = new JsonDeserializer<>(targetType, objectMapper);
+  }
+
+  @Override
+  public Serializer<T> serializer() {
+    return this.jsonSerializer;
+  }
+
+  @Override
+  public Deserializer<T> deserializer() {
+    return this.jsonDeserializer;
   }
 
   @Override
@@ -31,15 +41,5 @@ public class JsonSerde<T> implements Serde<T> {
   public void close() {
     this.jsonSerializer.close();
     this.jsonDeserializer.close();
-  }
-
-  @Override
-  public Serializer<T> serializer() {
-    return this.jsonSerializer;
-  }
-
-  @Override
-  public Deserializer<T> deserializer() {
-    return this.jsonDeserializer;
   }
 }

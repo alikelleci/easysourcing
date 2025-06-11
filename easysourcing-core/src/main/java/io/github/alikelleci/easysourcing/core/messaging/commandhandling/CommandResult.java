@@ -8,6 +8,9 @@ import lombok.Value;
 
 import java.util.List;
 
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.FAILURE;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.RESULT;
+
 
 public interface CommandResult {
 
@@ -23,8 +26,8 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       command.getMetadata()
-          .add(Metadata.RESULT, "success")
-          .remove(Metadata.FAILURE);
+          .add(RESULT, "success")
+          .remove(FAILURE);
 
       return command;
     }
@@ -39,8 +42,8 @@ public interface CommandResult {
     @Override
     public Command getCommand() {
       command.getMetadata()
-          .add(Metadata.RESULT, "failed")
-          .add(Metadata.FAILURE, cause);
+          .add(RESULT, "failed")
+          .add(FAILURE, cause);
 
       return command;
     }

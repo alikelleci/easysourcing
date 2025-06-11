@@ -15,6 +15,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.function.BiFunction;
 
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.EVENT_ID;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.ID;
+
 @Slf4j
 @Getter
 public class EventSourcingHandler implements BiFunction<AggregateState, Event, AggregateState>, CommonParameterResolver {
@@ -67,7 +70,7 @@ public class EventSourcingHandler implements BiFunction<AggregateState, Event, A
         .payload(result)
         .metadata(Metadata.builder()
             .addAll(event.getMetadata())
-            .add(Metadata.EVENT_ID, event.getMetadata().get(Metadata.ID))
+            .add(EVENT_ID, event.getMetadata().get(ID))
             .build())
         .build();
   }

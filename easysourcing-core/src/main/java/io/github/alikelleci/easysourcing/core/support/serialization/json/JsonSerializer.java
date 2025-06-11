@@ -10,19 +10,13 @@ import java.util.Map;
 
 public class JsonSerializer<T> implements Serializer<T> {
 
-  private final Class<T> targetType;
   private final ObjectMapper objectMapper;
 
   public JsonSerializer() {
-    this(null);
+    this(JacksonUtils.enhancedObjectMapper());
   }
 
-  public JsonSerializer(Class<T> targetType) {
-    this(targetType, JacksonUtils.enhancedObjectMapper());
-  }
-
-  public JsonSerializer(Class<T> targetType, ObjectMapper objectMapper) {
-    this.targetType = targetType;
+  public JsonSerializer(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 

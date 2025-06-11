@@ -28,10 +28,15 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.CORRELATION_ID;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.FAILURE;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.ID;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.REPLY_TO;
+import static io.github.alikelleci.easysourcing.core.messaging.Metadata.RESULT;
+
 @Slf4j
 public class DefaultCommandGateway extends AbstractCommandResultListener implements CommandGateway {
 
-  //private final Map<String, CompletableFuture<Object>> futures = new ConcurrentHashMap<>();
   private final Cache<String, CompletableFuture<Object>> cache = Caffeine.newBuilder()
       .expireAfterWrite(Duration.ofMinutes(5))
       .build();
@@ -43,7 +48,7 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>(Command.class, objectMapper));
+        new JsonSerializer<>(objectMapper));
   }
 
   @Override
@@ -60,8 +65,8 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
         .payload(payload)
         .metadata(Metadata.builder()
             .addAll(metadata)
-            .add(Metadata.CORRELATION_ID, UUID.randomUUID().toString())
-            .add(Metadata.REPLY_TO, getReplyTopic())
+            .add(CORRELATION_ID, UUID.randomUUID().toString())
+            .add(REPLY_TO, getReplyTopic())
             .build())
         .build();
 
@@ -72,7 +77,7 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
     producer.send(producerRecord);
 
     CompletableFuture<Object> future = new CompletableFuture<>();
-    cache.put(command.getMetadata().get(Metadata.ID), future);
+    cache.put(command.getMetadata().get(ID), future);
 
     return (CompletableFuture<R>) future;
   }
@@ -81,13 +86,12 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
   protected void onMessage(ConsumerRecords<String, Command> consumerRecords) {
     consumerRecords.forEach(consumerRecord -> {
       String messageId = Optional.ofNullable(consumerRecord.value().getMetadata())
-          .map(metadata -> metadata.get(Metadata.ID))
+          .map(metadata -> metadata.get(ID))
           .orElse(null);
 
       if (StringUtils.isBlank(messageId)) {
         return;
       }
-      // CompletableFuture<Object> future = futures.remove(messageId);
       CompletableFuture<Object> future = cache.getIfPresent(messageId);
       if (future != null) {
         Exception exception = checkForErrors(consumerRecord);
@@ -121,8 +125,8 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
     Message message = consumerRecord.value();
     Metadata metadata = message.getMetadata();
 
-    if (metadata.get(Metadata.RESULT).equals("failed")) {
-      return new CommandExecutionException(metadata.get(Metadata.FAILURE));
+    if (metadata.get(RESULT).equals("failed")) {
+      return new CommandExecutionException(metadata.get(FAILURE));
     }
 
     return null;
