@@ -213,11 +213,7 @@ public class EasySourcing {
     kafkaStreams.setGlobalStateRestoreListener(this.stateRestoreListener);
     kafkaStreams.setUncaughtExceptionHandler(this.uncaughtExceptionHandler);
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      log.info("EasySourcing is shutting down...");
-      kafkaStreams.close(Duration.ofSeconds(60));
-      log.info("EasySourcing shut down complete.");
-    }));
+    Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
   }
 
   private Set<String> getCommandTopics() {
