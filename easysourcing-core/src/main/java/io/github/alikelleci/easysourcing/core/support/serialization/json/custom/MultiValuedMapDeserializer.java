@@ -1,11 +1,7 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json.custom;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.type.TypeBindings;
@@ -31,10 +27,11 @@ public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<S
   }
 
   @Override
-  public MultiValuedMap<String, ?> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-    MultiValuedMap<String, Object> map = new ArrayListValuedHashMap<>();
+  public MultiValuedMap<String, ?> deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
+    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+    JsonNode node = mapper.readTree(jp);
 
-    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+    MultiValuedMap<String, Object> map = new ArrayListValuedHashMap<>();
     if (node == null) {
       return map;
     }

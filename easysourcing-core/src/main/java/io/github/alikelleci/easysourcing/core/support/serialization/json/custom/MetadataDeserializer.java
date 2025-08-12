@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import org.apache.commons.lang3.StringUtils;
@@ -25,8 +26,9 @@ public class MetadataDeserializer extends StdDeserializer<Metadata> {
   }
 
   @Override
-  public Metadata deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
-    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+  public Metadata deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException, JacksonException {
+    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+    JsonNode node = mapper.readTree(jp);
 
     JsonNode entries = node.get("entries"); // added for backwards compatibility
     return toMetadata(Objects.requireNonNullElse(entries, node));

@@ -3,6 +3,7 @@ package io.github.alikelleci.easysourcing.core.support.serialization.json.custom
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import java.io.IOException;
@@ -19,8 +20,9 @@ public class InstantDeserializer extends StdDeserializer<Instant> {
   }
 
   @Override
-  public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+  public Instant deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
+    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+    JsonNode node = mapper.readTree(jp);
 
     if (node == null) {
       return null;
