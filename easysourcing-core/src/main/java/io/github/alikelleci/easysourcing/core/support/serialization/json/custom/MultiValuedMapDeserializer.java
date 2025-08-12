@@ -32,6 +32,7 @@ public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<S
     JsonNode node = mapper.readTree(jp);
 
     MultiValuedMap<String, Object> map = new ArrayListValuedHashMap<>();
+
     if (node == null) {
       return map;
     }
