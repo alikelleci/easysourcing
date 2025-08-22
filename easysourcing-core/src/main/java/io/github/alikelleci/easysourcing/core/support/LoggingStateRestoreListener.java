@@ -8,6 +8,7 @@ import org.apache.kafka.streams.processor.StateRestoreListener;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class LoggingStateRestoreListener implements StateRestoreListener {
 
-  private final Map<TopicPartition, Stats> stores = new HashMap<>();
+  private final Map<TopicPartition, Stats> stores = new ConcurrentHashMap<>();
 
   public LoggingStateRestoreListener() {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
