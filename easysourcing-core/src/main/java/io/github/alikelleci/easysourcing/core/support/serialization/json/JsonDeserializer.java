@@ -33,10 +33,7 @@ public class JsonDeserializer<T> implements Deserializer<T> {
 
   @Override
   public T deserialize(String topic, byte[] bytes) {
-    if (bytes == null) {
-      return null;
-    }
-
+    if (bytes == null) return null;
     try {
       return objectMapper.readValue(bytes, targetType);
     } catch (Exception e) {
