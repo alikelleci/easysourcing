@@ -27,7 +27,7 @@ public class JsonSerializer<T> implements Serializer<T> {
   @Override
   public byte[] serialize(String topic, T object) {
     if (object == null) {
-      return new byte[0];
+      return null;
     }
 
     try {
