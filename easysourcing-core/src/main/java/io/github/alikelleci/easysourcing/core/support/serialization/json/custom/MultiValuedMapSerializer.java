@@ -10,7 +10,7 @@ import java.io.IOException;
 public class MultiValuedMapSerializer extends StdSerializer<MultiValuedMap> {
 
   public MultiValuedMapSerializer() {
-    this(null);
+    this(MultiValuedMap.class);
   }
 
   protected MultiValuedMapSerializer(Class<MultiValuedMap> t) {

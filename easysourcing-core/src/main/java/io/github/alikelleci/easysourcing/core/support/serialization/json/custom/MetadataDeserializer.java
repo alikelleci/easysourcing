@@ -18,7 +18,7 @@ import java.util.Optional;
 public class MetadataDeserializer extends StdDeserializer<Metadata> {
 
   public MetadataDeserializer() {
-    this(null);
+    this(Metadata.class);
   }
 
   protected MetadataDeserializer(Class<?> vc) {

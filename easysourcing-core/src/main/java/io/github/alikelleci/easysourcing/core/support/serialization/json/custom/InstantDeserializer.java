@@ -12,7 +12,7 @@ import java.time.Instant;
 public class InstantDeserializer extends StdDeserializer<Instant> {
 
   public InstantDeserializer() {
-    this(null);
+    this(Instant.class);
   }
 
   protected InstantDeserializer(Class<?> vc) {
