@@ -60,7 +60,7 @@ class EasySourcingTest {
         .registerHandler(new CustomerResultHandler())
         .build();
 
-    testDriver = new TopologyTestDriver(easySourcing.topology(), easySourcing.getStreamsConfig());
+    testDriver = new TopologyTestDriver(easySourcing.topology());
 
     commandsTopic = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
         new StringSerializer(), new JsonSerializer<>());
