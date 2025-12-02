@@ -20,7 +20,7 @@ public class InstantDeserializer extends StdDeserializer<Instant> {
 
   @Override
   public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
-    JsonNode jsonNode = ctxt.readTree(p);
+    JsonNode jsonNode = p.objectReadContext().readTree(p);
 
     if (jsonNode == null) {
       return null;

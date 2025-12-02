@@ -29,7 +29,7 @@ public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<S
 
   @Override
   public MultiValuedMap<String, ?> deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
-    JsonNode jsonNode = ctxt.readTree(p);
+    JsonNode jsonNode = p.objectReadContext().readTree(p);
 
     MultiValuedMap<String, Object> map = new ArrayListValuedHashMap<>();
 

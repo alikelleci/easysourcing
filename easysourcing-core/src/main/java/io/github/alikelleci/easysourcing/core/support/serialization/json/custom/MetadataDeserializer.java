@@ -21,8 +21,7 @@ public class MetadataDeserializer extends StdDeserializer<Metadata> {
 
   @Override
   public Metadata deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
-    TreeNode treeNode = p.objectReadContext().readTree(p);
-    JsonNode jsonNode = ctxt.readTree(p);
+    JsonNode jsonNode = p.objectReadContext().readTree(p);
 
     JsonNode entries = jsonNode.get("entries"); // added for backwards compatibility
     return toMetadata(Objects.requireNonNullElse(entries, jsonNode));  }
