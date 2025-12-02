@@ -1,6 +1,7 @@
 package io.github.alikelleci.easysourcing.core.messaging;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.EqualsAndHashCode;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
@@ -27,6 +28,7 @@ public class Metadata {
     this.entries = new HashMap<>();
   }
 
+  @JsonCreator
   private Metadata(Map<String, String> entries) {
     this.entries = entries;
   }
