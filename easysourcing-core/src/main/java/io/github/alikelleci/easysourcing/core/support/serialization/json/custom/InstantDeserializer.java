@@ -1,12 +1,11 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json.custom;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
-import java.io.IOException;
 import java.time.Instant;
 
 public class InstantDeserializer extends StdDeserializer<Instant> {
@@ -20,20 +19,19 @@ public class InstantDeserializer extends StdDeserializer<Instant> {
   }
 
   @Override
-  public Instant deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
-    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-    JsonNode node = mapper.readTree(jp);
+  public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
+    JsonNode jsonNode = ctxt.readTree(p);
 
-    if (node == null) {
+    if (jsonNode == null) {
       return null;
     }
 
-    if (node.isNumber()) {
-      return Instant.ofEpochMilli(toMillis(node.asLong()));
+    if (jsonNode.isNumber()) {
+      return Instant.ofEpochMilli(toMillis(jsonNode.asLong()));
     }
 
-    if (node.isTextual()) {
-      return Instant.parse(node.asText());
+    if (jsonNode.isString()) {
+      return Instant.parse(jsonNode.asString());
     }
 
     return null;

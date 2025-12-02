@@ -1,17 +1,15 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json.custom;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import org.apache.commons.lang3.StringUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.TreeNode;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -21,34 +19,30 @@ public class MetadataDeserializer extends StdDeserializer<Metadata> {
     this(null);
   }
 
+  @Override
+  public Metadata deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
+    TreeNode treeNode = p.objectReadContext().readTree(p);
+    JsonNode jsonNode = ctxt.readTree(p);
+
+    JsonNode entries = jsonNode.get("entries"); // added for backwards compatibility
+    return toMetadata(Objects.requireNonNullElse(entries, jsonNode));  }
+
   protected MetadataDeserializer(Class<?> vc) {
     super(vc);
   }
 
-  @Override
-  public Metadata deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException, JacksonException {
-    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-    JsonNode node = mapper.readTree(jp);
-
-    JsonNode entries = node.get("entries"); // added for backwards compatibility
-    return toMetadata(Objects.requireNonNullElse(entries, node));
-  }
 
   private static Metadata toMetadata(JsonNode node) {
     Metadata metadata = Metadata.builder().build();
 
-    Iterator<Map.Entry<String, JsonNode>> it = node.fields();
-    while (it.hasNext()) {
-      Map.Entry<String, JsonNode> entry = it.next();
-
-      String key = entry.getKey();
-      String value = Optional.ofNullable(entry.getValue())
-          .filter(JsonNode::isTextual)
-          .map(JsonNode::textValue)
+    for (String propertyName : node.propertyNames()) {
+      String value = Optional.ofNullable(node.get(propertyName))
+          .filter(JsonNode::isString)
+          .map(JsonNode::stringValue)
           .orElse(null);
 
-      if (StringUtils.isNoneBlank(key, value)) {
-        metadata.add(key, value);
+      if (StringUtils.isNoneBlank(propertyName, value)) {
+        metadata.add(propertyName, value);
       }
     }
 

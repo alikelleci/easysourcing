@@ -1,20 +1,21 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json.custom;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.type.TypeBindings;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.BeanProperty;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.type.TypeBindings;
+import tools.jackson.databind.type.TypeFactory;
 
-import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
 
-public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<String, ?>> implements ContextualDeserializer {
+public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<String, ?>> {
 
   private Class<?> valueClass;
 
@@ -27,26 +28,22 @@ public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<S
   }
 
   @Override
-  public MultiValuedMap<String, ?> deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
-    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-    JsonNode node = mapper.readTree(jp);
+  public MultiValuedMap<String, ?> deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
+    JsonNode jsonNode = ctxt.readTree(p);
 
     MultiValuedMap<String, Object> map = new ArrayListValuedHashMap<>();
 
-    if (node == null) {
+    if (jsonNode == null) {
       return map;
     }
 
-    Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-    while (fields.hasNext()) {
-      Map.Entry<String, JsonNode> field = fields.next();
-      String key = field.getKey();
-      JsonNode values = field.getValue();
+    for (String propertyName : jsonNode.propertyNames()) {
+      JsonNode values = jsonNode.get(propertyName);
 
       if (values.isArray()) {
-        JavaType javaType = TypeFactory.defaultInstance().constructCollectionType(Collection.class, valueClass);
-        Collection<?> o = deserializationContext.readTreeAsValue(values, javaType);
-        map.putAll(key, o);
+        JavaType javaType = TypeFactory.createDefaultInstance().constructCollectionType(Collection.class, valueClass);
+        Collection<?> o = ctxt.readTreeAsValue(values, javaType);
+        map.putAll(propertyName, o);
       }
     }
 
@@ -55,7 +52,7 @@ public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<S
 
 
   @Override
-  public JsonDeserializer<?> createContextual(DeserializationContext context, BeanProperty property) {
+  public ValueDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) {
     TypeBindings bindings = property.getType().getBindings();
     this.valueClass = bindings.getBoundType(1).getRawClass();
 

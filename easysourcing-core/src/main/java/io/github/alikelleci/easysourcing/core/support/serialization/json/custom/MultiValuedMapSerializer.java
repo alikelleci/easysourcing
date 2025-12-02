@@ -1,11 +1,10 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json.custom;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.apache.commons.collections4.MultiValuedMap;
-
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 public class MultiValuedMapSerializer extends StdSerializer<MultiValuedMap> {
 
@@ -18,11 +17,11 @@ public class MultiValuedMapSerializer extends StdSerializer<MultiValuedMap> {
   }
 
   @Override
-  public void serialize(MultiValuedMap value, JsonGenerator generator, SerializerProvider serializerProvider) throws IOException {
+  public void serialize(MultiValuedMap value, JsonGenerator gen, SerializationContext ctxt) throws JacksonException {
     if (value == null) {
-      generator.writeNull();
+      gen.writeNull();
       return;
     }
-    generator.writeObject(value.asMap());
+    gen.writePOJO(value.asMap());
   }
 }
