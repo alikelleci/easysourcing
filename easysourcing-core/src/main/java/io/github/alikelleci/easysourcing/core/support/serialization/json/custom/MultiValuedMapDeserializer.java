@@ -20,7 +20,7 @@ public class MultiValuedMapDeserializer extends StdDeserializer<MultiValuedMap<S
   private Class<?> valueClass;
 
   public MultiValuedMapDeserializer() {
-    this(null);
+    this(MultiValuedMap.class);
   }
 
   protected MultiValuedMapDeserializer(Class<?> vc) {

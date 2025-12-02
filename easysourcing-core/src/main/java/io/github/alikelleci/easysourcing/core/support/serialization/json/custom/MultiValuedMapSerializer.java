@@ -9,7 +9,7 @@ import tools.jackson.databind.ser.std.StdSerializer;
 public class MultiValuedMapSerializer extends StdSerializer<MultiValuedMap> {
 
   public MultiValuedMapSerializer() {
-    this(null);
+    this(MultiValuedMap.class);
   }
 
   protected MultiValuedMapSerializer(Class<MultiValuedMap> t) {
