@@ -18,17 +18,16 @@ public class MetadataDeserializer extends StdDeserializer<Metadata> {
     this(Metadata.class);
   }
 
+  protected MetadataDeserializer(Class<?> vc) {
+    super(vc);
+  }
+
   @Override
   public Metadata deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
     JsonNode jsonNode = p.objectReadContext().readTree(p);
 
     JsonNode entries = jsonNode.get("entries"); // added for backwards compatibility
     return toMetadata(Objects.requireNonNullElse(entries, jsonNode));  }
-
-  protected MetadataDeserializer(Class<?> vc) {
-    super(vc);
-  }
-
 
   private static Metadata toMetadata(JsonNode node) {
     Metadata metadata = Metadata.builder().build();
