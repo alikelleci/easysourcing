@@ -1,14 +1,12 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.github.alikelleci.easysourcing.core.messaging.Message;
+import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.InstantDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MetadataDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MultiValuedMapDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MultiValuedMapSerializer;
-import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import org.apache.commons.collections4.MultiValuedMap;
-import tools.jackson.databind.DefaultTyping;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.DateTimeFeature;
