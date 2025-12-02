@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.core.messaging.eventhandling.gateway;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.core.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.core.common.exceptions.PayloadMissingException;
@@ -13,6 +12,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.Properties;
@@ -25,10 +25,10 @@ public class DefaultEventGateway implements EventGateway {
 
   private final Producer<String, Event> producer;
 
-  protected DefaultEventGateway(Properties producerConfig, ObjectMapper objectMapper) {
+  protected DefaultEventGateway(Properties producerConfig, JsonMapper jsonMapper) {
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>(objectMapper));
+        new JsonSerializer<>(jsonMapper));
   }
 
   @Override

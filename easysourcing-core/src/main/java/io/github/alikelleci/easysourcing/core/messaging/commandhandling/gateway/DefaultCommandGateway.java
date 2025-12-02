@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.core.messaging.commandhandling.gateway;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
@@ -20,6 +19,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,12 +43,12 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
   private final Producer<String, Command> producer;
 
-  protected DefaultCommandGateway(Properties producerConfig, Properties consumerConfig, String replyTopic, ObjectMapper objectMapper) {
-    super(consumerConfig, replyTopic, objectMapper);
+  protected DefaultCommandGateway(Properties producerConfig, Properties consumerConfig, String replyTopic, JsonMapper jsonMapper) {
+    super(consumerConfig, replyTopic, jsonMapper);
 
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>(objectMapper));
+        new JsonSerializer<>(jsonMapper));
   }
 
   @Override

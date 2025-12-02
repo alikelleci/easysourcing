@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.core.messaging.commandhandling.gateway;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.util.JacksonUtils;
 import lombok.SneakyThrows;
@@ -8,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.Properties;
@@ -51,7 +51,7 @@ public interface CommandGateway {
     private Properties producerConfig;
     private Properties consumerConfig;
     private String replyTopic;
-    private ObjectMapper objectMapper;
+    private JsonMapper jsonMapper;
 
     public CommandGatewayBuilder producerConfig(Properties producerConfig) {
       this.producerConfig = producerConfig;
@@ -70,8 +70,8 @@ public interface CommandGateway {
       return this;
     }
 
-    public CommandGatewayBuilder objectMapper(ObjectMapper objectMapper) {
-      this.objectMapper = objectMapper;
+    public CommandGatewayBuilder objectMapper(JsonMapper jsonMapper) {
+      this.jsonMapper = jsonMapper;
       return this;
     }
 
@@ -88,15 +88,15 @@ public interface CommandGateway {
         this.consumerConfig.putIfAbsent(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
       }
 
-      if (this.objectMapper == null) {
-        this.objectMapper = JacksonUtils.enhancedObjectMapper();
+      if (this.jsonMapper == null) {
+        this.jsonMapper = JacksonUtils.enhancedJsonMapper();
       }
 
       return new DefaultCommandGateway(
           this.producerConfig,
           this.consumerConfig,
           this.replyTopic,
-          this.objectMapper);
+          this.jsonMapper);
     }
   }
 

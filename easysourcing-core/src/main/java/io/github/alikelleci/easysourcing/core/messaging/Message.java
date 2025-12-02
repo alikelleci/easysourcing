@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.core.messaging;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.github.alikelleci.easysourcing.core.common.annotations.AggregateId;
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.core.common.exceptions.AggregateIdMissingException;
@@ -13,6 +12,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.beans.Transient;
 import java.lang.reflect.Field;

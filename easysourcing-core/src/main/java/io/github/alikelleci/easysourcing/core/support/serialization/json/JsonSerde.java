@@ -1,10 +1,10 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.util.JacksonUtils;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
 
@@ -13,12 +13,12 @@ public class JsonSerde<T> implements Serde<T> {
   private final JsonDeserializer<T> deserializer;
 
   public JsonSerde(Class<T> targetType) {
-    this(targetType, JacksonUtils.enhancedObjectMapper());
+    this(targetType, JacksonUtils.enhancedJsonMapper());
   }
 
-  public JsonSerde(Class<T> targetType, ObjectMapper objectMapper) {
-    this.serializer = new JsonSerializer<>(objectMapper);
-    this.deserializer = new JsonDeserializer<>(targetType, objectMapper);
+  public JsonSerde(Class<T> targetType, JsonMapper jsonMapper) {
+    this.serializer = new JsonSerializer<>(jsonMapper);
+    this.deserializer = new JsonDeserializer<>(targetType, jsonMapper);
   }
 
   @Override

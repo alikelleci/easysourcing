@@ -1,16 +1,16 @@
 package io.github.alikelleci.easysourcing.core.support.serialization.json;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.util.JacksonUtils;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
 
 public class JsonDeserializer<T> implements Deserializer<T> {
 
   private final Class<T> targetType;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper jsonMapper;
 
 
   public JsonDeserializer() {
@@ -18,12 +18,12 @@ public class JsonDeserializer<T> implements Deserializer<T> {
   }
 
   public JsonDeserializer(Class<T> targetType) {
-    this(targetType, JacksonUtils.enhancedObjectMapper());
+    this(targetType, JacksonUtils.enhancedJsonMapper());
   }
 
-  public JsonDeserializer(Class<T> targetType, ObjectMapper objectMapper) {
+  public JsonDeserializer(Class<T> targetType, JsonMapper jsonMapper) {
     this.targetType = targetType;
-    this.objectMapper = objectMapper;
+    this.jsonMapper = jsonMapper;
   }
 
   @Override
@@ -34,7 +34,7 @@ public class JsonDeserializer<T> implements Deserializer<T> {
   public T deserialize(String topic, byte[] bytes) {
     if (bytes == null) return null;
     try {
-      return objectMapper.readValue(bytes, targetType);
+      return jsonMapper.readValue(bytes, targetType);
     } catch (Exception e) {
       throw new SerializationException("Error deserializing JSON", e);
     }

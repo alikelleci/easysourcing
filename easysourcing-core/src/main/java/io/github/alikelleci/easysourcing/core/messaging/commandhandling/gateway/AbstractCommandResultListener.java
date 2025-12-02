@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.core.messaging.commandhandling.gateway;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.JsonDeserializer;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -11,6 +10,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -22,7 +22,7 @@ public abstract class AbstractCommandResultListener {
   private final Consumer<String, Command> consumer;
   private final String replyTopic;
 
-  protected AbstractCommandResultListener(Properties consumerConfig, String replyTopic, ObjectMapper objectMapper) {
+  protected AbstractCommandResultListener(Properties consumerConfig, String replyTopic, JsonMapper jsonMapper) {
     consumerConfig.putIfAbsent(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumerConfig.putIfAbsent(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 //    consumerConfig.putIfAbsent(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
@@ -32,7 +32,7 @@ public abstract class AbstractCommandResultListener {
 
     this.consumer = new KafkaConsumer<>(consumerConfig,
         new StringDeserializer(),
-        new JsonDeserializer<>(Command.class, objectMapper));
+        new JsonDeserializer<>(Command.class, jsonMapper));
 
     this.replyTopic = replyTopic;
 
