@@ -1,6 +1,5 @@
 package io.github.alikelleci.easysourcing.core.messaging.commandhandling;
 
-import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
 import lombok.Builder;
 import lombok.Singular;

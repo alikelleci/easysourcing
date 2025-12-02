@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.InstantDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MetadataDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MultiValuedMapDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MultiValuedMapSerializer;
-import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import org.apache.commons.collections4.MultiValuedMap;
 
 import java.time.Instant;

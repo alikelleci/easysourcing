@@ -5,7 +5,6 @@ import io.github.alikelleci.easysourcing.core.common.annotations.MetadataValue;
 import io.github.alikelleci.easysourcing.core.common.annotations.Timestamp;
 import io.github.alikelleci.easysourcing.core.messaging.Message;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
-import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 
 import java.lang.reflect.Parameter;
