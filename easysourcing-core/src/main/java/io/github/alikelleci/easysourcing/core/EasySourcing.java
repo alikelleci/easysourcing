@@ -39,6 +39,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.StateRestoreListener;
+import org.apache.kafka.streams.processor.StreamPartitioner;
 import org.apache.kafka.streams.state.Stores;
 
 import java.time.Duration;
@@ -49,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -136,7 +138,7 @@ public class EasySourcing {
           .filter((key, command) -> StringUtils.isNotBlank(command.getMetadata().get(REPLY_TO)))
           .to((key, command, recordContext) -> command.getMetadata().get(REPLY_TO),
               Produced.with(Serdes.String(), commandSerde)
-                  .withStreamPartitioner((topic, key, value, numPartitions) -> 0));
+                  .withStreamPartitioner((topic, key, value, numPartitions) -> Optional.of(Set.of(0))));
 
       // Events --> Push
       commandResults

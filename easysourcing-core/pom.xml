@@ -17,9 +17,9 @@
     <description>A Java library for Event Sourcing using Kafka</description>
 
     <properties>
-        <kafka.version>3.9.1</kafka.version>
+        <kafka.version>4.1.1</kafka.version>
         <jackson.version>2.16.2</jackson.version>
-        <lombok.version>1.18.34</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencies>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.19.0</version>
+            <version>3.20.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -98,12 +98,12 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>3.2.2</version>
+            <version>3.2.3</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.19</version>
+            <version>1.5.21</version>
         </dependency>
 
         <!--JSR 380 -->
