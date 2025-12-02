@@ -1,7 +1,6 @@
 package io.github.alikelleci.easysourcing.core.messaging.resulthandling;
 
 import io.github.alikelleci.easysourcing.core.EasySourcing;
-import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.messaging.resulthandling.annotations.HandleError;
 import io.github.alikelleci.easysourcing.core.messaging.resulthandling.annotations.HandleResult;
