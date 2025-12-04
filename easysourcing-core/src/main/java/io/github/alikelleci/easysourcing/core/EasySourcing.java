@@ -39,7 +39,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.StateRestoreListener;
 import org.apache.kafka.streams.state.Stores;
-import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public class EasySourcing {
   private final StateListener stateListener;
   private final StateRestoreListener stateRestoreListener;
   private final StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
-  private final JsonMapper jsonMapper;
+  private final ObjectMapper objectMapper;
 
   private KafkaStreams kafkaStreams;
 
@@ -77,12 +77,12 @@ public class EasySourcing {
                          StateListener stateListener,
                          StateRestoreListener stateRestoreListener,
                          StreamsUncaughtExceptionHandler uncaughtExceptionHandler,
-                         JsonMapper jsonMapper) {
+                         ObjectMapper objectMapper) {
     this.streamsConfig = streamsConfig;
     this.stateListener = stateListener;
     this.stateRestoreListener = stateRestoreListener;
     this.uncaughtExceptionHandler = uncaughtExceptionHandler;
-    this.jsonMapper = jsonMapper;
+    this.objectMapper = objectMapper;
   }
 
   public static EasySourcingBuilder builder() {
@@ -98,9 +98,9 @@ public class EasySourcing {
      * -------------------------------------------------------------
      */
 
-    Serde<Command> commandSerde = new JsonSerde<>(Command.class, jsonMapper);
-    Serde<Event> eventSerde = new JsonSerde<>(Event.class, jsonMapper);
-    Serde<AggregateState> snapshotSerde = new JsonSerde<>(AggregateState.class, jsonMapper);
+    Serde<Command> commandSerde = new JsonSerde<>(Command.class, objectMapper);
+    Serde<Event> eventSerde = new JsonSerde<>(Event.class, objectMapper);
+    Serde<AggregateState> snapshotSerde = new JsonSerde<>(AggregateState.class, objectMapper);
 
     /*
      * -------------------------------------------------------------
@@ -254,7 +254,7 @@ public class EasySourcing {
     private StateListener stateListener;
     private StateRestoreListener stateRestoreListener;
     private StreamsUncaughtExceptionHandler uncaughtExceptionHandler;
-    private JsonMapper jsonMapper;
+    private ObjectMapper objectMapper;
 
     public EasySourcingBuilder registerHandler(Object handler) {
       handlers.add(handler);
@@ -290,8 +290,8 @@ public class EasySourcing {
       return this;
     }
 
-    public EasySourcingBuilder objectMapper(JsonMapper jsonMapper) {
-      this.jsonMapper = jsonMapper;
+    public EasySourcingBuilder objectMapper(ObjectMapper objectMapper) {
+      this.objectMapper = objectMapper;
       return this;
     }
 
@@ -310,8 +310,8 @@ public class EasySourcing {
             StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT;
       }
 
-      if (this.jsonMapper == null) {
-        this.jsonMapper = JacksonUtils.enhancedJsonMapper();
+      if (this.objectMapper == null) {
+        this.objectMapper = JacksonUtils.enhancedObjectMapper();
       }
 
       EasySourcing easySourcing = new EasySourcing(
@@ -319,7 +319,7 @@ public class EasySourcing {
           this.stateListener,
           this.stateRestoreListener,
           this.uncaughtExceptionHandler,
-          this.jsonMapper);
+          this.objectMapper);
 
       this.handlers.forEach(handler ->
           HandlerUtils.registerHandler(easySourcing, handler));

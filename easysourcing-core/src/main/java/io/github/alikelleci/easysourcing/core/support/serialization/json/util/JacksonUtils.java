@@ -8,6 +8,7 @@ import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.
 import io.github.alikelleci.easysourcing.core.support.serialization.json.custom.MultiValuedMapSerializer;
 import org.apache.commons.collections4.MultiValuedMap;
 import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -19,13 +20,13 @@ import java.time.Instant;
 
 public class JacksonUtils {
 
-  private static JsonMapper jsonMapper;
+  private static ObjectMapper objectMapper;
 
   private JacksonUtils() {
   }
 
-  public static JsonMapper enhancedJsonMapper() {
-    if (jsonMapper == null) {
+  public static ObjectMapper enhancedObjectMapper() {
+    if (objectMapper == null) {
       SimpleModule customModule = new SimpleModule()
           .addDeserializer(Metadata.class, new MetadataDeserializer())
           .addDeserializer(Instant.class, new InstantDeserializer())
@@ -36,7 +37,7 @@ public class JacksonUtils {
           .allowIfSubType(Object.class)
           .build();
 
-      jsonMapper = JsonMapper.builder()
+      objectMapper = JsonMapper.builder()
           .findAndAddModules()
 //          .addModule(customModule)
           .polymorphicTypeValidator(ptv)
@@ -50,6 +51,6 @@ public class JacksonUtils {
           .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
           .build();
     }
-    return jsonMapper;
+    return objectMapper;
   }
 }

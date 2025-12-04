@@ -12,7 +12,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.Properties;
@@ -25,10 +25,10 @@ public class DefaultEventGateway implements EventGateway {
 
   private final Producer<String, Event> producer;
 
-  protected DefaultEventGateway(Properties producerConfig, JsonMapper jsonMapper) {
+  protected DefaultEventGateway(Properties producerConfig, ObjectMapper objectMapper) {
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>(jsonMapper));
+        new JsonSerializer<>(objectMapper));
   }
 
   @Override

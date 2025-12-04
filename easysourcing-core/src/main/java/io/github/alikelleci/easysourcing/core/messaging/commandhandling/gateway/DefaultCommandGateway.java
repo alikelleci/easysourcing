@@ -19,7 +19,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,12 +43,12 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
   private final Producer<String, Command> producer;
 
-  protected DefaultCommandGateway(Properties producerConfig, Properties consumerConfig, String replyTopic, JsonMapper jsonMapper) {
-    super(consumerConfig, replyTopic, jsonMapper);
+  protected DefaultCommandGateway(Properties producerConfig, Properties consumerConfig, String replyTopic, ObjectMapper objectMapper) {
+    super(consumerConfig, replyTopic, objectMapper);
 
     this.producer = new KafkaProducer<>(producerConfig,
         new StringSerializer(),
-        new JsonSerializer<>(jsonMapper));
+        new JsonSerializer<>(objectMapper));
   }
 
   @Override
