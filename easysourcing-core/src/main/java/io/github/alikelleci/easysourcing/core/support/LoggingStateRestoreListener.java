@@ -52,6 +52,11 @@ public class LoggingStateRestoreListener implements StateRestoreListener {
     stores.remove(topicPartition);
   }
 
+  @Override
+  public void onRestoreSuspended(TopicPartition topicPartition, String storeName, long totalRestored) {
+    log.info("State restoration suspended: topic={}, partition={}, store={}, totalRestored={}", topicPartition.topic(), topicPartition.partition(), storeName, totalRestored);
+    stores.remove(topicPartition);
+  }
 
   @Data
   @Builder(toBuilder = true)
