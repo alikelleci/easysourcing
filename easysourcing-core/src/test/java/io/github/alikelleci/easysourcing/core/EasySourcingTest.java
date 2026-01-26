@@ -1,14 +1,14 @@
 package io.github.alikelleci.easysourcing.core;
 
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
-import io.github.alikelleci.easysourcing.core.example.domain.CustomerCommand;
-import io.github.alikelleci.easysourcing.core.example.domain.CustomerCommand.CreateCustomer;
-import io.github.alikelleci.easysourcing.core.example.domain.CustomerEvent;
-import io.github.alikelleci.easysourcing.core.example.domain.CustomerEvent.CustomerCreated;
-import io.github.alikelleci.easysourcing.core.example.handlers.CustomerCommandHandler;
-import io.github.alikelleci.easysourcing.core.example.handlers.CustomerEventHandler;
-import io.github.alikelleci.easysourcing.core.example.handlers.CustomerEventSourcingHandler;
-import io.github.alikelleci.easysourcing.core.example.handlers.CustomerResultHandler;
+import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerCommand;
+import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerCommand.CreateCustomer;
+import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerEvent;
+import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerEvent.CustomerCreated;
+import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerCommandHandler;
+import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerEventHandler;
+import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerEventSourcingHandler;
+import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerResultHandler;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;

@@ -1,4 +1,4 @@
-package io.github.alikelleci.easysourcing.core.example.domain;
+package io.github.alikelleci.easysourcing.core.example.customer.core;
 
 import io.github.alikelleci.easysourcing.core.common.annotations.AggregateId;
 import io.github.alikelleci.easysourcing.core.common.annotations.AggregateRoot;
