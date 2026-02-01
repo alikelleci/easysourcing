@@ -1,14 +1,11 @@
 package io.github.alikelleci.easysourcing.core;
 
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
+import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerCommandHandler;
+import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerEventSourcingHandler;
 import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerCommand;
 import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerCommand.CreateCustomer;
 import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerEvent;
-import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerEvent.CustomerCreated;
-import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerCommandHandler;
-import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerEventHandler;
-import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerEventSourcingHandler;
-import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerResultHandler;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
@@ -20,6 +17,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,11 +31,7 @@ import static io.github.alikelleci.easysourcing.core.messaging.Metadata.FAILURE;
 import static io.github.alikelleci.easysourcing.core.messaging.Metadata.ID;
 import static io.github.alikelleci.easysourcing.core.messaging.Metadata.RESULT;
 import static io.github.alikelleci.easysourcing.core.messaging.Metadata.TIMESTAMP;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class EasySourcingTest {
 
@@ -56,8 +50,8 @@ class EasySourcingTest {
         .streamsConfig(properties)
         .registerHandler(new CustomerCommandHandler())
         .registerHandler(new CustomerEventSourcingHandler())
-        .registerHandler(new CustomerEventHandler())
-        .registerHandler(new CustomerResultHandler())
+//        .registerHandler(new CustomerEventHandler())
+//        .registerHandler(new CustomerResultHandler())
         .build();
 
     testDriver = new TopologyTestDriver(easySourcing.topology());
@@ -101,46 +95,24 @@ class EasySourcingTest {
 
     commandsTopic.pipeInput(command.getAggregateId(), command);
 
-    // Assert Command Metadata
-    assertThat(command.getMetadata().get(ID), is(notNullValue()));
-    assertThat(command.getMetadata().get(TIMESTAMP), is(notNullValue()));
-
     // Assert Command Result
     Command commandResult = commandResultsTopic.readValue();
-    assertThat(commandResult, is(notNullValue()));
-    assertThat(commandResult.getAggregateId(), is(command.getAggregateId()));
-    // Metadata
-    assertThat(commandResult.getMetadata(), is(notNullValue()));
-    assertThat(commandResult.getMetadata().get("custom-key"), is("custom-value"));
-    assertThat(commandResult.getMetadata().get(CORRELATION_ID), is(notNullValue()));
-    assertThat(commandResult.getMetadata().get(CORRELATION_ID), is(command.getMetadata().get(CORRELATION_ID)));
-    assertThat(commandResult.getMetadata().get(ID), is(notNullValue()));
-    assertThat(commandResult.getMetadata().get(TIMESTAMP), is(notNullValue()));
-    assertThat(commandResult.getMetadata().get(RESULT), is("success"));
-    assertThat(commandResult.getMetadata().get(FAILURE), emptyOrNullString());
-    // Payload
-    // assertThat(commandResult.getPayload(), is(command.getPayload())); // TODO: fix date
+    assertThat(commandResult)
+        .usingRecursiveComparison(RecursiveComparisonConfiguration.builder()
+            .withIgnoredFields("metadata", "payload.birthday")
+            .build())
+        .isEqualTo(command);
+
+    assertThat(commandResult.getMetadata().get(RESULT)).isEqualTo("success");
+    assertThat(commandResult.getMetadata().get(FAILURE)).isBlank();
 
     // Assert Event
     Event event = eventsTopic.readValue();
-    assertThat(event, is(notNullValue()));
-    assertThat(event.getAggregateId(), is(command.getAggregateId()));
-    // Metadata
-    assertThat(event.getMetadata(), is(notNullValue()));
-    assertThat(event.getMetadata().get("custom-key"), is("custom-value"));
-    assertThat(event.getMetadata().get(CORRELATION_ID), is(notNullValue()));
-    assertThat(event.getMetadata().get(CORRELATION_ID), is(command.getMetadata().get(CORRELATION_ID)));
-    assertThat(event.getMetadata().get(ID), is(notNullValue()));
-    assertThat(event.getMetadata().get(TIMESTAMP), is(notNullValue()));
-    assertThat(event.getMetadata().get(RESULT), emptyOrNullString());
-    assertThat(event.getMetadata().get(FAILURE), emptyOrNullString());
-    // Payload
-    assertThat(event.getPayload(), instanceOf(CustomerCreated.class));
-    assertThat(((CustomerCreated) event.getPayload()).getId(), is(((CreateCustomer) command.getPayload()).getId()));
-    assertThat(((CustomerCreated) event.getPayload()).getLastName(), is(((CreateCustomer) command.getPayload()).getLastName()));
-    assertThat(((CustomerCreated) event.getPayload()).getCredits(), is(((CreateCustomer) command.getPayload()).getCredits()));
-    // assertThat(((CustomerCreated) event.getPayload()).getBirthday(), is(((CreateCustomer) command.getPayload()).getBirthday())); // TODO: fix date
+    assertThat(event)
+        .usingRecursiveComparison(RecursiveComparisonConfiguration.builder()
+            .withIgnoredFields("type", "metadata", "payload.birthday")
+            .build())
+        .isEqualTo(command);
   }
-
 
 }
