@@ -40,7 +40,7 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
   private final Object handler;
   private final Method method;
 
-  private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+  private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
 
   private FixedKeyProcessorContext<?, ?> context;
 
@@ -122,7 +122,7 @@ public class CommandHandler implements BiFunction<AggregateState, Command, List<
   }
 
   private void validate(Object payload) {
-    Set<ConstraintViolation<Object>> violations = validator.validate(payload);
+    Set<ConstraintViolation<Object>> violations = VALIDATOR.validate(payload);
     if (!CollectionUtils.isEmpty(violations)) {
       throw new ConstraintViolationException(violations);
     }
