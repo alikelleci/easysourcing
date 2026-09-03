@@ -3,6 +3,7 @@ package io.github.alikelleci.easysourcing.core.messaging.commandhandling.gateway
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
 import io.github.alikelleci.easysourcing.core.common.exceptions.AggregateIdMissingException;
 import io.github.alikelleci.easysourcing.core.common.exceptions.PayloadMissingException;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import static io.github.alikelleci.easysourcing.core.messaging.Metadata.CORRELATION_ID;
 import static io.github.alikelleci.easysourcing.core.messaging.Metadata.FAILURE;
@@ -39,6 +41,11 @@ public class DefaultCommandGateway extends AbstractCommandResultListener impleme
 
   private final Cache<String, CompletableFuture<Object>> cache = Caffeine.newBuilder()
       .expireAfterWrite(Duration.ofMinutes(5))
+      .removalListener((String key, CompletableFuture<Object> future, RemovalCause cause) -> {
+        if (cause.wasEvicted()) {
+          future.completeExceptionally(new TimeoutException("Command timed out: no reply received within the allowed time."));
+        }
+      })
       .build();
 
   private final Producer<String, Command> producer;
