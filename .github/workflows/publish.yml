@@ -1,8 +1,8 @@
-name: On Release
+name: Publish
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   publish:
@@ -18,18 +18,6 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags --force
 
-      - name: Display outputs
-        run: |
-          echo "GITHUB_BASE_REF: ${GITHUB_BASE_REF}"
-          echo "GITHUB_HEAD_REF: ${GITHUB_HEAD_REF}"
-          echo "GITHUB_JOB: ${GITHUB_JOB}"
-          echo "GITHUB_REF: ${GITHUB_REF}"
-          echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME}"
-          echo "GITHUB_REF_TYPE: ${GITHUB_REF_TYPE}"
-          echo "GITHUB_RUN_ATTEMPT: ${GITHUB_RUN_ATTEMPT}"
-          echo "GITHUB_RUN_ID: ${GITHUB_RUN_ID}"
-          echo "GITHUB_RUN_NUMBER: ${GITHUB_RUN_NUMBER}"
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -42,10 +30,14 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Build and test
+        run: mvn --batch-mode verify
+
       - name: Publish package
         run: |
-          mvn versions:set -DnewVersion=${GITHUB_REF_NAME}
-          mvn --batch-mode deploy -Prelease
+          VERSION=${GITHUB_REF_NAME#v}
+          mvn versions:set -DnewVersion=${VERSION}
+          mvn --batch-mode deploy -Prelease -DskipTests
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
