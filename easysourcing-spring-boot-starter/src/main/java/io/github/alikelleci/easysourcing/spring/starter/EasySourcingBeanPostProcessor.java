@@ -3,7 +3,6 @@ package io.github.alikelleci.easysourcing.spring.starter;
 import io.github.alikelleci.easysourcing.core.EasySourcing;
 import io.github.alikelleci.easysourcing.core.common.annotations.HandleMessage;
 import io.github.alikelleci.easysourcing.core.util.AnnotationUtils;
-import io.github.alikelleci.easysourcing.core.util.HandlerUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import java.util.Arrays;
@@ -30,8 +29,7 @@ public class EasySourcingBeanPostProcessor implements BeanPostProcessor {
   @Override
   public Object postProcessAfterInitialization(final Object bean, final String beanName) {
     if (isHandler(bean)) {
-      apps.forEach(easySourcing ->
-          HandlerUtils.registerHandler(easySourcing, bean));
+      apps.forEach(eventify -> eventify.registerHandler(bean));
     }
     return bean;
   }

@@ -85,6 +85,10 @@ public class EasySourcing {
     this.objectMapper = objectMapper;
   }
 
+  public void registerHandler(Object handler) {
+    HandlerUtils.registerHandler(this, handler);
+  }
+
   public static EasySourcingBuilder builder() {
     return new EasySourcingBuilder();
   }
@@ -261,7 +265,6 @@ public class EasySourcing {
 
     public EasySourcingBuilder registerHandler(Object handler) {
       handlers.add(handler);
-
       return this;
     }
 
@@ -324,8 +327,7 @@ public class EasySourcing {
           this.uncaughtExceptionHandler,
           this.objectMapper);
 
-      this.handlers.forEach(handler ->
-          HandlerUtils.registerHandler(easySourcing, handler));
+      this.handlers.forEach(easySourcing::registerHandler);
 
       return easySourcing;
     }
