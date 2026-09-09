@@ -5,14 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.EventListener;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @AutoConfiguration
@@ -20,19 +17,37 @@ import java.util.Map;
 @EnableConfigurationProperties(EasySourcingProperties.class)
 public class EasySourcingAutoConfiguration {
 
-  @Autowired
-  private ApplicationContext applicationContext;
-
   @Bean
   public EasySourcingBeanPostProcessor easySourcingBeanPostProcessor(@Autowired List<EasySourcing> apps) {
     return new EasySourcingBeanPostProcessor(apps);
   }
 
-  @EventListener
-  public void onApplicationEvent(ApplicationReadyEvent event) {
-    if (event.getApplicationContext().equals(this.applicationContext)) {
-      Map<String, EasySourcing> apps = event.getApplicationContext().getBeansOfType(EasySourcing.class);
-      apps.values().forEach(EasySourcing::start);
-    }
+  @Bean
+  public SmartLifecycle easysourcingLifecycle(List<EasySourcing> apps) {
+    return new SmartLifecycle() {
+      private volatile boolean running = false;
+
+      @Override
+      public void start() {
+        apps.forEach(EasySourcing::start);
+        running = true;
+      }
+
+      @Override
+      public void stop() {
+        apps.forEach(EasySourcing::stop);
+        running = false;
+      }
+
+      @Override
+      public boolean isRunning() {
+        return running;
+      }
+
+      @Override
+      public int getPhase() {
+        return Integer.MAX_VALUE;
+      }
+    };
   }
 }
