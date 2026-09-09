@@ -204,6 +204,9 @@ public class EasySourcing {
   }
 
   public void stop() {
+    if (kafkaStreams == null || !kafkaStreams.state().isRunningOrRebalancing()) {
+      return;
+    }
     log.info("EasySourcing is shutting down...");
     kafkaStreams.close(Duration.ofSeconds(60));
     log.info("EasySourcing shut down complete.");
