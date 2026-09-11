@@ -5,8 +5,8 @@ on:
     types: [published]
 
 jobs:
-  publish:
-    name: Publish
+  publish-maven:
+    name: Publish Maven
     runs-on: ubuntu-latest
 
     steps:
