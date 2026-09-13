@@ -1,14 +1,14 @@
 package io.github.alikelleci.easysourcing.core;
 
 import io.github.alikelleci.easysourcing.core.common.annotations.TopicInfo;
-import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerCommandHandler;
-import io.github.alikelleci.easysourcing.core.example.customer.core.CustomerEventSourcingHandler;
-import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerCommand;
-import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerCommand.CreateCustomer;
-import io.github.alikelleci.easysourcing.core.example.customer.shared.CustomerEvent;
 import io.github.alikelleci.easysourcing.core.messaging.Metadata;
 import io.github.alikelleci.easysourcing.core.messaging.commandhandling.Command;
 import io.github.alikelleci.easysourcing.core.messaging.eventhandling.Event;
+import io.github.alikelleci.easysourcing.core.order.OrderCommand;
+import io.github.alikelleci.easysourcing.core.order.OrderCommand.PlaceOrder;
+import io.github.alikelleci.easysourcing.core.order.OrderCommandHandler;
+import io.github.alikelleci.easysourcing.core.order.OrderEvent;
+import io.github.alikelleci.easysourcing.core.order.OrderEventSourcingHandler;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.JsonDeserializer;
 import io.github.alikelleci.easysourcing.core.support.serialization.json.JsonSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -22,7 +22,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -48,21 +47,21 @@ class EasySourcingTest {
 
     EasySourcing easySourcing = EasySourcing.builder()
         .streamsConfig(properties)
-        .registerHandler(new CustomerCommandHandler())
-        .registerHandler(new CustomerEventSourcingHandler())
+        .registerHandler(new OrderCommandHandler())
+        .registerHandler(new OrderEventSourcingHandler())
 //        .registerHandler(new CustomerEventHandler())
 //        .registerHandler(new CustomerResultHandler())
         .build();
 
     testDriver = new TopologyTestDriver(easySourcing.topology());
 
-    commandsTopic = testDriver.createInputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value(),
+    commandsTopic = testDriver.createInputTopic(OrderCommand.class.getAnnotation(TopicInfo.class).value(),
         new StringSerializer(), new JsonSerializer<>());
 
-    commandResultsTopic = testDriver.createOutputTopic(CustomerCommand.class.getAnnotation(TopicInfo.class).value().concat(".results"),
+    commandResultsTopic = testDriver.createOutputTopic(OrderCommand.class.getAnnotation(TopicInfo.class).value().concat(".results"),
         new StringDeserializer(), new JsonDeserializer<>(Command.class));
 
-    eventsTopic = testDriver.createOutputTopic(CustomerEvent.class.getAnnotation(TopicInfo.class).value(),
+    eventsTopic = testDriver.createOutputTopic(OrderEvent.class.getAnnotation(TopicInfo.class).value(),
         new StringDeserializer(), new JsonDeserializer<>(Event.class));
   }
 
@@ -76,12 +75,11 @@ class EasySourcingTest {
   @Test
   void test1() {
     Command command = Command.builder()
-        .payload(CreateCustomer.builder()
-            .id("customer-123")
-            .firstName("Peter")
-            .lastName("Bruin")
-            .credits(100)
-            .birthday(Instant.now())
+        .payload(PlaceOrder.builder()
+            .id("order-1")
+            .customer("John Doe")
+            .shippingAddress("Some Street 212")
+            .couponCode("HMX004")
             .build())
         .metadata(Metadata.builder()
             .add("custom-key", "custom-value")
