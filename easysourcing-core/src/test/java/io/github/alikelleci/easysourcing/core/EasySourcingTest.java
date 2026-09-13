@@ -49,8 +49,8 @@ class EasySourcingTest {
         .streamsConfig(properties)
         .registerHandler(new OrderCommandHandler())
         .registerHandler(new OrderEventSourcingHandler())
-//        .registerHandler(new CustomerEventHandler())
-//        .registerHandler(new CustomerResultHandler())
+//        .registerHandler(new OrderEventHandler())
+//        .registerHandler(new OrderResultHandler())
         .build();
 
     testDriver = new TopologyTestDriver(easySourcing.topology());
