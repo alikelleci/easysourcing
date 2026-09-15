@@ -22,8 +22,7 @@ public class LoggingStateRestoreListener implements StateRestoreListener {
     scheduler.scheduleAtFixedRate(() ->
         stores.forEach((topicPartition, stats) -> {
           if (stats.getCurrentOffset() < stats.getEndingOffset()) {
-            double progressPercentage = ((double) stats.getCurrentOffset() / stats.getEndingOffset()) * 100;
-            log.info("State restoration in progress: topic={}, partition={}, store={}, progress={}%", topicPartition.topic(), topicPartition.partition(), stats.getStoreName(), ((int) progressPercentage));
+            log.info("State restoration in progress: topic={}, partition={}, store={}, progress={}%", topicPartition.topic(), topicPartition.partition(), stats.getStoreName(), stats.progressPercentage());
           }
         }), 0, 10, TimeUnit.SECONDS);
 
@@ -35,6 +34,7 @@ public class LoggingStateRestoreListener implements StateRestoreListener {
     log.info("State restoration started: topic={}, partition={}, store={}, startingOffset={}, endingOffset={}", topicPartition.topic(), topicPartition.partition(), storeName, startingOffset, endingOffset);
     stores.put(topicPartition, Stats.builder()
         .storeName(storeName)
+        .startingOffset(startingOffset)
         .currentOffset(startingOffset)
         .endingOffset(endingOffset)
         .build());
@@ -43,7 +43,10 @@ public class LoggingStateRestoreListener implements StateRestoreListener {
   @Override
   public void onBatchRestored(TopicPartition topicPartition, String storeName, long batchEndOffset, long numRestored) {
 //    log.debug("State restoration in progress: topic={}, partition={}, store={}, numRestored={}", topicPartition.topic(), topicPartition.partition(), storeName, numRestored);
-    stores.get(topicPartition).setCurrentOffset(batchEndOffset);
+    Stats stats = stores.get(topicPartition);
+    if (stats != null) {
+      stats.setCurrentOffset(batchEndOffset);
+    }
   }
 
   @Override
@@ -62,7 +65,21 @@ public class LoggingStateRestoreListener implements StateRestoreListener {
   @Builder(toBuilder = true)
   static class Stats {
     private String storeName;
+    private long startingOffset;
     private long endingOffset;
     private long currentOffset;
+
+    /**
+     * How much of this restoration is done, from 0 to 100. Restoration can start past offset 0 (e.g. from a checkpoint),
+     * so progress is measured from the starting offset, not from the start of the changelog.
+     */
+    int progressPercentage() {
+      long total = endingOffset - startingOffset;
+      if (total <= 0) {
+        return 100;
+      }
+      long restored = Math.min(Math.max(currentOffset - startingOffset, 0), total);
+      return (int) (restored * 100 / total);
+    }
   }
 }
